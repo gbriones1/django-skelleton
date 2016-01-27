@@ -12,7 +12,6 @@ router.register(r'organization', views.OrganizationViewSet)
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
-	url(r'^$', views.main),
-    url(r'^product/$', views.product),
 	url(r'^api/', include(router.urls)),
+	url(r'^(?P<name>\w+\W*\w*)/$', views.main),
 ]

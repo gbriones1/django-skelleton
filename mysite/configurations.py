@@ -1,4 +1,4 @@
 APPNAME = 'Test App'
 VERSION = '0.1 beta'
-YEAR = '2015'
+YEAR = '2016'
 PAGE_TITLE = APPNAME
