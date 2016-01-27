@@ -1,0 +1,13 @@
+<form class="form-horizontal" action="/" autocomplete="off" method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="UPDATE">
+    {% if storage %}
+    <input type="hidden" name="storage" value="{{ storage }}">
+    {% endif %}
+    {% for field in form %}
+    <div class="form-group">
+        <label for="{{ field.id_for_label }}" class="col-xs-2 control-label">{{ field.label }}</label>
+        <div class="col-xs-10">{{ field }}</div>
+    </div>
+    {% endfor %}
+</form>

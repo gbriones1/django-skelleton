@@ -1,0 +1,43 @@
+<div class="col-sm-3 col-md-2 sidebar">
+  {% if dashboard_active %}
+  <ul class="nav nav-sidebar">
+    <li class="{{ filter_active.all }}"><a href="/">Refacciones <span class="sr-only">(current)</span></a></li>
+    <li class="{{ tools_active }}"><a href="/tools/">Herramientas</a></li>
+    <li class="{{ providers_active }}"><a href="/providers/">Proveedores</a></li>
+    <li class="{{ brands_active }}"><a href="/brands/">Marcas</a></li>
+    <li class="{{ appliances_active }}"><a href="/appliances/">Aplicaciones</a></li>
+    <li class="{{ percentages_active }}"><a href="/percentages/">Porcentajes</a></li>
+    <li class="{{ organizations_active }}"><a href="/organizations/">Organizaciones</a></li>
+  </ul>
+  <ul class="nav nav-sidebar">
+    <li><h5>Almacenes</h5></li>
+    <li class="{{ filter_active.S }}"><a href="/?storage=S">Propias</a></li>
+    <li class="{{ filter_active.C }}"><a href="/?storage=C">Consignación</a></li>
+    <li class="{{ filter_active.U }}"><a href="/?storage=U">Obsoletas</a></li>
+  </ul>
+  <ul class="nav nav-sidebar">
+    <li><h5>Movimientos</h5></li>
+    <li class="{{ registry_active }}"><a href="/registry/">Todos</a></li>
+    <li class="{{ inputs_active }}"><a href="/inputs/">Entradas</a></li>
+    <li class="{{ outputs_active }}"><a href="/outputs/">Salidas</a></li>
+    <li class="{{ lendings_active }}"><a href="/lendings/">Prestamos</a></li>
+    <li class="{{ shopping_active }}"><a href="/shopping/">Pedidos</a></li>
+  </ul>
+  {% elif reports_active %}
+  <ul class="nav nav-sidebar">
+    <li class="{{ statistics_active }}"><a href="/reports/">Estadisticas</a></li>
+  </ul>
+  <ul class="nav nav-sidebar">
+    <li><h5>Diferencias</h5></li>
+    <li class="{{ product_diff_active }}"><a href="/reports/differences/products/">Productos</a></li>
+    <li class="{{ provider_diff_active }}"><a href="/reports/differences/providers/">Proveedores</a></li>
+    <li class="{{ storage_diff_active }}"><a href="/reports/differences/storage/">Almacenes</a></li>
+  </ul>
+  <ul class="nav nav-sidebar">
+    <li><h5>Gastos</h5></li>
+    <li class="{{ expenses_active.W }}"><a href="/reports/expenses/">Semanales</a></li>
+    <li class="{{ expenses_active.M }}"><a href="/reports/expenses/?time=M">Mensuales</a></li>
+    <li class="{{ expenses_active.A }}"><a href="/reports/expenses/?time=A">Anuales</a></li>
+  </ul>
+  {% endif %}
+</div>

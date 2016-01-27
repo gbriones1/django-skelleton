@@ -1,0 +1,147 @@
+{% extends "layouts/base.html" %}
+
+{% block page_title %}
+<title>Muelles Obrero</title>
+{% endblock %}
+
+{% block page_top %}
+{% include 'sections/navbar.html' %}
+{% endblock %}
+
+{% block header %}
+<div style="padding-top: 60px;"></div>
+{% endblock %}
+
+{% block site_wrapper %}
+<div class="col-sm-6 col-sm-offset-3 main">
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+            <h3 class="panel-title">Configuraciones Generales</h3>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" action="." method="POST">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
+                        <div class="col-sm-8">
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <span class="help-block">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <!-- <div class="form-group">
+                        <label for="company_email" class="col-sm-2 control-label">Email</label>
+                        <div class="col-sm-10">
+                            <input type="email" class="form-control" name="company_email" value="" id="company_email">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="company_password" class="col-sm-2 control-label">Password</label>
+                        <div class="col-sm-10">
+                            <input type="password" class="form-control" name="company_password" value="" id="company_password">
+                        </div>
+                    </div> -->
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button type="submit" class="btn btn-success btn-block"> Guardar</button>
+                        </div>
+                    </div>
+                  </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+            <h3 class="panel-title">Respaldos automaticos</h3>
+            </div>
+            <div class="panel-body">
+                <form class="form-horizontal" action="./backup/" method="POST" id="backupform">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">Crear respaldo</label>
+                        <div class="col-sm-8">
+                            <button type="button" id="backup" class="btn btn-success btn-block"> Respaldar ahora</button>
+                        </div>
+                    </div>
+                    {% for field in backupform %}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
+                        <div class="col-sm-8">
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <span class="help-block">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button type="button" id="send" class="btn btn-info btn-block"> Enviar por email</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button type="button" id="restore-btn" class="btn btn-warning btn-block" data-title="Restore" data-toggle="modal" data-target="#restore" > Restaurar respaldo</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-8 col-sm-offset-4">
+                            <button type="button" id="delete-btn" class="btn btn-danger btn-block" data-title="Delete" data-toggle="modal" data-target="#delete" > Eliminar respaldo</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="restore" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align">Restaurar antigua base de datos</h4>
+    </div>
+    <form class="form-horizontal" action="./backup/" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="RESTORE">
+        <input type="hidden" name="backup" value="">
+        <div class="modal-body">
+            <div class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span> Esta seguro de restaurar a una antigua base de datos? Toda la informacion no respaldada sera borrada permanentemente.</div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Restaurar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+<div class="modal fade" id="delete" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align">Eliminar antigua base de datos</h4>
+    </div>
+    <form class="form-horizontal" action="./backup/" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="DELETE">
+        <input type="hidden" name="backup" value="">
+        <div class="modal-body">
+            <div class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span> Esta seguro de eliminar una antigua base de datos?</div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Eliminar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block notifications %}
+{% include 'sections/notifications.html' %}
+{% endblock %}
+
+{% block footer %}
+{% include 'sections/footer.html' %}
+{% endblock %}

@@ -1,0 +1,332 @@
+{% load custom_tags %}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+            <h3 class="panel-title">Rango</h3>
+            </div>
+            <div class="panel-body">
+                <form class="form-inline" action="." method="GET">
+                  <div class="form-group">
+                    <label for="exampleInputName2">Fecha inicio</label>
+                    <input type="date" class="form-control" name="start_date" value="{{ formatted_start_date }}">
+                  </div>
+                  <div class="form-group">
+                    <label for="exampleInputEmail2">Fecha fin</label>
+                    <input type="date" class="form-control" name="end_date" value="{{ formatted_end_date }}">
+                  </div>
+                  <button type="submit" class="btn btn-default">Filtrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <h2>
+            <div class="col-md-11 col-sm-10">Pedidos</div>
+            <div class="col-md-1 col-sm-2">
+                <p data-placement="top" data-toggle="tooltip" title="Nuevo pedido"><button id="order-btn" type="button" class="btn btn-info btn-lg btn-block" data-toggle="modal" data-target="#new"><i class="fa fa-truck"></i></button></p>
+        </h2>
+    </div>
+    <div class="row">
+    <div class="table-responsive">
+        <table class="table table-bordred table-striped" id="orders">
+            <thead>
+                <th>Numero de Pedido</th>
+                <th>Fecha</th>
+                <th>Solicitante</th>
+                <th>Código</th>
+                <th>Marca</th>
+                <th>Proveedor</th>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+                <th>Almacen</th>
+                <th>Organizacion</th>
+                <th>Estado</th>
+                <th>Fecha de recibido</th>
+                <th style="text-align: center;">Acciones</th>
+            </thead>
+            <tfoot>
+                <th>Numero de Pedido</th>
+                <th>Fecha</th>
+                <th>Solicitante</th>
+                <th>Código</th>
+                <th>Marca</th>
+                <th>Proveedor</th>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+                <th>Almacen</th>
+                <th>Organizacion</th>
+                <th>Estado</th>
+                <th>Fecha de recibido</th>
+                <th></th>
+            </tfoot>
+            <tbody>
+                {% for order in orders %}
+                    {% for product in order.order_product_set.all %}
+                        <tr>
+                            <td>{{ order.id }}</td>
+                            <td>{{ order.date }}</td>
+                            <td>{% if order.claimant %}{{ order.claimant }}{% endif %}</td>
+                            <td>{{ product.product.code }}</td>
+                            <td>{{ product.product.brand }}</td>
+                            <td>{{ product.product.provider.name }}</td>
+                            <td>{{ product.product.name }}</td>
+                            <td class="needed">x {{ product.amount }}</td>
+                            <td>${{ product.product.price }}</td>
+                            <td class="product-total">${{ product.amount|multiply:product.product.price }}</td>
+                            <td>{% if product.storage %}{{ product.get_storage_display }}{% endif %}</td>
+                            <td>{% if product.organization %}{{ product.organization }}{% endif %}</td>
+                            <td>{% if product.status %}{{ product.get_status_display }}{% endif %}</td>
+                            <td>{% if product.received_date %}{{ product.received_date.day }}-{{ product.received_date.month|month_name }}-{{ product.received_date.year }}{% endif %}</td>
+                            <td align="center" style="min-width: 220px">
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-success new-input" data-title="Input" data-toggle="modal" data-target="#input{{ product.id }}" data-id="{{ product.id }}"><p data-placement="top" data-toggle="tooltip" title="Registrar entrada"><i class="fa fa-sign-in"></i></p></button>
+                                    <button type="button" class="btn btn-success" data-title="Received" data-toggle="modal" data-target="#received{{ order.id }}"><p data-placement="top" data-toggle="tooltip" title="Marcar como recibido"><i class="fa fa-check"></i></p></button>
+                                    <button type="button" class="btn btn-info" data-title="Resend" data-toggle="modal" data-target="#resend{{ order.id }}"><p data-placement="top" data-toggle="tooltip" title="Reenviar email"><i class="fa fa-share"></i><i class="fa fa-envelope"></i></p></button>
+                                    <button class="btn btn-warning" data-title="Cancel" data-toggle="modal" data-target="#cancel{{ order.id }}" ><p data-placement="top" data-toggle="tooltip" title="Enviar mail de cancelacion"><i class="fa fa-times"></i><i class="fa fa-envelope"></i></p></button>
+                                    <button class="btn btn-danger" data-title="Delete" data-toggle="modal" data-target="#delete{{ order.id }}" ><p data-placement="top" data-toggle="tooltip" title="Eliminar registro"><i class="fa fa-trash"></i></p></button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
+</div>
+<div class="modal fade" id="new" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Nuevo Pedido</h4>
+    </div>
+    <form class="form-horizontal" action="" autocomplete="off" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="NEW">
+        <input type="hidden" name="orderProducts" value="NEW">
+        <div class="modal-body">
+            {% for field in form %}
+            {% if field.field.widget.is_hidden %}
+            {{ field }}
+            {% else %}
+            <div class="form-group {% if field.errors %}has-error{% endif %}">
+                <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                <div class="col-sm-10">
+                    {{ field }}
+                    {% for error in field.errors %}
+                    <span class="help-block">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <button type="button" id="addOrderProduct" class="btn btn-info">Agregar <i class="fa fa-caret-square-o-down"></i></button>
+                    <button type="button" id="removeOrderProduct" class="btn btn-info">Remover <i class="fa fa-caret-square-o-up"></i></button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="orderProducts" class="col-sm-2 control-label">Productos agregados</label>
+                <div class="col-sm-10">
+                    <select id="orderProducts" multiple></select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-ok-sign"></span> Pedir</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+{% for id, form in order_inputs_forms.items %}
+<div class="modal fade" id="input{{ id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Registrar pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal input-form" action="" method="POST" id="input-order">
+        {% csrf_token %}
+        <input type="hidden" name="order_product_id" value='["{{ id }}"]'>
+        <input type="hidden" name="action" value="INPUT">
+        <div class="modal-body">
+            {% for field in form %}
+            {% if field.field.widget.is_hidden %}
+            {{ field }}
+            {% else %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                <div class="col-sm-10">{{ field }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Registrar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+{% endfor %}
+{% for order in orders %}
+<!-- <div class="modal fade" id="input{{ order.id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Registrar pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal" action="" method="POST" id="input-order">
+        {% csrf_token %}
+        <input type="hidden" name="order_id" value='["{{ order.id }}"]'>
+        <input type="hidden" name="action" value="INPUT">
+        <div class="modal-body">
+            {% for field in orderInputForm %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                <div class="col-sm-10">{{ field }}</div>
+            </div>
+            {% endfor %}
+            {% for product in order.order_product_set.all %}
+            <div class="product-input" data-code="{{ product.product.code }}">
+                <div class="form-group">
+                    <label for="{{ product.product.code }}" class="col-sm-12 control-label" style="text-align: left;">{{ product.product.code }} - {{ product.product.name }} - {{ product.product.description }}</label>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-3">
+                        <label class="control-label">Cantidad</label>
+                        <input class="amount" type="number" name="{{ product.product.code }}" value="{{ product.amount }}" min="0" max="{{ product.amount }}">
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="control-label">Precio de lista</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
+                            <input class="price" type="number" name="price{{ product.product.code }}" value="{% if request.user.is_superuser %}{{ product.product.price }}{% else %}0{% endif %}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="control-label">Descuento</label>
+                        <div class="input-group">
+                            <input class="discount" type="number" name="discount{{ product.product.code }}" value="{% if request.user.is_superuser %}{{ product.product.discount }}{% else %}0{% endif %}">
+                            <span class="input-group-addon">%</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="control-label">Precio real</label>
+                        <div class="input-group">
+                            <span class="input-group-addon">$</span>
+                            <input class="real_price" type="number" value="{% if request.user.is_superuser %}{{ product.product|real_price }}{% else %}0{% endif %}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Registrar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div> -->
+<div class="modal fade" id="received{{ order.id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Marcar como recibido pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="order_id" value='["{{ order.id }}"]'>
+        <input type="hidden" name="action" value="RECEIVED">
+        <div class="modal-body">
+            <div class="alert alert-success"><span class="glyphicon glyphicon-warning-sign"></span> Esta seguro de marcar como recibido este Pedido de la base de datos?</div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Guardar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+<div class="modal fade" id="resend{{ order.id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Reenviar pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="order_id" value='["{{ order.id }}"]'>
+        <input type="hidden" name="action" value="RESEND">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="id_subject" class="col-sm-2 control-label">Asunto</label>
+                <input id="id_subject" class="form-control" type="text" name="subject" value="Muelles Obrero S. de R.L. de C.V.">
+            </div>
+            <div class="form-group">
+                <label for="id_text" class="col-sm-2 control-label">Mensaje</label>
+                <textarea id="id_text" name="text" class="form-control" rows="4" cols="50">
+Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si está enderado del mismo.
+Duda o aclaración comunicarlo con almacenista a cargo.
+Gracias.</textarea>
+            </div>
+            {% for product in order.order_product_set.all %}
+            <div class="form-group">
+                <label for="{{ product.product.code }}" class="col-sm-8 control-label">{{ product.product.code }} - {{ product.product.name }} - {{ product.product.description }}</label>
+                <div class="col-sm-2">
+                    <input type="number" class="form-control" min="1" value="{{ product.amount }}" name="{{ product.product.code }}" id="{{ product.product.code }}"></div><a class="btn btn-danger btn-sm col-sm-1 unlist-product"><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-info btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Enviar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+<div class="modal fade" id="cancel{{ order.id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Cancelar pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="order_id" value='["{{ order.id }}"]'>
+        <input type="hidden" name="action" value="CANCEL">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="id_subject" class="col-sm-2 control-label">Asunto</label>
+                <input id="id_subject" class="form-control" type="text" name="subject" value="Muelles Obrero S. de R.L. de C.V.">
+            </div>
+            <div class="form-group">
+                <label for="id_text" class="col-sm-2 control-label">Mensaje</label>
+                <textarea id="id_text" name="text" class="form-control" rows="4" cols="50">
+Por medio de este mensaje les solicitamos CANCELAR el siguiente pedido. Favor de confirmar por esta misma via si está enderado del mismo.
+Duda o aclaración comunicarlo con almacenista a cargo.
+Gracias.</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-warning btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Enviar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+<div class="modal fade" id="delete{{ order.id }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align" id="Heading">Eliminar pedido de {{ order.date }}</h4>
+    </div>
+    <form class="form-horizontal" action="" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="order_id" value='["{{ order.id }}"]'>
+        <input type="hidden" name="action" value="DELETE">
+        <div class="modal-body">
+            <div class="alert alert-danger"><span class="glyphicon glyphicon-warning-sign"></span> Esta seguro de eliminar este Pedido de la base de datos?</div>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-danger btn-lg" ><span class="glyphicon glyphicon-ok-sign"></span> Eliminar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+{% endfor %}

@@ -1,0 +1,13 @@
+{% extends "layouts/iframe.html" %}
+
+{% block page_title %}
+<title>Muelles Obrero</title>
+{% endblock %}
+
+{% block site_wrapper %}
+{% if object_type == "Product" %}
+	{% include 'sections/productForm.html' %}
+{% elif object_type == "Tool" %}
+	{% include 'sections/toolForm.html' %}
+{% endif %}
+{% endblock %}

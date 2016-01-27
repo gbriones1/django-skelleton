@@ -1,0 +1,101 @@
+{% extends "layouts/base.html" %}
+
+{% block page_title %}
+<title>{{ PAGE_TITLE }}</title>
+{% endblock %}
+
+{% block page_top %}
+{% include 'sections/navbar.html' %}
+{% endblock %}
+
+{% block header %}
+<div style="padding-top: 60px;"></div>
+{% endblock %}
+
+{% block sidebar %}
+{% include 'sections/sidebar.html' %}
+{% endblock %}
+
+{% block site_wrapper %}
+
+{% if dashboard_active %}
+	{% if filter_active %}
+	{% include 'sections/productTable.html' %}
+	{% endif %}
+	{% if tools_active %}
+	{% include 'sections/toolTable.html' %}
+	{% endif %}
+	{% if inputs_active %}
+	{% include 'sections/inputTable.html' %}
+	{% endif %}
+	{% if outputs_active %}
+	{% include 'sections/outputTable.html' %}
+	{% endif %}
+	{% if lendings_active %}
+	{% include 'sections/lendingTable.html' %}
+	{% endif %}
+	{% if shopping_active %}
+	{% include 'sections/shoppingTable.html' %}
+	{% endif %}
+	{% if providers_active %}
+	{% include 'sections/providerTable.html' %}
+	{% endif %}
+	{% if brands_active %}
+	{% include 'sections/brandTable.html' %}
+	{% endif %}
+	{% if appliances_active %}
+	{% include 'sections/applianceTable.html' %}
+	{% endif %}
+	{% if percentages_active %}
+	{% include 'sections/percentageTable.html' %}
+	{% endif %}
+	{% if organizations_active %}
+	{% include 'sections/organizationTable.html' %}
+	{% endif %}
+	{% if registry_active %}
+	{% include 'sections/registryTable.html' %}
+	{% endif %}
+{% endif %}
+{% if reports_active %}
+	{% if statistics_active %}
+	{% include 'sections/statisticsChart.html' %}
+	{% endif %}
+	{% if expenses_active %}
+	{% include 'sections/expensesReport.html' %}
+	{% endif %}
+	{% if product_diff_active %}
+	{% include 'sections/productDiffTable.html' %}
+	{% endif %}
+	{% if provider_diff_active %}
+	{% include 'sections/providerDiffTable.html' %}
+	{% endif %}
+	{% if storage_diff_active %}
+	{% include 'sections/storageDiffTable.html' %}
+	{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block notifications %}
+{% include 'sections/notifications.html' %}
+{% endblock %}
+
+{% block popup %}
+<!-- <div class="popup"></div> -->
+
+<div class="modal fade" id="popup" tabindex="-1" aria-hidden="true" data-focus-on="input:first" style="display: none;">
+    <div class="modal-header">
+        <h4 class="modal-title title">Inconsistencia en el precio</h4>
+    </div>
+    <div class="modal-body">
+        <p class="content"></p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-success ok" data-dismiss="modal"><span class="glyphicon glyphicon-ok-sign"></span> Aceptar</button>
+        <button type="button" class="btn btn-danger cancel" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% include 'sections/footer.html' %}
+{% endblock %}

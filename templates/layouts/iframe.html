@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=10">
+    <meta name="viewport" content="width=device-width">
+    {% block page_title %}
+    {% endblock %}
+    {% load staticfiles %}
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% for css in stylesheets %}
+        <link rel="stylesheet" href="/static/css/{{ css }}.css">
+    {% endfor %}
+    <!-- <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"> -->
+</head>
+<body style="max-width: 550px;">
+    <div class="row">
+    </div>
+    {% block site_wrapper %}
+    {% endblock %}
+    <script src="{% static 'js/jquery-1.11.2.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/modernizr.js' %}"></script>
+    <script src="{% static 'js/polyfiller.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% for js in scripts %}
+        <script src="/static/js/{{ js }}.js"></script>
+    {% endfor %}
+</body>
+</html>

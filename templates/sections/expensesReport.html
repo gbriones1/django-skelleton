@@ -1,0 +1,67 @@
+{% load custom_tags %}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+            <h3 class="panel-title">Revisar</h3>
+            </div>
+            <div class="panel-body">
+                <form class="form-inline" action="." method="GET">
+                    <div class="form-group">
+                        <label for="exampleInputName2">Año</label>
+                        <input type="number" class="form-control" name="year" value="{{ year }}" min="2000" max="2100">
+                    </div>
+                    {% if expenses_active.M %}
+                    <div class="form-group">
+                        <label for="exampleInputName2">Mes</label>
+                        <input type="number" class="form-control" name="month" value="{{ month }}" min="1" max="12">
+                    </div>
+                    {% elif expenses_active.W %}
+                    <div class="form-group">
+                        <label for="exampleInputName2">Semana</label>
+                        <input type="number" class="form-control" name="week" value="{{ week }}" min="1" max="52">
+                    </div>
+                    {% endif %}
+                    <input type="hidden" name="time" value="{{ time }}">
+                    <button type="submit" class="btn btn-default">Filtrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="table-responsive">
+            <table class="table table-bordred table-striped">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Precio Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for input_reg in inputs %}
+                        {% for product in input_reg.input_product_set.all %}
+                        <tr>
+                            <td>{{ input_reg.date.day }}-{{ input_reg.date.month|month_name }}-{{ input_reg.date.year }}</td>
+                            <td>{{ product.product.code }}</td>
+                            <td>{{ product.product.name }}</td>
+                            <td>x {{ product.amount }}</td>
+                            <td>${{ product.price }}</td>
+                            <td>${{ product.amount|multiply:product.price }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" style="text-align: right;"><b>TOTAL</b></td>
+                        <td><b>${{ inputs|total_sum }}</b></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+<div>

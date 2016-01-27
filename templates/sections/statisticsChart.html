@@ -1,0 +1,28 @@
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+    <div class="row">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+            <h3 class="panel-title">Revisar</h3>
+            </div>
+            <div class="panel-body">
+                <form class="form-inline" action="." method="GET">
+                  <div class="form-group">
+                    <label for="exampleInputName2">Año</label>
+                    <input type="number" class="form-control" name="year" value="{{ year }}" min="2000" max="2100">
+                  </div>
+                  <button type="submit" class="btn btn-default">Filtrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+    	<h2>Productos mas vendidos en el año</h2>
+    	<canvas id="productSalesChart" width="600" height="400"></canvas>
+    	<h2>Productos mas rentables del año</h2>
+    	<canvas id="productEarningsChart" width="600" height="400"></canvas>
+    </div>
+</div>
+<script type="text/javascript">
+    var ProductSalesData = {{ ProductSalesData|safe }};
+    var ProductEarningsData = {{ ProductEarningsData|safe }};
+</script>

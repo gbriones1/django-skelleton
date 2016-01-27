@@ -1,0 +1,133 @@
+<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="navbar-container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a target="_blank" href="/" class="navbar-brand">{{ APPNAME }}</a>
+        </div>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="dropdown {{ dashboard_active }}">
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Base de Datos
+                    <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li role="presentation" class="dropdown-header">Almacenes</li>
+                        <li><a href="/?storage=S">Propias</a></li>
+                        <li><a href="/?storage=C">Consignación</a></li>
+                        <li><a href="/?storage=U">Obsoletas</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Movimientos</li>
+                        <li><a href="/registry/">Todos</a></li>
+                        <li><a href="/inputs/">Entradas</a></li>
+                        <li><a href="/outputs/">Salidas</a></li>
+                        <li><a href="/lendings/">Prestamos</a></li>
+                        <li><a href="/shopping/">Pedidos</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Tablas</li>
+                        <li><a href="/">Refacciones</a></li>
+                        <li><a href="/tools/">Herramientas</a></li>
+                        <li><a href="/providers/">Proveedores</a></li>
+                        <li><a href="/brands/">Marcas</a></li>
+                        <li><a href="/appliances/">Aplicaciones</a></li>
+                        <li><a href="/percentages/">Porcentajes</a></li>
+                        <li><a href="/organizaciones/">Marcas</a></li>
+                    </ul>
+                </li>
+                <li class="{{ reports_active }}"><a href="/reports/">Reportes</a></li>
+            </ul>
+            {% if request.user.is_authenticated %}
+            <ul class="nav navbar-nav navbar-right">
+                {% if request.user.is_superuser %}
+                    <li class="{{ settings_active }}"><a href="/settings/">Configuracion</a></li>
+                    <li class="{{ accounts_active }}"><a href="/accounts/users/">Usuarios</a></li>
+                {% endif %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <span class="glyphicon glyphicon-user"></span> 
+                        <strong>{{ request.user }} <span class="glyphicon glyphicon-chevron-down"></span></strong>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <div class="navbar-login">
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <p class="text-center">
+                                            <span class="glyphicon glyphicon-user icon-size"></span>
+                                        </p>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <p class="text-left"><strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong></p>
+                                        <p class="text-left small">{{ request.user.email }}</p>
+                                        <p class="text-left">
+                                            <!-- <a href=""  data-toggle="modal" data-target="#update_userinfo" class="btn btn-primary btn-block btn-sm">Actualizar Datos</a> -->
+                                            <a href=""  data-toggle="modal" data-target="#update_userpass" class="btn btn-primary btn-block btn-sm">Cambiar Password</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <div class="navbar-login navbar-login-session">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <p>
+                                            <a href="/accounts/logout/" class="btn btn-danger btn-block">Cerrar Sesion</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="update_userinfo" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align">Actualizar usuario: {{ request.user.id }}</h4>
+    </div>
+    <form class="form-horizontal" action="" autocomplete="off" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="UPDATE">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="id_user_first_name" class="col-sm-2 control-label">Nombre</label>
+                <div class="col-sm-10"><input id="{{ id_user_first_name }}" name="first_name" value="{{ request.user.first_name }}"></div>
+            </div>
+            <input id="id_id" name="id" type="hidden" value="{{ request.user.id }}">
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-ok-sign"></span> Guardar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>
+<div class="modal fade" id="update_userpass" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+        <h4 class="modal-title custom_align">Actualizar password</h4>
+    </div>
+    <form class="form-horizontal" action="/accounts/password/" autocomplete="off" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="">
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="id_user_password" class="col-sm-2 control-label">Nuevo password</label>
+                <div class="col-sm-10"><input type="password" id="{{ id_user_password }}" name="password" value=""></div>
+            </div>
+            <input id="id_id" name="id" type="hidden" value="{{ request.user.id }}">
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-ok-sign"></span> Guardar</button>
+            <button type="button" class="btn btn-default btn-lg" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
+        </div>
+    </form>
+</div>

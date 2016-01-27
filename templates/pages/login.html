@@ -1,0 +1,42 @@
+{% extends "layouts/base.html" %}
+
+{% block page_title %}
+<title>Muelles Obrero</title>
+{% endblock %}
+
+
+{% block site_wrapper %}
+<div class="row main">
+	<div>
+	    <form class="onl_loginForm" action="" autocomplete="off" method="POST">
+	    	{% csrf_token %}
+			<h1>Welcome! </h1>
+
+			<div class="input-group">
+				<span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+				<input type="text" class="form-control" name="username" placeholder="Username">
+			</div>
+			<span class="help-block"></span>
+
+			<div class="input-group">
+				<span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
+				<input  type="password" class="form-control" name="password" placeholder="Password">
+			</div>
+            <span class="help-block"></span>
+
+			{% if next %}
+				<input type="hidden" name="next" value="{{ next }}" />
+			{% else %}
+				<input type="hidden" name="next" value="/" />
+			{% endif %}
+			<button class="btn btn-lg btn-primary btn-block" type="submit"><i class="fa fa-sign-in"></i> Sign in</button>
+			<p class="onl_forgotPwd">
+				<a href="#">Forgot your password?</a>
+			</p>
+		</form>
+	</div>
+</div>
+<!-- <div style="position: fixed;top: 20%;left: 50%;margin-top: -100px;margin-left: -100px;z-index: 10;">
+	<img src="/static/img/giphy.gif" width="100">
+</div> -->
+{% endblock %}
