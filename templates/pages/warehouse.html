@@ -4,7 +4,7 @@
 <title>{{ PAGE_TITLE }}</title>
 {% endblock %}
 
-{% block page_top %}
+{% block navbar %}
 {% include 'sections/navbar.html' %}
 {% endblock %}
 
@@ -19,32 +19,30 @@
 {% block site_wrapper %}
 <div class="col-lg-10 col-lg-offset-2 main">
     {% for content in contents %}
-        {{ content }}
+        {% if content.section == 'table' %}
+            {% include 'sections/tables.html' %}
+        {% elif content.section == 'modal' %}
+            {% include 'sections/modals.html' %}
+        {% else %}
+            {{ content.html|safe }}
+        {% endif %}
     {% endfor %}
 </div>
+{% endblock %}
+
+{% block footer %}
+<footer class="navbar-inverse navbar-fixed-bottom">
+	<p class="navbar-brand">© {{ YEAR }} - {{ APPNAME }}® Version {{ VERSION }}</p>
+</footer>
+{% endblock %}
+
+{% block modals %}
+{% include 'sections/modals.html' %}
 {% endblock %}
 
 {% block notifications %}
 {% include 'sections/notifications.html' %}
 {% endblock %}
 
-{% block popup %}
-<!-- <div class="popup"></div> -->
-
-<div class="modal fade" id="popup" tabindex="-1" aria-hidden="true" data-focus-on="input:first" style="display: none;">
-    <div class="modal-header">
-        <h4 class="modal-title title">Inconsistencia en el precio</h4>
-    </div>
-    <div class="modal-body">
-        <p class="content"></p>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-success ok" data-dismiss="modal"><span class="glyphicon glyphicon-ok-sign"></span> Aceptar</button>
-        <button type="button" class="btn btn-danger cancel" data-dismiss="modal"><span class="glyphicon glyphicon-remove"></span> Cancelar</button>
-    </div>
-</div>
-{% endblock %}
-
-{% block footer %}
-{% include 'sections/footer.html' %}
+{% block popups %}
 {% endblock %}

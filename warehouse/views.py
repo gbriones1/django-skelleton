@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from warehouse.models import Provider, Brand, Appliance, Product, Organization
 from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, OrganizationSerializer
 from mysite import configurations
+from mysite import graphics
 
 
 @login_required
@@ -17,11 +18,30 @@ def main(request, name):
     VERSION = configurations.VERSION
     PAGE_TITLE = configurations.PAGE_TITLE
     contents = []
+    scripts = ["tables"]
     if name == 'product':
-        contents = ["table"]
+        table = graphics.Table(
+            "table-product",
+            "Refacciones",
+            Product.get_fields(),
+            actions=graphics.Action.edit_and_delete(),
+            use_rest='/warehouse/api/product/'
+        )
+        contents = [table]
+    elif name == 'provider':
+        providers = ProviderSerializer(Provider.objects.all(), many=True).data
+        table = graphics.Table(
+            "table-providers",
+            "Provedores",
+            Provider.get_fields(),
+            actions=graphics.Action.edit_and_delete(),
+            buttons=graphics.Action.new_and_multidelete(),
+            rows=providers
+        )
+        contents = [table]
     else:
         raise Http404("Page does not exist")
-    return render_to_response('pages/warehouse.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('pages/warehouse.html', locals())
 
 @login_required
 def product(request):
