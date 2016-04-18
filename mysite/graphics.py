@@ -20,7 +20,7 @@ class HTMLButton(HTMLObject):
     def from_action(action):
         return HTMLButton('', icon=action.icon, style=action.style, toggle=action.action, target=action.name)
 
-    def __init__(self, name, icon='', text='', style='', size='', block=False, toggle='', target=''):
+    def __init__(self, name, icon='', text='', style='', size='', block=False, toggle='', target='', dismiss=''):
         super(HTMLButton, self).__init__('button', name)
         class_attr = ['btn']
         if style:
@@ -34,6 +34,8 @@ class HTMLButton(HTMLObject):
             self.root.set('data-toggle', toggle)
         if target:
             self.root.set('data-target', '#'+target)
+        if dismiss:
+            self.root.set('data-dismiss', dismiss)
         if icon:
             i = ET.Element('i')
             i.set('class', 'fa fa-'+icon)
@@ -67,7 +69,7 @@ class HTMLTable(HTMLObject):
             for action in actions:
                 th = ET.Element('th')
                 th.set("class", "table-action")
-                th.set("data-json", action.to_json_attr())
+                th.set("data-json", action.to_json())
                 th.text = Action.TITLES[action.name]
                 tr.append(th)
         header.append(tr)
@@ -117,6 +119,21 @@ class Table(Section):
         self.table = HTMLTable(name, columns, rows, actions, checkbox, use_rest)
         self.html = self.table.stringify()
         self.title = title
+
+class Modal(Section):
+
+    @staticmethod
+    def from_action(action):
+        return Modal(action.name, Action.TITLES[action.name], buttons=[HTMLButton("", text=Action.TITLES[action.name], style=action.style)])
+
+    def __init__(self, name, title, buttons=[], add_close_btn=True):
+        super(Modal, self).__init__("modal")
+        self.name = name
+        self.title = title
+        self.buttons = buttons
+        if add_close_btn:
+            self.buttons.append(HTMLButton("", text="Close", style="default", dismiss='modal'))
+
 
 
 class HelperObject(object):

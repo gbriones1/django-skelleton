@@ -1,7 +1,7 @@
-<div class="modal fade" id="{{ content.config.name }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
+<div class="modal fade" id="{{ content.name }}" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
     <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
-        <h4 class="modal-title custom_align" id="Heading">{{ content.config.title }}</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="fa fa-times" aria-hidden="true"></i></button>
+        <h4 class="modal-title custom_align" id="Heading">{{ content.title }}</h4>
     </div>
     <form class="form-horizontal" action="" autocomplete="off" method="POST" id="">
         {% csrf_token %}
@@ -10,7 +10,7 @@
         </div>
         <div class="modal-footer">
             {% for button in content.buttons %}
-                {{ button.html|safe }}
+                {{ button.stringify|safe }}
             {% endfor %}
         </div>
     </form>

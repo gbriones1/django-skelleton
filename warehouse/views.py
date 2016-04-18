@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from django.shortcuts import render_to_response
-from django.template import RequestContext
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from rest_framework import viewsets
@@ -20,14 +19,17 @@ def main(request, name):
     contents = []
     scripts = ["tables"]
     if name == 'product':
+        actions = graphics.Action.edit_and_delete()
         table = graphics.Table(
             "table-product",
             "Refacciones",
             Product.get_fields(),
-            actions=graphics.Action.edit_and_delete(),
+            actions=actions,
             use_rest='/warehouse/api/product/'
         )
         contents = [table]
+        for action in actions:
+            contents.append(graphics.Modal.from_action(action))
     elif name == 'provider':
         providers = ProviderSerializer(Provider.objects.all(), many=True).data
         table = graphics.Table(
@@ -47,7 +49,7 @@ def main(request, name):
 def product(request):
     # products = ProductViewSet.as_view({'get': 'list'})(request).data
     products = ProductSerializer(Product.objects.all(), many=True).data
-    return render_to_response('pages/dashboard.html', locals(), context_instance=RequestContext(request))
+    return render_to_response('pages/dashboard.html', locals())
 
 class ProviderViewSet(viewsets.ModelViewSet):
     queryset = Provider.objects.all()
