@@ -91,6 +91,7 @@ class HTMLTable(HTMLObject):
                     td = ET.Element('td')
                     td.text = row[column[0]]
                     tr.append(td)
+                    tr.set("data-"+row[column[1]], row[column[0]])
                 if actions:
                     for action in actions:
                         td = ET.Element('td')
@@ -119,21 +120,37 @@ class Table(Section):
         self.table = HTMLTable(name, columns, rows, actions, checkbox, use_rest)
         self.html = self.table.stringify()
         self.title = title
+        self.buttons = buttons
+        for button in self.buttons:
+            button.root.set("class", button.root.get('class')+" btn-lg btn-block")
 
 class Modal(Section):
 
     @staticmethod
-    def from_action(action):
-        return Modal(action.name, Action.TITLES[action.name], buttons=[HTMLButton("", text=Action.TITLES[action.name], style=action.style)])
+    def from_action(action, body=[]):
+        return Modal(action.name, Action.TITLES[action.name], buttons=[HTMLButton("", text=Action.TITLES[action.name], style=action.style)], body=body)
 
-    def __init__(self, name, title, buttons=[], add_close_btn=True):
+    def __init__(self, name, title, buttons=[], add_close_btn=True, body=[]):
         super(Modal, self).__init__("modal")
         self.name = name
         self.title = title
         self.buttons = buttons
+        self.body = []
+        for item in body:
+            self.body.append(ModalBodyItem(item))
         if add_close_btn:
             self.buttons.append(HTMLButton("", text="Close", style="default", dismiss='modal'))
 
+    def add_form(self, form):
+        self.body.append(ModalBodyItem(form))
+
+class ModalBodyItem(Section):
+
+    def __init__(self, item):
+        super(ModalBodyItem, self).__init__("modal-body-item")
+        self.type = item.__class__.__base__.__name__
+        self.name = item.__class__.__name__
+        self.obj = item
 
 
 class HelperObject(object):

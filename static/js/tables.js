@@ -17,6 +17,9 @@ function build_table(table, data, actions, selectable) {
                 }
             }
         }
+        $.each(data[index], function( key, value ) {
+            tr.attr("data-"+key, value);
+        });
         body.append(tr);
     }
     build_data_table(table)
@@ -47,15 +50,31 @@ function build_data_table(table) {
             }],
         "aaSorting": [[sorting,'asc']]
     });
-    console.log(dt)
 }
 
 
 $('table.use-rest').each(function () {
     var table = $(this);
     $('.loading').show()
-    $.get( window.location.origin + table.data().rest, function( data ) {
-        build_table(table, data)
+    if (!sessionStorage.getItem(table.attr("id"))){
+        $.get( window.location.origin + table.data().rest, function( data ) {
+            sessionStorage.setItem(table.attr("id"), JSON.stringify(data))
+            build_table(table, data)
+            $('.loading').hide()
+        });
+    }
+    else{
+        build_table(table, JSON.parse(sessionStorage.getItem(table.attr("id"))))
         $('.loading').hide()
-    });
+    }
+});
+
+$(document).on('click', 'button[data-target="#edit"]', function () {
+    console.log("Editing")
+    var data = $(this).closest('tr').data()
+    var editform = $("#edit form");
+    editform[0].reset();
+    for (key in data){
+        editform.find('input[name="'+ key +'"]').val(data[key]);
+    }
 });

@@ -11,6 +11,7 @@ class BrandSerializer(serializers.ModelSerializer):
 class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
+
 class ProductSerializer(serializers.ModelSerializer):
     provider = serializers.StringRelatedField()
     brand = serializers.StringRelatedField()
