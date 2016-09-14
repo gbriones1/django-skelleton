@@ -1,0 +1,5 @@
+<div style="display: none;" class="global-messages">
+	{% for msg in global_messages %}
+	<div data-action="{{ msg.action }}" data-parameter="{{ msg.parameter }}"></div>
+	{% endfor %}
+</div>

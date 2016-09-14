@@ -1,17 +1,18 @@
-from django.shortcuts import render
-from django.shortcuts import render_to_response
+from django.shortcuts import render, render_to_response
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext
+from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework.response import Response
+
+import time
+
 from warehouse.models import Provider, Brand, Appliance, Product, Organization
 from warehouse.forms import NewProductForm, EditProductForm
 from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, OrganizationSerializer
-from mysite import configurations
-from mysite import graphics
-from mysite.extensions import NotificationHandler
-
+from mysite import configurations, graphics
+from mysite.extensions import Notification, Message
 
 @login_required
 def main(request, name):
@@ -20,12 +21,29 @@ def main(request, name):
     VERSION = configurations.VERSION
     PAGE_TITLE = configurations.PAGE_TITLE
     contents = []
+    notifications = []
+    global_messages = []
     scripts = ["tables"]
     if name == 'product':
+        if request.method == 'POST':
+            pvs = ProductViewSet.as_view({'post': 'create'})(request)
+            if pvs.status_code/100 != 2:
+                notifications.append(Notification(message=str(pvs.data), level="danger"))
+            else:
+                cache.set('product-table-update', int(time.time()*1000))
+                return HttpResponseRedirect(request.get_full_path())
+        if request.method == 'PUT':
+            pvs = ProductViewSet.as_view({'put': 'update'})(request)
+            cache.get_or_set('product-table-update', int(time.time()*1000))
+            return HttpResponseRedirect(request.get_full_path())
+        if request.method == 'DELETE':
+            pvs = ProductViewSet.as_view({'delete': 'destroy'})(request)
+            cache.get_or_set('product-table-update', int(time.time()*1000))
+            return HttpResponseRedirect(request.get_full_path())
         actions = graphics.Action.edit_and_delete()
         buttons = graphics.Action.new_and_multidelete()
         table = graphics.Table(
-            "table-product",
+            "product-table",
             "Refacciones",
             Product.get_fields(),
             actions=actions,
@@ -40,7 +58,12 @@ def main(request, name):
             elif action.name == "edit":
                 content = EditProductForm()
             modal = graphics.Modal.from_action(action, [content])
+            import pdb; pdb.set_trace()
             contents.append(modal)
+        global_messages.append(Message(
+            action='product-table-update',
+            parameter=cache.get_or_set('product-table-update', int(time.time()*1000))
+        ))
     elif name == 'provider':
         providers = ProviderSerializer(Provider.objects.all(), many=True).data
         actions = graphics.Action.edit_and_delete()
@@ -106,3 +129,17 @@ class ProductViewSet(viewsets.ModelViewSet):
 class OrganizationViewSet(viewsets.ModelViewSet):
     queryset = Organization.objects.all()
     serializer_class = OrganizationSerializer
+
+object_map = {
+    'product': {
+        'name': 'Refacciones',
+        'api_path': '/warehouse/api/product',
+        'use_cache': True,
+        'model': Product,
+        'viewset': ProductViewSet,
+        'action_forms': {
+            'new': NewProductForm,
+            'edit': EditProductForm,
+        }
+    }
+}

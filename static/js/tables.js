@@ -55,16 +55,29 @@ function build_data_table(table) {
 
 $('table.use-rest').each(function () {
     var table = $(this);
+    var name = table.attr("id");
     $('.loading').show()
-    if (!sessionStorage.getItem(table.attr("id"))){
+    if (name + "-update" in messages){
+        var oldupdate = sessionStorage.getItem(name + "-update")
+        if (oldupdate && (oldupdate < messages[name + "-update"])) {
+            sessionStorage.removeItem(name)
+        }
+        sessionStorage.setItem(name + "-update", messages[name + "-update"]);
+    }
+    else{
+        sessionStorage.setItem(name + "-update", new Date().getTime()+"");
+    }
+    if (!sessionStorage.getItem(name)){
         $.get( window.location.origin + table.data().rest, function( data ) {
-            sessionStorage.setItem(table.attr("id"), JSON.stringify(data))
+            sessionStorage.setItem(name, JSON.stringify(data));
             build_table(table, data)
             $('.loading').hide()
         });
+        console.log("fetched");
     }
     else{
-        build_table(table, JSON.parse(sessionStorage.getItem(table.attr("id"))))
+        console.log("cached");
+        build_table(table, JSON.parse(sessionStorage.getItem(name)))
         $('.loading').hide()
     }
 });

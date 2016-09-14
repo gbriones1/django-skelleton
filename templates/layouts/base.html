@@ -35,10 +35,10 @@
         {% endblock %}
         {% block modals %}
         {% endblock %}
-        {% block notifications %}
-        {% endblock %}
+        {% include 'sections/notifications.html' %}
         {% block popup %}
         {% endblock %}
+        {% include 'sections/globalMessages.html' %}
         <div class="loading">
         	<div style="float: left;padding-left: 20px;"><strong><h1 style="margin-top: 10px;">LOADING </h1></strong></div><img style="height: 50px;width: 50px;" src="/static/img/loading.gif" width="100">
         </div>

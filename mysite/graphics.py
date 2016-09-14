@@ -70,7 +70,7 @@ class HTMLTable(HTMLObject):
                 th = ET.Element('th')
                 th.set("class", "table-action")
                 th.set("data-json", action.to_json())
-                th.text = Action.TITLES[action.name]
+                th.text = action.text
                 tr.append(th)
         header.append(tr)
         self.root.append(header)
@@ -99,7 +99,7 @@ class HTMLTable(HTMLObject):
                         p = ET.Element('p')
                         p.set('data-pacement', "top")
                         p.set('data-toggle', 'tooltip')
-                        p.set('title', Action.TITLES[action.name])
+                        p.set('title', action.text)
                         button = HTMLButton.from_action(action)
                         p.append(button.root)
                         td.append(p)
@@ -128,13 +128,15 @@ class Modal(Section):
 
     @staticmethod
     def from_action(action, body=[]):
-        return Modal(action.name, Action.TITLES[action.name], buttons=[HTMLButton("", text=Action.TITLES[action.name], style=action.style)], body=body)
+        return Modal(action.name, action.text, buttons=[HTMLButton.from_action(action)], body=body, form_method=action.method)
 
-    def __init__(self, name, title, buttons=[], add_close_btn=True, body=[]):
+    def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method=''):
         super(Modal, self).__init__("modal")
         self.name = name
         self.title = title
         self.buttons = buttons
+        self.form_action = form_action
+        self.form_method = form_method
         self.body = []
         for item in body:
             self.body.append(ModalBodyItem(item))
@@ -174,22 +176,36 @@ class HelperObject(object):
 
 class Action(HelperObject):
 
-    CRUD_ACTIONS = {
-        'edit':('pencil', 'success'),
-        'delete':('trash', 'danger'),
-        'multi-delete':('trash', 'danger'),
-        'new':('plus-square', 'primary'),
-    }
-    TITLES = {
-        'edit':'Editar',
-        'delete':'Eliminar',
-        'multi-delete':'Eliminar',
-        'new':'Crear',
+    MAP = {
+        'edit':{
+            "title": 'Editar',
+            "icon": 'pencil',
+            "level": 'success',
+            "method": 'PUT'
+        },
+        'delete':{
+            "title":'Eliminar',
+            "icon": 'trash',
+            "level": 'danger',
+            "method": 'DELETE'
+        },
+        'multi-delete':{
+            "title":'Eliminar',
+            "icon": 'trash',
+            "level": 'danger',
+            "method": 'DELETE'
+        },
+        'new':{
+            "title":'Crear',
+            "icon": 'plus-square',
+            "level": 'primary',
+            "method": 'POST'
+        },
     }
 
     @staticmethod
     def crud_button(name):
-        return Action(name, 'modal', icon=Action.CRUD_ACTIONS[name][0], style=Action.CRUD_ACTIONS[name][1])
+        return Action(name, 'modal', icon=Action.MAP[name]["icon"], style=Action.MAP[name]["level"], method=Action.MAP[name]["method"])
 
     @staticmethod
     def edit_and_delete():
@@ -199,9 +215,10 @@ class Action(HelperObject):
     def new_and_multidelete():
         return [Action.crud_button('new'), Action.crud_button('multi-delete')]
 
-    def __init__(self, name, action, text='', icon='', style=''):
+    def __init__(self, name, action, text='', icon='', style='', method=''):
         self.name = name
         self.action = action
         self.text = text
         self.icon = icon
         self.style = style
+        self.method = method

@@ -66,6 +66,11 @@ $('.messages').children().each(function () {
     showNotification($(this).attr("data-message"), $(this).attr("data-level"));
 });
 
+var messages = {};
+$('.global-messages').children().each(function () {
+    messages[$(this).attr("data-action")] = $(this).attr("data-parameter");
+});
+
 
 $('#update_userpass form').submit(function (argument) {
     $('input[name="next"]').val(location.pathname);

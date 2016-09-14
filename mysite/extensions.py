@@ -1,20 +1,18 @@
 class Notification(object):
-    def __init__(self, name, message):
+    def __init__(self, name="", message="", level="info"):
         self.name = name
         self.message = message
+        self.level = level
 
-class NotificationHandler(object):
+class Message(object):
 
-    QUEUE = []
-
-    @staticmethod
-    def add_notification(name, message):
-        NotificationHandler.QUEUE.append(Notification(name, message))
+    CLEAR_TABLE_MODEL = "cleartablemodel"
 
     @staticmethod
-    def remove_notification(name):
-        new_queue = []
-        for n in NotificationHandler.QUEUE:
-            if n.name != name:
-                new_queue.append(n)
-        NotificationHandler.QUEUE = new_queue
+    def new_message(request, action, parameter):
+        msg = SessionMessage(action, parameter)
+        return msg
+
+    def __init__(self, action, parameter):
+        self.action = action
+        self.parameter = parameter
