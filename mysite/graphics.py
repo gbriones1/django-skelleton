@@ -20,7 +20,11 @@ class HTMLButton(HTMLObject):
     def from_action(action):
         return HTMLButton('', icon=action.icon, style=action.style, toggle=action.action, target=action.name)
 
-    def __init__(self, name, icon='', text='', style='', size='', block=False, toggle='', target='', dismiss=''):
+    @staticmethod
+    def from_action_text(action):
+        return HTMLButton('', text=action.text, style=action.style, btn_type='submit')
+
+    def __init__(self, name, icon='', text='', style='', size='', block=False, btn_type='', toggle='', target='', dismiss=''):
         super(HTMLButton, self).__init__('button', name)
         class_attr = ['btn']
         if style:
@@ -30,6 +34,8 @@ class HTMLButton(HTMLObject):
         if block:
             class_attr.append("btn-block")
         self.root.set("class", " ".join(class_attr))
+        if btn_type:
+            self.root.set('type', btn_type)
         if toggle:
             self.root.set('data-toggle', toggle)
         if target:
@@ -45,12 +51,14 @@ class HTMLButton(HTMLObject):
 
 class HTMLTable(HTMLObject):
 
-    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, use_rest=None):
+    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, filters=True, use_rest=None):
         super(HTMLTable, self).__init__('table', name)
         self.root.set("class", "table table-bordred table-striped table-hover")
         header = ET.Element('thead')
+        footer = ET.Element('tfoot')
         body = ET.Element('tbody')
         tr = ET.Element('tr')
+        tr_foot = ET.Element('tr')
         tr.set("class", "headers")
         if checkbox:
             self.root.set("data-selectable", "true")
@@ -60,11 +68,13 @@ class HTMLTable(HTMLObject):
             chk.set("id", "checkall")
             th.append(chk)
             tr.append(th)
+            tr_foot.append(ET.Element('th'))
         for column in columns:
             th = ET.Element('th')
             th.text = column[1]
             th.set("data-name", column[0])
             tr.append(th)
+            tr_foot.append(th)
         if actions:
             for action in actions:
                 th = ET.Element('th')
@@ -72,8 +82,12 @@ class HTMLTable(HTMLObject):
                 th.set("data-json", action.to_json())
                 th.text = action.text
                 tr.append(th)
+                tr_foot.append(ET.Element('th'))
         header.append(tr)
         self.root.append(header)
+        if filters:
+            footer.append(tr_foot)
+            self.root.append(footer)
         if use_rest:
             self.root.set("data-rest", use_rest)
             self.root.set("class", self.root.get('class')+" use-rest")
@@ -115,9 +129,9 @@ class Section(object):
 
 class Table(Section):
 
-    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, buttons=[], use_rest=None):
+    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None):
         super(Table, self).__init__("table")
-        self.table = HTMLTable(name, columns, rows, actions, checkbox, use_rest)
+        self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest)
         self.html = self.table.stringify()
         self.title = title
         self.buttons = buttons
@@ -128,7 +142,7 @@ class Modal(Section):
 
     @staticmethod
     def from_action(action, body=[]):
-        return Modal(action.name, action.text, buttons=[HTMLButton.from_action(action)], body=body, form_method=action.method)
+        return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method)
 
     def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method=''):
         super(Modal, self).__init__("modal")
@@ -181,19 +195,19 @@ class Action(HelperObject):
             "title": 'Editar',
             "icon": 'pencil',
             "level": 'success',
-            "method": 'PUT'
+            "method": 'POST'
         },
         'delete':{
             "title":'Eliminar',
             "icon": 'trash',
             "level": 'danger',
-            "method": 'DELETE'
+            "method": 'POST'
         },
         'multi-delete':{
             "title":'Eliminar',
             "icon": 'trash',
             "level": 'danger',
-            "method": 'DELETE'
+            "method": 'POST'
         },
         'new':{
             "title":'Crear',
@@ -205,7 +219,7 @@ class Action(HelperObject):
 
     @staticmethod
     def crud_button(name):
-        return Action(name, 'modal', icon=Action.MAP[name]["icon"], style=Action.MAP[name]["level"], method=Action.MAP[name]["method"])
+        return Action(name, 'modal', text=Action.MAP[name]["title"], icon=Action.MAP[name]["icon"], style=Action.MAP[name]["level"], method=Action.MAP[name]["method"])
 
     @staticmethod
     def edit_and_delete():

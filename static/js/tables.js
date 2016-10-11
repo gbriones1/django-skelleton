@@ -22,6 +22,15 @@ function build_table(table, data, actions, selectable) {
         });
         body.append(tr);
     }
+    $(table.find('tfoot th')).each( function () {
+        var title = $(this).text();
+        var width = $(this).width();
+        if (title){
+            $(this).html( '<input class="form-control" type="text" placeholder="Search '+title+'" style="width: 100%" />' );
+            $(this).css('padding-left', '0px')
+            $(this).css('padding-right', '0px')
+        }
+    } );
     build_data_table(table)
 }
 
@@ -49,6 +58,14 @@ function build_data_table(table) {
             'aTargets' : unsortable
             }],
         "aaSorting": [[sorting,'asc']]
+    });
+    dt.columns().every( function () {
+        var that = this;
+        $('input', this.footer()).on('keyup change', function () {
+            if (that.search() !== this.value) {
+                that.search(this.value).draw();
+            }
+        });
     });
 }
 
@@ -83,11 +100,17 @@ $('table.use-rest').each(function () {
 });
 
 $(document).on('click', 'button[data-target="#edit"]', function () {
-    console.log("Editing")
     var data = $(this).closest('tr').data()
     var editform = $("#edit form");
     editform[0].reset();
     for (key in data){
         editform.find('input[name="'+ key +'"]').val(data[key]);
     }
+});
+
+$(document).on('click', 'button[data-target="#delete"]', function () {
+    var data = $(this).closest('tr').data()
+    var deleteform = $("#delete form");
+    deleteform[0].reset();
+    deleteform.find('input[name="id"]').val(data['id']);
 });

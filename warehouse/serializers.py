@@ -1,4 +1,4 @@
-from warehouse.models import Provider, Brand, Appliance, Product, Organization, Storage_Product
+from warehouse.models import Provider, Brand, Appliance, Product, Organization, Input, Output, Lending, Order
 from rest_framework import serializers
 
 
@@ -28,6 +28,18 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
 
-class StorageProductSerializer(serializers.ModelSerializer):
+class InputSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Storage_Product
+        model = Input
+
+class OutputSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Output
+
+class LendingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lending
+
+class OrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order

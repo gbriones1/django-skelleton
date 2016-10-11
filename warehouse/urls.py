@@ -8,6 +8,10 @@ router.register(r'brand', views.BrandViewSet)
 router.register(r'appliance', views.ApplianceViewSet)
 router.register(r'product', views.ProductViewSet)
 router.register(r'organization', views.OrganizationViewSet)
+router.register(r'input', views.InputViewSet)
+router.register(r'output', views.OutputViewSet)
+router.register(r'lending', views.LendingViewSet)
+router.register(r'order', views.OrderViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
