@@ -2,10 +2,12 @@ from __future__ import unicode_literals
 
 from django.db import models
 
+VALID_FIELDS = ['Field', 'CharField']
+
 def get_fields(cls):
     fields = []
     for field in cls._meta.fields:
-        if field.__class__.__base__.__name__ == 'Field' and field.__class__.__name__ != 'AutoField':
+        if field.__class__.__base__.__name__ in VALID_FIELDS and field.__class__.__name__ != 'AutoField':
             fields.append((field.name, field.formfield().label, field.__class__.__name__))
         elif field.__class__.__name__ == 'ForeignKey':
             fields.append((field.name, field.target_field.model.__name__, field.__class__.__name__))

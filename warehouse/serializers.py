@@ -13,9 +13,9 @@ class ApplianceSerializer(serializers.ModelSerializer):
         model = Appliance
 
 class ProductSerializer(serializers.ModelSerializer):
-    provider = serializers.StringRelatedField()
-    brand = serializers.StringRelatedField()
-    appliance = serializers.StringRelatedField()
+    provider = serializers.SlugRelatedField(slug_field='name', queryset=Provider.objects.all(), allow_null=True)
+    brand = serializers.SlugRelatedField(slug_field='name', queryset=Brand.objects.all(), allow_null=True)
+    appliance = serializers.SlugRelatedField(slug_field='name', queryset=Appliance.objects.all(), allow_null=True)
     class Meta:
         model = Product
 

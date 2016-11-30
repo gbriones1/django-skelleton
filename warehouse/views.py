@@ -45,10 +45,13 @@ def main(request, name):
             elif action == 'delete':
                 request.method = 'DELETE'
                 vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+            elif action == 'multi-delete':
+                request.method = 'DELETE'
+                vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
             if vs.status_code/100 != 2:
                 notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
-                cache.get_or_set('product-table-update', int(time.time()*1000))
+                cache.set('product-table-update', int(time.time()*1000))
                 return HttpResponseRedirect(request.get_full_path())
         actions = graphics.Action.edit_and_delete()
         buttons = graphics.Action.new_and_multidelete()
@@ -75,21 +78,21 @@ def main(request, name):
             action='product-table-update',
             parameter=cache.get_or_set('product-table-update', int(time.time()*1000))
         ))
-    elif name == 'provider':
-        providers = ProviderSerializer(Provider.objects.all(), many=True).data
-        actions = graphics.Action.edit_and_delete()
-        buttons = graphics.Action.new_and_multidelete()
-        table = graphics.Table(
-            "table-providers",
-            "Provedores",
-            Provider.get_fields(),
-            actions=actions,
-            buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
-            rows=providers
-        )
-        contents = [table]
-        for action in actions+buttons:
-            contents.append(graphics.Modal.from_action(action))
+    # elif name == 'provider':
+    #     providers = ProviderSerializer(Provider.objects.all(), many=True).data
+    #     actions = graphics.Action.edit_and_delete()
+    #     buttons = graphics.Action.new_and_multidelete()
+    #     table = graphics.Table(
+    #         "table-providers",
+    #         "Provedores",
+    #         Provider.get_fields(),
+    #         actions=actions,
+    #         buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
+    #         rows=providers
+    #     )
+    #     contents = [table]
+    #     for action in actions+buttons:
+    #         contents.append(graphics.Modal.from_action(action))
     elif name in object_map.keys():
         if request.method == 'POST':
             action = request.POST.get('action')
@@ -104,7 +107,7 @@ def main(request, name):
             if vs.status_code/100 != 2:
                 notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
-                cache.get_or_set(name+'-table-update', int(time.time()*1000))
+                cache.set(name+'-table-update', int(time.time()*1000))
                 return HttpResponseRedirect(request.get_full_path())
         actions = graphics.Action.edit_and_delete()
         buttons = graphics.Action.new_and_multidelete()
@@ -120,7 +123,7 @@ def main(request, name):
         for action in actions+buttons:
             content = None
             if action.name in object_map[name]['action_forms'].keys():
-                content = object_map[name]['action_forms'][action.name]
+                content = object_map[name]['action_forms'][action.name]()
             modal = graphics.Modal.from_action(action, [content])
             contents.append(modal)
         global_messages.append(Message(
@@ -140,38 +143,47 @@ def product(request):
 
 class APIWrapper(viewsets.ModelViewSet):
 
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        # import pdb; pdb.set_trace()
+        # obj = get_object_by('viewset', self.__class__)
+        # resolve_foreign_fields(request.POST, obj['model'].get_fields())
+        return super(APIWrapper, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        return super(ProductViewSet, self).update(request, *args, **kwargs)
+        return super(APIWrapper, self).update(request, *args, **kwargs)
 
 
 class ProviderViewSet(viewsets.ModelViewSet):
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
+    ordering = ('name',)
 
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
+    ordering = ('name',)
 
 class ApplianceViewSet(viewsets.ModelViewSet):
     queryset = Appliance.objects.all()
     serializer_class = ApplianceSerializer
+    ordering = ('name',)
 
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(APIWrapper):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
-    def update(self, request, *args, **kwargs):
-        return super(ProductViewSet, self).update(request, *args, **kwargs)
-
-    def partial_update(self, request, *args, **kwargs):
-        return super(ProductViewSet, self).partial_update(request, *args, **kwargs)
+    # def update(self, request, *args, **kwargs):
+    #     return super(ProductViewSet, self).update(request, *args, **kwargs)
+    #
+    # def partial_update(self, request, *args, **kwargs):
+    #     return super(ProductViewSet, self).partial_update(request, *args, **kwargs)
 
 
 class OrganizationViewSet(viewsets.ModelViewSet):
@@ -193,6 +205,18 @@ class LendingViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+
+def get_object_by(attrib, match):
+    for name, value in object_map.items():
+        if object_map[name].get(attrib, None) == match:
+            return object_map[name]
+    return None
+
+def resolve_foreign_fields(data, fields):
+    data._mutable = True
+    for field in fields:
+        if field[2] == 'ForeignKey':
+            data[field[0]] = str(object_map[field[0]]['model'].objects.filter(name=data[field[0]])[0].pk)
 
 object_map = {
     'product': {

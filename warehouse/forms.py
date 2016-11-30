@@ -76,6 +76,7 @@ class EditProductForm(forms.ModelForm):
     appliance = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -101,6 +102,8 @@ class DeleteProductForm(forms.ModelForm):
 
 
 class NewProviderForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    email = forms.EmailField(max_length=255, label='Email', required=False)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -109,6 +112,9 @@ class NewProviderForm(forms.ModelForm):
 
 
 class EditProviderForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    email = forms.EmailField(max_length=255, label='Email', required=False)
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -125,6 +131,7 @@ class DeleteProviderForm(forms.ModelForm):
         fields = ["id"]
 
 class NewBrandForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
 
     class Meta:
@@ -133,6 +140,8 @@ class NewBrandForm(forms.ModelForm):
 
 
 class EditBrandForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -149,6 +158,7 @@ class DeleteBrandForm(forms.ModelForm):
         fields = ["id"]
 
 class NewApplianceForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
 
     class Meta:
@@ -157,6 +167,8 @@ class NewApplianceForm(forms.ModelForm):
 
 
 class EditApplianceForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -173,6 +185,7 @@ class DeleteApplianceForm(forms.ModelForm):
         fields = ["id"]
 
 class NewOrganizationForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
 
     class Meta:
@@ -181,6 +194,8 @@ class NewOrganizationForm(forms.ModelForm):
 
 
 class EditOrganizationForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -205,6 +220,7 @@ class NewInputForm(forms.ModelForm):
 
 
 class EditInputForm(forms.ModelForm):
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -229,6 +245,7 @@ class NewOutputForm(forms.ModelForm):
 
 
 class EditOutputForm(forms.ModelForm):
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -253,6 +270,7 @@ class NewLendingForm(forms.ModelForm):
 
 
 class EditLendingForm(forms.ModelForm):
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -277,6 +295,7 @@ class NewOrderForm(forms.ModelForm):
 
 
 class EditOrderForm(forms.ModelForm):
+    id = HiddenField()
     action = HiddenField(initial='edit')
 
     class Meta:
