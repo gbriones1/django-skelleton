@@ -236,3 +236,11 @@ class Action(HelperObject):
         self.icon = icon
         self.style = style
         self.method = method
+
+MultiDeleteInput = HTMLObject('input')
+MultiDeleteInput.root.set('type', 'hidden')
+MultiDeleteInput.root.set('name', 'ids')
+MultiDeleteAction = HTMLObject('input')
+MultiDeleteAction.root.set('type', 'hidden')
+MultiDeleteAction.root.set('name', 'action')
+MultiDeleteAction.root.set('value', 'multi-delete')

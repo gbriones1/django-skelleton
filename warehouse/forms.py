@@ -6,7 +6,7 @@ from django.utils.html import conditional_escape, format_html
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 
-from warehouse.models import Product, Brand, Provider, Appliance, Organization, Input, Output, Lending, Order
+from warehouse.models import Product, Brand, Provider, Appliance, Percentage, Organization, Input, Output, Lending, Order
 
 class Datalist(forms.widgets.Select):
     def render(self, name, value, attrs=None, choices=()):
@@ -182,6 +182,39 @@ class DeleteApplianceForm(forms.ModelForm):
 
     class Meta:
         model = Appliance
+        fields = ["id"]
+
+class NewPercentageForm(forms.ModelForm):
+    max_price_limit = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio maximo', required=True, min_value=0, initial=0)
+    percentage_1 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 1', required=True, min_value=0, initial=0)
+    percentage_2 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 2', required=True, min_value=0, initial=0)
+    percentage_3 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 3', required=True, min_value=0, initial=0)
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Percentage
+        fields = '__all__'
+
+
+class EditPercentageForm(forms.ModelForm):
+    max_price_limit = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio maximo', required=True, min_value=0, initial=0)
+    percentage_1 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 1', required=True, min_value=0, initial=0)
+    percentage_2 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 2', required=True, min_value=0, initial=0)
+    percentage_3 = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento 3', required=True, min_value=0, initial=0)
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Percentage
+        fields = '__all__'
+
+
+class DeletePercentageForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Percentage
         fields = ["id"]
 
 class NewOrganizationForm(forms.ModelForm):

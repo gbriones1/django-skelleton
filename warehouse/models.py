@@ -25,6 +25,9 @@ class Appliance(models.Model):
         products = Product.objects.filter(appliance=self)
         return len(products)
 
+    class Meta:
+        ordering = ['name']
+
 class Provider(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField(blank=True, null=True)
@@ -36,6 +39,9 @@ class Provider(models.Model):
         products = Product.objects.filter(provider=self)
         return len(products)
 
+    class Meta:
+        ordering = ['name']
+
 class Brand(models.Model):
     name = models.CharField(max_length=100)
 
@@ -45,6 +51,9 @@ class Brand(models.Model):
     def products_related(self):
         products = Product.objects.filter(brand=self)
         return len(products)
+
+    class Meta:
+        ordering = ['name']
 
 class Tool(models.Model):
     code = models.CharField(max_length=30, unique=True)
@@ -71,17 +80,26 @@ class Product(models.Model):
     def __unicode__(self):
         return self.code+" - "+self.name+" - "+self.description
 
+    class Meta:
+        ordering = ['code']
+
 class Organization(models.Model):
     name = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        ordering = ['name']
+
 class StorageType(models.Model):
     name = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.name
+    
+    class Meta:
+        ordering = ['name']
 
 class Organization_Storage(models.Model):
     organization = models.ForeignKey(Organization)

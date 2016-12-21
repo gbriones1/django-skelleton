@@ -31,6 +31,7 @@ function build_table(table, data, actions, selectable) {
             $(this).css('padding-right', '0px')
         }
     } );
+    // table.find('tfoot tr').appendTo('#'+table.attr("id")+' thead')
     build_data_table(table)
 }
 
@@ -48,7 +49,7 @@ function build_data_table(table) {
         }
     }
     var dt = table.DataTable({
-        "sScrollY": ($(window).height()-320)+"px",
+        "sScrollY": ($(window).height()-370)+"px",
         "sScrollX": "100%",
         "bScrollCollapse": true,
         "lengthMenu": [[50, 100, -1], [50, 100, "All"]],
@@ -59,6 +60,7 @@ function build_data_table(table) {
             }],
         "aaSorting": [[sorting,'asc']]
     });
+    // table.closest('.dataTables_scroll').find('.dataTables_scrollFoot table').appendTo('.dataTables_scrollHeadInner')
     dt.columns().every( function () {
         var that = this;
         $('input', this.footer()).on('keyup change', function () {
@@ -113,4 +115,16 @@ $(document).on('click', 'button[data-target="#delete"]', function () {
     var deleteform = $("#delete form");
     deleteform[0].reset();
     deleteform.find('input[name="id"]').val(data['id']);
+});
+
+$(document).on('click', 'button[data-target="#multi-delete"]', function () {
+    var data = []
+    $('input.checkthis').each(function() {
+        if(this.checked){
+            data.push($(this).closest('tr').data('id'));
+        }
+    });
+    var deleteform = $("#multi-delete form");
+    deleteform[0].reset();
+    deleteform.find('input[name="ids"]').val(JSON.stringify(data));
 });

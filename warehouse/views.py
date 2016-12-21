@@ -7,20 +7,22 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 
 import time
+import json
 
-from warehouse.models import Provider, Brand, Appliance, Product, Organization, Input, Output, Lending, Order
+from warehouse.models import Provider, Brand, Appliance, Product, Percentage, Organization, Input, Output, Lending, Order
 from warehouse.forms import (
     NewProductForm, EditProductForm, DeleteProductForm,
     NewProviderForm, EditProviderForm, DeleteProviderForm,
     NewBrandForm, EditBrandForm, DeleteBrandForm,
     NewApplianceForm, EditApplianceForm, DeleteApplianceForm,
+    NewPercentageForm, EditPercentageForm, DeletePercentageForm,
     NewOrganizationForm, EditOrganizationForm, DeleteOrganizationForm,
     NewInputForm, EditInputForm, DeleteInputForm,
     NewOutputForm, EditOutputForm, DeleteOutputForm,
     NewLendingForm, EditLendingForm, DeleteLendingForm,
     NewOrderForm, EditOrderForm, DeleteOrderForm
 )
-from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, OrganizationSerializer, InputSerializer, OutputSerializer, LendingSerializer, OrderSerializer
+from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, PercentageSerializer, OrganizationSerializer, InputSerializer, OutputSerializer, LendingSerializer, OrderSerializer
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
 
@@ -47,8 +49,10 @@ def main(request, name):
                 vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
             elif action == 'multi-delete':
                 request.method = 'DELETE'
-                vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-            if vs.status_code/100 != 2:
+                ids = json.loads(request.POST.get('ids', '[]'))
+                for pk in ids:
+                    vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+            if vs and vs.status_code/100 != 2:
                 notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
                 cache.set('product-table-update', int(time.time()*1000))
@@ -65,14 +69,16 @@ def main(request, name):
         )
         contents = [table]
         for action in actions+buttons:
-            content = None
+            body = []
             if action.name == "new":
-                content = NewProductForm()
+                body = [NewProductForm()]
             elif action.name == "edit":
-                content = EditProductForm()
+                body = [EditProductForm()]
             elif action.name == 'delete':
-                content = DeleteProductForm()
-            modal = graphics.Modal.from_action(action, [content])
+                body = [DeleteProductForm()]
+            elif action.name == 'multi-delete':
+                body = [graphics.MultiDeleteInput, graphics.MultiDeleteAction]
+            modal = graphics.Modal.from_action(action, body)
             contents.append(modal)
         global_messages.append(Message(
             action='product-table-update',
@@ -159,26 +165,6 @@ class APIWrapper(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         return super(APIWrapper, self).update(request, *args, **kwargs)
 
-
-class ProviderViewSet(viewsets.ModelViewSet):
-    queryset = Provider.objects.all()
-    serializer_class = ProviderSerializer
-    ordering = ('name',)
-
-class BrandViewSet(viewsets.ModelViewSet):
-    queryset = Brand.objects.all()
-    serializer_class = BrandSerializer
-    ordering = ('name',)
-
-class ApplianceViewSet(viewsets.ModelViewSet):
-    queryset = Appliance.objects.all()
-    serializer_class = ApplianceSerializer
-    ordering = ('name',)
-
-class ProductViewSet(APIWrapper):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-
     # def update(self, request, *args, **kwargs):
     #     return super(ProductViewSet, self).update(request, *args, **kwargs)
     #
@@ -186,8 +172,28 @@ class ProductViewSet(APIWrapper):
     #     return super(ProductViewSet, self).partial_update(request, *args, **kwargs)
 
 
+class ProviderViewSet(viewsets.ModelViewSet):
+    queryset = Provider.objects.order_by('name')
+    serializer_class = ProviderSerializer
+
+class BrandViewSet(viewsets.ModelViewSet):
+    queryset = Brand.objects.order_by('name')
+    serializer_class = BrandSerializer
+
+class ApplianceViewSet(viewsets.ModelViewSet):
+    queryset = Appliance.objects.order_by('name')
+    serializer_class = ApplianceSerializer
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.order_by('code')
+    serializer_class = ProductSerializer
+
+class PercentageViewSet(viewsets.ModelViewSet):
+    queryset = Percentage.objects.order_by('max_price_limit')
+    serializer_class = PercentageSerializer
+
 class OrganizationViewSet(viewsets.ModelViewSet):
-    queryset = Organization.objects.all()
+    queryset = Organization.objects.order_by('name')
     serializer_class = OrganizationSerializer
 
 class InputViewSet(viewsets.ModelViewSet):
@@ -206,17 +212,17 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
-def get_object_by(attrib, match):
-    for name, value in object_map.items():
-        if object_map[name].get(attrib, None) == match:
-            return object_map[name]
-    return None
-
-def resolve_foreign_fields(data, fields):
-    data._mutable = True
-    for field in fields:
-        if field[2] == 'ForeignKey':
-            data[field[0]] = str(object_map[field[0]]['model'].objects.filter(name=data[field[0]])[0].pk)
+# def get_object_by(attrib, match):
+#     for name, value in object_map.items():
+#         if object_map[name].get(attrib, None) == match:
+#             return object_map[name]
+#     return None
+#
+# def resolve_foreign_fields(data, fields):
+#     data._mutable = True
+#     for field in fields:
+#         if field[2] == 'ForeignKey':
+#             data[field[0]] = str(object_map[field[0]]['model'].objects.filter(name=data[field[0]])[0].pk)
 
 object_map = {
     'product': {
@@ -265,6 +271,18 @@ object_map = {
             'new': NewApplianceForm,
             'edit': EditApplianceForm,
             'delete': DeleteApplianceForm,
+        }
+    },
+    'percentage': {
+        'name': 'Porcentajes',
+        'api_path': '/warehouse/api/percentage',
+        'use_cache': True,
+        'model': Percentage,
+        'viewset': PercentageViewSet,
+        'action_forms': {
+            'new': NewPercentageForm,
+            'edit': EditPercentageForm,
+            'delete': DeletePercentageForm,
         }
     },
     'organization': {
