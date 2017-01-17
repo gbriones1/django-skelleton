@@ -1,26 +1,64 @@
+function filter_data(data) {
+    for (field in urlParams){
+        if (data[field] != urlParams[field]){
+            return false
+        }
+    }
+    return true
+}
+
 function build_table(table, data, actions, selectable) {
     var body = $(table.find('tbody'));
     var headers = $(table.find('thead tr th'));
     for (index in data){
-        var tr = $('<tr>');
-        if (table.data().selectable){
-            tr.append($('<td><input type="checkbox" class="checkthis"></td>'));
-        }
-        for (i = 0; i < headers.length; i++) {
-            if (!(table.data().selectable && i == 0)){
-                if ($(headers[i]).hasClass('table-action')){
-                    var action = $(headers[i]).data().json
-                    tr.append($('<td align="center"><p data-pacement="top" data-toggle="tooltip" title="'+$(headers[i]).text()+'"><button class="btn btn-'+action.style+'" data-target="#'+action.name+'" data-toggle="modal"><i class="fa fa-'+action.icon+'"></i></button></p></td>'))
-                }
-                else{
-                    tr.append($('<td>').text(data[index][$(headers[i]).attr('data-name')]));
+        if (filter_data(data[index])){
+            var tr = $('<tr>');
+            if (table.data().selectable){
+                tr.append($('<td><input type="checkbox" class="checkthis"></td>'));
+            }
+            for (i = 0; i < headers.length; i++) {
+                if (!(table.data().selectable && i == 0)){
+                    if ($(headers[i]).hasClass('table-action')){
+                        var action = $(headers[i]).data().json
+                        tr.append($('<td align="center"><p data-pacement="top" data-toggle="tooltip" title="'+$(headers[i]).text()+'"><button class="btn btn-'+action.style+'" data-target="#'+action.name+'" data-toggle="modal"><i class="fa fa-'+action.icon+'"></i></button></p></td>'))
+                    }
+                    else{
+                        var value = data[index][$(headers[i]).attr('data-name')]
+                        if (typeof(value) == "object" && value.length > 0){
+                            // value = JSON.stringify(value);
+                            var subt = $('<table>')
+                            var subh = $('<thead>')
+                            var subb = $('<tbody>')
+                            var subhr = $('<tr>')
+                            for (field_index in Object.keys(value[0])){
+                                subhr.append($("<th>").text(Object.keys(value[0])[field_index]))
+                            }
+                            subh.append(subhr)
+                            for (reg_index in value){
+                                var subbr = $('<tr>')
+                                for (subdata in value[reg_index]){
+                                    subbr.append($("<td>").text(value[reg_index][subdata]))
+                                }
+                                subb.append(subbr)
+                            }
+                            subt.append(subh)
+                            subt.append(subb)
+                            tr.append($('<td>').append(subt))
+                        }
+                        else{
+                            tr.append($('<td>').text(value));
+                        }
+                    }
                 }
             }
+            $.each(data[index], function( key, value ) {
+                if (typeof(value) == "object"){
+                    value = JSON.stringify(value);
+                }
+                tr.attr("data-"+key, value);
+            });
+            body.append(tr);
         }
-        $.each(data[index], function( key, value ) {
-            tr.attr("data-"+key, value);
-        });
-        body.append(tr);
     }
     $(table.find('tfoot th')).each( function () {
         var title = $(this).text();

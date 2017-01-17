@@ -4,14 +4,15 @@ from django.db import models
 
 VALID_FIELDS = ['Field', 'CharField']
 
-def get_fields(cls):
+def get_fields(cls, remove_fields=[], add_fields=[]):
     fields = []
     for field in cls._meta.fields:
-        if field.__class__.__base__.__name__ in VALID_FIELDS and field.__class__.__name__ != 'AutoField':
-            fields.append((field.name, field.formfield().label, field.__class__.__name__))
-        elif field.__class__.__name__ == 'ForeignKey':
-            fields.append((field.name, field.target_field.model.__name__, field.__class__.__name__))
-    return fields
+        if field.name not in remove_fields:
+            if field.__class__.__base__.__name__ in VALID_FIELDS and field.__class__.__name__ != 'AutoField':
+                fields.append((field.name, field.formfield().label, field.__class__.__name__))
+            elif field.__class__.__name__ == 'ForeignKey':
+                fields.append((field.name, field.target_field.model.__name__, field.__class__.__name__))
+    return fields+add_fields
 
 models.Model.get_fields = classmethod(get_fields)
 
@@ -74,6 +75,37 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
 
+    @property
+    def real_price(self):
+        return "${:.2f}".format(self.get_real_price())
+
+    @property
+    def percentage_1(self):
+        percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
+        sell_price = self.get_real_price()
+        if percentage:
+            sell_price = sell_price+sell_price*percentage[0].percentage_1/100
+        return "${:.2f}".format(sell_price)
+
+    @property
+    def percentage_2(self):
+        percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
+        sell_price = self.get_real_price()
+        if percentage:
+            sell_price = sell_price+sell_price*percentage[0].percentage_2/100
+        return "${:.2f}".format(sell_price)
+
+    @property
+    def percentage_3(self):
+        percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
+        sell_price = self.get_real_price()
+        if percentage:
+            sell_price = sell_price+sell_price*percentage[0].percentage_3/100
+        return "${:.2f}".format(sell_price)
+
+    def get_real_price(self):
+        return self.price-(self.price*(self.discount/100))
+
     def __str__(self):
         return self.code+" - "+self.name.encode('utf8')+" - "+self.description
 
@@ -97,7 +129,7 @@ class StorageType(models.Model):
 
     def __unicode__(self):
         return self.name
-    
+
     class Meta:
         ordering = ['name']
 
@@ -111,6 +143,31 @@ class Storage_Product(models.Model):
     product = models.ForeignKey(Product)
     organization_storage = models.ForeignKey(Organization_Storage)
     amount = models.IntegerField()
+    must_have = models.IntegerField(null=True)
+
+    @property
+    def product_code(self):
+        return self.product.code
+
+    @property
+    def product_name(self):
+        return self.product.name
+
+    @property
+    def product_description(self):
+        return self.product.description
+
+    @property
+    def product_brand(self):
+        return self.product.brand.name
+
+    @property
+    def storage_name(self):
+        return self.organization_storage.storage_type.name
+
+    @property
+    def organization_name(self):
+        return self.organization_storage.organization.name
 
 class Storage_Tool(models.Model):
     tool = models.ForeignKey(Tool)
@@ -124,7 +181,7 @@ class Percentage(models.Model):
     percentage_3 = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __unicode__(self):
-        return self.max_price_limit
+        return str(self.max_price_limit)
 
 class Movement(models.Model):
     date = models.DateTimeField()
@@ -133,6 +190,18 @@ class Movement(models.Model):
 class Input(models.Model):
     movement = models.ForeignKey(Movement)
     invoice_number = models.CharField(max_length=30, null=True, blank=True)
+
+    @property
+    def movement_date(self):
+        return self.movement.date
+
+    @property
+    def movement_storage_name(self):
+        return self.movement.organization_storage.storage_type.name
+
+    @property
+    def movement_organization_name(self):
+        return self.movement.organization_storage.organization.name
 
 class Output(models.Model):
     movement = models.ForeignKey(Movement)
@@ -152,6 +221,22 @@ class Input_Product(models.Model):
     product = models.ForeignKey(Product)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
+
+    @property
+    def product_code(self):
+        return self.product.code
+
+    @property
+    def product_name(self):
+        return self.product.name
+
+    @property
+    def product_description(self):
+        return self.product.description
+
+    @property
+    def product_brand(self):
+        return self.product.brand.name
 
 class Output_Product(models.Model):
     output_reg = models.ForeignKey(Output)

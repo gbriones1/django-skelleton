@@ -1,4 +1,4 @@
-APPNAME = 'Test App'
-VERSION = '0.1 beta'
-YEAR = '2016'
+APPNAME = 'Database Admin'
+VERSION = '2.0 Beta'
+YEAR = '2017'
 PAGE_TITLE = APPNAME

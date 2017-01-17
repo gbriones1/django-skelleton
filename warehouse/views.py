@@ -9,7 +9,7 @@ from rest_framework.response import Response
 import time
 import json
 
-from warehouse.models import Provider, Brand, Appliance, Product, Percentage, Organization, Input, Output, Lending, Order
+from warehouse.models import Provider, Brand, Appliance, Product, Percentage, Organization, Storage_Product, Input, Output, Lending, Order
 from warehouse.forms import (
     NewProductForm, EditProductForm, DeleteProductForm,
     NewProviderForm, EditProviderForm, DeleteProviderForm,
@@ -22,7 +22,7 @@ from warehouse.forms import (
     NewLendingForm, EditLendingForm, DeleteLendingForm,
     NewOrderForm, EditOrderForm, DeleteOrderForm
 )
-from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, PercentageSerializer, OrganizationSerializer, InputSerializer, OutputSerializer, LendingSerializer, OrderSerializer
+from warehouse.serializers import ProviderSerializer, BrandSerializer, ApplianceSerializer, ProductSerializer, PercentageSerializer, OrganizationSerializer, StorageProductSerializer, InputSerializer, OutputSerializer, LendingSerializer, OrderSerializer
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
 
@@ -36,54 +36,56 @@ def main(request, name):
     notifications = []
     global_messages = []
     scripts = ["tables"]
-    if name == 'product':
-        if request.method == 'POST':
-            action = request.POST.get('action')
-            if action == 'new':
-                vs = ProductViewSet.as_view({'post': 'create'})(request)
-            elif action == 'edit':
-                request.method = 'PUT'
-                vs = ProductViewSet.as_view({'put': 'update'})(request, pk=request.POST.get('id'))
-            elif action == 'delete':
-                request.method = 'DELETE'
-                vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-            elif action == 'multi-delete':
-                request.method = 'DELETE'
-                ids = json.loads(request.POST.get('ids', '[]'))
-                for pk in ids:
-                    vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-            if vs and vs.status_code/100 != 2:
-                notifications.append(Notification(message=str(vs.data), level="danger"))
-            else:
-                cache.set('product-table-update', int(time.time()*1000))
-                return HttpResponseRedirect(request.get_full_path())
-        actions = graphics.Action.edit_and_delete()
-        buttons = graphics.Action.new_and_multidelete()
-        table = graphics.Table(
-            "product-table",
-            "Refacciones",
-            Product.get_fields(),
-            actions=actions,
-            buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
-            use_rest='/warehouse/api/product/'
-        )
-        contents = [table]
-        for action in actions+buttons:
-            body = []
-            if action.name == "new":
-                body = [NewProductForm()]
-            elif action.name == "edit":
-                body = [EditProductForm()]
-            elif action.name == 'delete':
-                body = [DeleteProductForm()]
-            elif action.name == 'multi-delete':
-                body = [graphics.MultiDeleteInput, graphics.MultiDeleteAction]
-            modal = graphics.Modal.from_action(action, body)
-            contents.append(modal)
-        global_messages.append(Message(
-            action='product-table-update',
-            parameter=cache.get_or_set('product-table-update', int(time.time()*1000))
-        ))
+    # if name == 'product':
+    #     if request.method == 'POST':
+    #         action = request.POST.get('action')
+    #         if action == 'new':
+    #             vs = ProductViewSet.as_view({'post': 'create'})(request)
+    #         elif action == 'edit':
+    #             request.method = 'PUT'
+    #             vs = ProductViewSet.as_view({'put': 'update'})(request, pk=request.POST.get('id'))
+    #         elif action == 'delete':
+    #             request.method = 'DELETE'
+    #             vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+    #         elif action == 'multi-delete':
+    #             request.method = 'DELETE'
+    #             ids = json.loads(request.POST.get('ids', '[]'))
+    #             for pk in ids:
+    #                 vs = ProductViewSet.as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+    #             if not ids:
+    #                 notifications.append(Notification(message="No elements selected", level="danger"))
+    #         if vs and vs.status_code/100 != 2:
+    #             notifications.append(Notification(message=str(vs.data), level="danger"))
+    #         else:
+    #             cache.set('product-table-update', int(time.time()*1000))
+    #             return HttpResponseRedirect(request.get_full_path())
+    #     actions = graphics.Action.edit_and_delete()
+    #     buttons = graphics.Action.new_and_multidelete()
+    #     table = graphics.Table(
+    #         "product-table",
+    #         "Refacciones",
+    #         Product.get_fields(),
+    #         actions=actions,
+    #         buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
+    #         use_rest='/warehouse/api/product/'
+    #     )
+    #     contents = [table]
+    #     for action in actions+buttons:
+    #         body = []
+    #         if action.name == "new":
+    #             body = [NewProductForm()]
+    #         elif action.name == "edit":
+    #             body = [EditProductForm()]
+    #         elif action.name == 'delete':
+    #             body = [DeleteProductForm()]
+    #         elif action.name == 'multi-delete':
+    #             body = [graphics.MultiDeleteInput, graphics.MultiDeleteAction]
+    #         modal = graphics.Modal.from_action(action, body)
+    #         contents.append(modal)
+    #     global_messages.append(Message(
+    #         action='product-table-update',
+    #         parameter=cache.get_or_set('product-table-update', int(time.time()*1000))
+    #     ))
     # elif name == 'provider':
     #     providers = ProviderSerializer(Provider.objects.all(), many=True).data
     #     actions = graphics.Action.edit_and_delete()
@@ -99,7 +101,7 @@ def main(request, name):
     #     contents = [table]
     #     for action in actions+buttons:
     #         contents.append(graphics.Modal.from_action(action))
-    elif name in object_map.keys():
+    if name in object_map.keys():
         if request.method == 'POST':
             action = request.POST.get('action')
             if action == 'new':
@@ -110,20 +112,39 @@ def main(request, name):
             elif action == 'delete':
                 request.method = 'DELETE'
                 vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-            if vs.status_code/100 != 2:
+            elif action == 'multi-delete':
+                request.method = 'DELETE'
+                ids = json.loads(request.POST.get('ids', '[]'))
+                for pk in ids:
+                    vs =  object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+                if not ids:
+                    notifications.append(Notification(message="No elements selected", level="danger"))
+            if vs and vs.status_code/100 != 2:
                 notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
                 cache.set(name+'-table-update', int(time.time()*1000))
                 return HttpResponseRedirect(request.get_full_path())
-        actions = graphics.Action.edit_and_delete()
-        buttons = graphics.Action.new_and_multidelete()
+        actions = []
+        if not 'remove_reg_actions' in object_map[name] or not object_map[name]['remove_reg_actions']:
+            actions = graphics.Action.edit_and_delete()
+        buttons = []
+        if not 'remove_table_actions' in object_map[name] or not object_map[name]['remove_table_actions']:
+            buttons = graphics.Action.new_and_multidelete()
+        if 'custom_reg_actions' in object_map[name]:
+            actions.extend(object_map[name]['custom_reg_actions'])
+        add_fields = object_map[name]['add_fields'] if 'add_fields' in object_map[name] else []
+        remove_fields = object_map[name]['remove_fields'] if 'remove_fields' in object_map[name] else []
+        checkbox = True
+        if 'remove_checkbox' in object_map[name] and object_map[name]['remove_checkbox']:
+            checkbox = False
         table = graphics.Table(
             name+"-table",
             object_map[name]['name'],
-            object_map[name]['model'].get_fields(),
+            object_map[name]['model'].get_fields(remove_fields=remove_fields, add_fields=add_fields),
             actions=actions,
             buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
-            use_rest=object_map[name]['api_path']
+            use_rest=object_map[name]['api_path'],
+            checkbox=checkbox
         )
         contents = [table]
         for action in actions+buttons:
@@ -171,6 +192,9 @@ class APIWrapper(viewsets.ModelViewSet):
     # def partial_update(self, request, *args, **kwargs):
     #     return super(ProductViewSet, self).partial_update(request, *args, **kwargs)
 
+    def get_queryset(self):
+        return self.queryset.filter(**self.request.query_params.dict())
+
 
 class ProviderViewSet(viewsets.ModelViewSet):
     queryset = Provider.objects.order_by('name')
@@ -196,12 +220,16 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     queryset = Organization.objects.order_by('name')
     serializer_class = OrganizationSerializer
 
+class StorageProductViewSet(APIWrapper):
+    queryset = Storage_Product.objects.order_by('product')
+    serializer_class = StorageProductSerializer
+
 class InputViewSet(viewsets.ModelViewSet):
-    queryset = Input.objects.all()
+    queryset = Input.objects.order_by('-movement__date')[:500]
     serializer_class = InputSerializer
 
 class OutputViewSet(viewsets.ModelViewSet):
-    queryset = Output.objects.all()
+    queryset = Output.objects.order_by('-movement__date')[:500]
     serializer_class = OutputSerializer
 
 class LendingViewSet(viewsets.ModelViewSet):
@@ -235,7 +263,14 @@ object_map = {
             'new': NewProductForm,
             'edit': EditProductForm,
             'delete': DeleteProductForm,
-        }
+        },
+        'add_fields': [
+            ('real_price', 'Real Price', 'CharField'),
+            ('percentage_1', 'Percentage 1', 'CharField'),
+            ('percentage_2', 'Percentage 2', 'CharField'),
+            ('percentage_3', 'Percentage 3', 'CharField'),
+        ],
+        'remove_fields': ['price', 'discount']
     },
     'provider': {
         'name': 'Provedores',
@@ -297,6 +332,31 @@ object_map = {
             'delete': DeleteOrganizationForm,
         }
     },
+    'storage': {
+        'name': 'Almacen',
+        'api_path': '/warehouse/api/storage',
+        'use_cache': False,
+        'model': Storage_Product,
+        'viewset': StorageProductViewSet,
+        'action_forms': {
+            # 'edit': EditInputForm,
+        },
+        'add_fields': [
+            ('product_code', 'Product Code', 'CharField'),
+            ('product_name', 'Product Name', 'CharField'),
+            ('product_description', 'Product Descripcion', 'CharField'),
+            ('product_brand', 'Product Brand', 'CharField'),
+            ('organization_name', 'Organization Name', 'CharField'),
+            ('storage_name', 'Storage Name', 'CharField'),
+            ('amount', 'Amount', 'IntegerField'),
+            ('must_have', 'Must Have', 'IntegerField'),
+        ],
+        'remove_fields': ['product', 'organization_storage', 'amount', 'must_have'],
+        'remove_checkbox': True,
+        'remove_table_actions': True,
+        'remove_reg_actions': True,
+        'custom_reg_actions': [graphics.Action('change', 'modal', text='Cambiar', icon='calculator', style='success', method="POST")],
+    },
     'input': {
         'name': 'Entradas',
         'api_path': '/warehouse/api/input',
@@ -307,7 +367,14 @@ object_map = {
             'new': NewInputForm,
             'edit': EditInputForm,
             'delete': DeleteInputForm,
-        }
+        },
+        'add_fields': [
+            ('date', 'Movement Date', 'DateTimeField'),
+            ('input_product_set', 'Product Set', 'ManyToManyField'),
+            ('organization', 'Organization Name', 'CharField'),
+            ('storage', 'Storage Name', 'CharField'),
+        ],
+        'remove_fields': ['movement'],
     },
     'output': {
         'name': 'Salidas',
