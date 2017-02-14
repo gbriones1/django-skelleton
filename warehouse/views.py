@@ -157,6 +157,7 @@ def main(request, name):
             action=name+'-table-update',
             parameter=cache.get_or_set(name+'-table-update', int(time.time()*1000))
         ))
+        scripts.extend(object_map[name].get('js', []))
     else:
         raise Http404("Page does not exist")
     return render(request, 'pages/warehouse.html', locals())
@@ -375,6 +376,7 @@ object_map = {
             ('storage', 'Storage Name', 'CharField'),
         ],
         'remove_fields': ['movement'],
+        'js': ['multiset', 'input']
     },
     'output': {
         'name': 'Salidas',

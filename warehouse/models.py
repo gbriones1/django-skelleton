@@ -107,7 +107,7 @@ class Product(models.Model):
         return self.price-(self.price*(self.discount/100))
 
     def __str__(self):
-        return self.code+" - "+self.name.encode('utf8')+" - "+self.description
+        return self.code+" - "+self.name.encode('ascii', 'ignore')+" - "+self.description.encode('ascii', 'ignore')
 
     def __unicode__(self):
         return self.code+" - "+self.name+" - "+self.description
@@ -138,6 +138,12 @@ class Organization_Storage(models.Model):
     storage_type = models.ForeignKey(StorageType)
     products = models.ManyToManyField(Product, through="Storage_Product")
     tools = models.ManyToManyField(Tool, through="Storage_Tool")
+
+    def __unicode__(self):
+        return self.organization.name + " - " + self.storage_type.name
+
+    class Meta:
+        ordering = ['organization']
 
 class Storage_Product(models.Model):
     product = models.ForeignKey(Product)

@@ -5,8 +5,12 @@ from django.utils.encoding import (
 from django.utils.html import conditional_escape, format_html
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
+from django.core import serializers
 
-from warehouse.models import Product, Brand, Provider, Appliance, Percentage, Organization, Input, Output, Lending, Order
+from warehouse.models import Product, Brand, Provider, Appliance, Percentage, Organization, Organization_Storage, Input, Output, Lending, Order
+
+from datetime import datetime
+import json
 
 class Datalist(forms.widgets.Select):
     def render(self, name, value, attrs=None, choices=()):
@@ -36,11 +40,69 @@ class Datalist(forms.widgets.Select):
         return format_html('<option value="{}"></option>',
                            force_text(option_label))
 
+class MultiSet(forms.widgets.Select):
+
+    def __init__(self, search=True, amounts=False):
+        super(forms.widgets.Select, self).__init__()
+        self.search = search
+        self.amounts = amounts
+
+    def render(self, name, value, attrs=None, choices=()):
+        model_name = self.choices.queryset.model.__name__
+        if value is None:
+            value = ''
+        final_attrs = self.build_attrs(attrs, name=name)
+        final_attrs["type"] = 'hidden'
+        output = []
+        output.append(format_html('<div{}>', flatatt({"class": "row"})))
+        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
+        output.append(format_html('<table{} >', flatatt({"class": "table", "id":model_name+"MultiSet-table"})))
+        for choice in self.choices.queryset:
+            tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
+            tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
+            tr_attr["data-id"] = choice.id
+            output.append(format_html('<tr {}>', flatatt(tr_attr)))
+            output.append('<td>{}</td>'.format(str(choice)))
+            output.append(format_html('<td><button{}>+</button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
+            output.append('</tr>')
+        output.append('</table>')
+        output.append('</div>')
+
+        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
+        output.append(format_html('<table{} >', flatatt({"class": "table", 'id':model_name+"MultiSet-added"})))
+        output.append('</table>')
+        output.append('</div>')
+        output.append('</div>')
+
+        if self.search or self.amounts:
+            output.append(format_html('<div{}>', flatatt({"class": "row"})))
+            output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
+            output.append(format_html('<table{} >', flatatt({})))
+            output.append('<tr>')
+            if self.search:
+                output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search"})))
+            if self.amounts:
+                output.append(format_html('<td> X </td>', flatatt({})))
+                output.append(format_html('<td><input{} /></td>', flatatt({"value":"1", "type":"number", "min":"1", "id":model_name+"MultiSet-multiplier"})))
+            output.append('</tr>')
+            output.append('</table>')
+            output.append('</div>')
+            output.append('</div>')
+
+        output.append(format_html('<input{} />', flatatt(final_attrs)))
+        output.append('<script>var modelName="'+model_name+'"; var inputSetId="'+final_attrs["id"]+'"</script>')
+
+        return mark_safe('\n'.join(output))
+
+
 class HiddenField(forms.Field):
     widget = forms.widgets.HiddenInput
 
     def __init__(self, *args, **kwargs):
         super(HiddenField, self).__init__(label='', *args, **kwargs)
+
+class DateInput(forms.DateInput):
+    input_type = 'date'
 
 
 class NewProductForm(forms.ModelForm):
@@ -245,15 +307,22 @@ class DeleteOrganizationForm(forms.ModelForm):
         fields = ["id"]
 
 class NewInputForm(forms.ModelForm):
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    input_product_set = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
         model = Input
         fields = '__all__'
+        exclude = ('movement',)
 
 
 class EditInputForm(forms.ModelForm):
     id = HiddenField()
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    input_product_set = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -270,6 +339,8 @@ class DeleteInputForm(forms.ModelForm):
         fields = ["id"]
 
 class NewOutputForm(forms.ModelForm):
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
     action = HiddenField(initial='new')
 
     class Meta:

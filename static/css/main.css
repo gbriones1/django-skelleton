@@ -140,3 +140,15 @@ iframe {
 button > p {
 	margin: 0;
 }
+
+@media (min-width: 1000px){
+	.modal-lg {
+	    width: 1000px;
+	}
+}
+
+@media (min-width: 1200px){
+	.modal-lg {
+	    width: 1200px;
+	}
+}
