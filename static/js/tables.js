@@ -24,7 +24,7 @@ function build_table(table, data, actions, selectable) {
                     }
                     else{
                         var value = data[index][$(headers[i]).attr('data-name')]
-                        if (typeof(value) == "object" && value.length > 0){
+                        if (value && typeof(value) == "object" && value.length > 0){
                             // value = JSON.stringify(value);
                             var subt = $('<table>')
                             var subh = $('<thead>')

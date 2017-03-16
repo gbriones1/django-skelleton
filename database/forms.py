@@ -7,8 +7,11 @@ from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from django.core import serializers
 
-from warehouse.models import Product, Brand, Provider, Appliance, Percentage, Organization, Organization_Storage, Input, Output, Lending, Order
-
+from database.models import (
+    Provider, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
+    StorageType, Organization_Storage, Storage_Product, PriceList,
+    Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
+)
 from datetime import datetime
 import json
 
@@ -192,6 +195,60 @@ class DeleteProviderForm(forms.ModelForm):
         model = Provider
         fields = ["id"]
 
+class NewCustomerForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+
+class EditCustomerForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+
+class DeleteCustomerForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Customer
+        fields = ["id"]
+
+class NewEmployeeForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Employee
+        fields = '__all__'
+
+
+class EditEmployeeForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Employee
+        fields = '__all__'
+
+
+class DeleteEmployeeForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Employee
+        fields = ["id"]
+
 class NewBrandForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
@@ -306,6 +363,31 @@ class DeleteOrganizationForm(forms.ModelForm):
         model = Organization
         fields = ["id"]
 
+class NewOrganizationStorageForm(forms.ModelForm):
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Organization_Storage
+        fields = '__all__'
+
+
+class EditOrganizationStorageForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Organization_Storage
+        fields = '__all__'
+
+
+class DeleteOrganizationStorageForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Organization_Storage
+        fields = ["id"]
+
 class NewInputForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
@@ -413,4 +495,112 @@ class DeleteOrderForm(forms.ModelForm):
 
     class Meta:
         model = Order
+        fields = ["id"]
+
+class NewInvoiceForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+
+class EditInvoiceForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+
+class DeleteInvoiceForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Invoice
+        fields = ["id"]
+
+class NewQuotationForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Quotation
+        fields = '__all__'
+
+
+class EditQuotationForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Quotation
+        fields = '__all__'
+
+
+class DeleteQuotationForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Quotation
+        fields = ["id"]
+
+class NewPaymentForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Payment
+        fields = '__all__'
+
+
+class EditPaymentForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Payment
+        fields = '__all__'
+
+
+class DeletePaymentForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Payment
+        fields = ["id"]
+
+class NewWorkForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Work
+        fields = '__all__'
+
+
+class EditWorkForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Work
+        fields = '__all__'
+
+
+class DeleteWorkForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Work
         fields = ["id"]

@@ -10,32 +10,70 @@
         </div>
         <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
-                <li class="dropdown {{ dashboard_active }}">
-                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Base de Datos
+                <li class="dropdown {{ mr_active }}">
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Recursos Materiales
                     <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li role="presentation" class="dropdown-header">Almacenes</li>
-                        <li><a href="/warehouse/storage/?storage_name=Propias">Propias</a></li>
-                        <li><a href="/warehouse/storage/?storage_name=Consignacion">Consignación</a></li>
-                        <li><a href="/warehouse/storage/?storage_name=Obsoletas">Obsoletas</a></li>
-                        <li><a href="/warehouse/storage/">Todo</a></li>
+                        <li role="presentation" class="dropdown-header">Tablas</li>
+                        <li><a href="/database/product/">Refacciones</a></li>
+                        <li><a href="/database/tools/">Herramientas</a></li>
+                        <li><a href="/database/brand/">Marcas</a></li>
+                        <li><a href="/database/appliance/">Aplicaciones</a></li>
+                        <li><a href="/database/organization/">Organizaciones</a></li>
+                        <li><a href="/database/organization_storage/">Almacenes</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Productos en almacen</li>
+                        <li><a href="/database/storage_product/?storage_name=Propias">Propias</a></li>
+                        <li><a href="/database/storage_product/?storage_name=Consignacion">Consignación</a></li>
+                        <li><a href="/database/storage_product/?storage_name=Obsoletas">Obsoletas</a></li>
+                        <li><a href="/database/storage_product/">Todo</a></li>
                         <li class="divider"></li>
                         <li role="presentation" class="dropdown-header">Movimientos</li>
-                        <li><a href="/registry/">Todos</a></li>
-                        <li><a href="/warehouse/input/">Entradas</a></li>
-                        <li><a href="/warehouse/output/">Salidas</a></li>
-                        <li><a href="/warehouse/lending/">Prestamos</a></li>
-                        <li><a href="/warehouse/order/">Pedidos</a></li>
-                        <li class="divider"></li>
+                        <li><a href="/database/input/">Entradas</a></li>
+                        <li><a href="/database/output/">Salidas</a></li>
+                        <li><a href="/database/lending/">Prestamos</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown {{ finance_active }}">
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Compras
+                    <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
                         <li role="presentation" class="dropdown-header">Tablas</li>
-                        <li><a href="/warehouse/product/">Refacciones</a></li>
-                        <li><a href="/warehouse/tools/">Herramientas</a></li>
-                        <li><a href="/warehouse/provider/">Proveedores</a></li>
-                        <li><a href="/warehouse/brand/">Marcas</a></li>
-                        <li><a href="/warehouse/appliance/">Aplicaciones</a></li>
-                        <li><a href="/warehouse/percentage">Porcentajes</a></li>
-                        <li><a href="/warehouse/organization/">Organizaciones</a></li>
+                        <li><a href="/database/provider/">Proveedores</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Movimientos</li>
+                        <li><a href="/database/invoice/">Compras</a></li>
+                        <li><a href="/database/order/">Pedidos</a></li>
+                        <li><a href="/database/payment/">Pagos</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown {{ sales_active }}">
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Ventas
+                    <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li role="presentation" class="dropdown-header">Tablas</li>
+                        <li><a href="/database/customer/">Clientes</a></li>
+                        <li><a href="/database/pricelist/">Listas de precios</a></li>
+                        <li><a href="/database/percentage/">Porcentajes de precios</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Movimientos</li>
+                        <li><a href="/database/quotation/">Cotizaciones</a></li>
+                        <li><a href="/database/work/">Trabajos</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown {{ hr_active }}">
+                    <a href="" class="dropdown-toggle" data-toggle="dropdown">Recursos Humanos
+                    <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li role="presentation" class="dropdown-header">Tablas</li>
+                        <li><a href="/database/employee/">Empleados</a></li>
+                        <li class="divider"></li>
+                        <li role="presentation" class="dropdown-header">Movimientos</li>
+                        <li><a href="/database/employee_work/">Comisiones</a></li>
                     </ul>
                 </li>
                 <li class="{{ reports_active }}"><a href="/reports/">Reportes</a></li>

@@ -29,20 +29,6 @@ class Appliance(models.Model):
     class Meta:
         ordering = ['name']
 
-class Provider(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(blank=True, null=True)
-
-    def __unicode__(self):
-        return self.name
-
-    def products_related(self):
-        products = Product.objects.filter(provider=self)
-        return len(products)
-
-    class Meta:
-        ordering = ['name']
-
 class Brand(models.Model):
     name = models.CharField(max_length=100)
 
@@ -55,6 +41,60 @@ class Brand(models.Model):
 
     class Meta:
         ordering = ['name']
+
+class Contact(models.Model):
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+
+    def __unicode__(self):
+        return self.name
+
+class Provider(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    contacts = models.ManyToManyField(Contact)
+
+    def __unicode__(self):
+        return self.name
+
+    def products_related(self):
+        products = Product.objects.filter(provider=self)
+        return len(products)
+
+    class Meta:
+        ordering = ['name']
+
+class Invoice(models.Model):
+    number = models.CharField(max_length=30, unique=True)
+    date = models.DateField()
+    due = models.DateField(null=True)
+    price = models.DecimalField(max_digits=9, decimal_places=2)
+    credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
+    discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
+    paid = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return self.number
+
+class Payment(models.Model):
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
+    invoice = models.ForeignKey(Invoice)
+
+class Customer(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    contacts = models.ManyToManyField(Contact)
+
+    def __unicode__(self):
+        return self.name
+
+class Employee(models.Model):
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15, null=True)
+
+    def __unicode__(self):
+        return self.name
 
 class Tool(models.Model):
     code = models.CharField(max_length=30, unique=True)
@@ -84,7 +124,7 @@ class Product(models.Model):
         percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
         sell_price = self.get_real_price()
         if percentage:
-            sell_price = sell_price+sell_price*percentage[0].percentage_1/100
+            sell_price = sell_price+sell_price*percentage[0].sale_percentage_1/100
         return "${:.2f}".format(sell_price)
 
     @property
@@ -92,7 +132,7 @@ class Product(models.Model):
         percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
         sell_price = self.get_real_price()
         if percentage:
-            sell_price = sell_price+sell_price*percentage[0].percentage_2/100
+            sell_price = sell_price+sell_price*percentage[0].sale_percentage_2/100
         return "${:.2f}".format(sell_price)
 
     @property
@@ -100,7 +140,7 @@ class Product(models.Model):
         percentage = Percentage.objects.filter(max_price_limit__gte=self.price)
         sell_price = self.get_real_price()
         if percentage:
-            sell_price = sell_price+sell_price*percentage[0].percentage_3/100
+            sell_price = sell_price+sell_price*percentage[0].sale_percentage_3/100
         return "${:.2f}".format(sell_price)
 
     def get_real_price(self):
@@ -136,8 +176,6 @@ class StorageType(models.Model):
 class Organization_Storage(models.Model):
     organization = models.ForeignKey(Organization)
     storage_type = models.ForeignKey(StorageType)
-    products = models.ManyToManyField(Product, through="Storage_Product")
-    tools = models.ManyToManyField(Tool, through="Storage_Tool")
 
     def __unicode__(self):
         return self.organization.name + " - " + self.storage_type.name
@@ -146,8 +184,8 @@ class Organization_Storage(models.Model):
         ordering = ['organization']
 
 class Storage_Product(models.Model):
-    product = models.ForeignKey(Product)
     organization_storage = models.ForeignKey(Organization_Storage)
+    product = models.ForeignKey(Product)
     amount = models.IntegerField()
     must_have = models.IntegerField(null=True)
 
@@ -176,79 +214,120 @@ class Storage_Product(models.Model):
         return self.organization_storage.organization.name
 
 class Storage_Tool(models.Model):
-    tool = models.ForeignKey(Tool)
     organization_storage = models.ForeignKey(Organization_Storage)
+    tool = models.ForeignKey(Tool)
     amount = models.IntegerField()
 
 class Percentage(models.Model):
     max_price_limit = models.DecimalField(max_digits=9, decimal_places=2)
-    percentage_1 = models.DecimalField(max_digits=9, decimal_places=2)
-    percentage_2 = models.DecimalField(max_digits=9, decimal_places=2)
-    percentage_3 = models.DecimalField(max_digits=9, decimal_places=2)
+    sale_percentage_1 = models.DecimalField(max_digits=9, decimal_places=2)
+    sale_percentage_2 = models.DecimalField(max_digits=9, decimal_places=2)
+    sale_percentage_3 = models.DecimalField(max_digits=9, decimal_places=2)
+    service_percentage_1 = models.DecimalField(max_digits=9, decimal_places=2)
+    service_percentage_2 = models.DecimalField(max_digits=9, decimal_places=2)
+    service_percentage_3 = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __unicode__(self):
         return str(self.max_price_limit)
 
+class PriceList(models.Model):
+    customer = models.OneToOneField(Customer)
+
+class PriceList_Product(models.Model):
+    pricelist = models.ForeignKey(PriceList)
+    product = models.ForeignKey(Product)
+    alt_code = models.CharField(max_length=30, null=True)
+    price = models.DecimalField(max_digits=9, decimal_places=2)
+
+class Quotation(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    pricelist = models.ForeignKey(PriceList, null=True)
+    unit = models.CharField(max_length=30, null=True)
+    plates = models.CharField(max_length=30, null=True)
+    authorized = models.BooleanField(default=False)
+    service = models.DecimalField(max_digits=9, decimal_places=2)
+    discount = models.DecimalField(max_digits=9, decimal_places=2)
+
+class Quotation_Product(models.Model):
+    quotation = models.ForeignKey(Quotation)
+    product = models.ForeignKey(Product)
+    amount = models.IntegerField()
+    price = models.DecimalField(max_digits=9, decimal_places=2)
+
+class Work(models.Model):
+    date = models.DateField()
+    start_time = models.TimeField(null=True)
+    end_time = models.TimeField(null=True)
+    unit_section = models.CharField(max_length=30, null=True)
+    quotation = models.ForeignKey(Quotation, null=True)
+
+class Employee_Work(models.Model):
+    work = models.ForeignKey(Work)
+    employee = models.ForeignKey(Employee)
+    earning = models.DecimalField(max_digits=9, decimal_places=2)
+
+    class Meta:
+        unique_together = ('work', 'employee',)
+
 class Movement(models.Model):
-    date = models.DateTimeField()
+    date = models.DateTimeField(auto_now_add=True)
     organization_storage = models.ForeignKey(Organization_Storage)
+    products = models.ManyToManyField(Product, through='Movement_Product')
 
-class Input(models.Model):
+    @property
+    def movement_product(self):
+        return Movement_Product.objects.filter(movement=self)
+
+class Movement_Product(models.Model):
     movement = models.ForeignKey(Movement)
-    invoice_number = models.CharField(max_length=30, null=True, blank=True)
+    product = models.ForeignKey(Product, related_name='xxx')
+    amount = models.IntegerField()
+    price = models.DecimalField(max_digits=9, decimal_places=2)
 
-    @property
-    def movement_date(self):
-        return self.movement.date
+class Input(Movement):
+    invoice = models.ForeignKey(Invoice, null=True)
 
-    @property
-    def movement_storage_name(self):
-        return self.movement.organization_storage.storage_type.name
-
-    @property
-    def movement_organization_name(self):
-        return self.movement.organization_storage.organization.name
-
-class Output(models.Model):
-    movement = models.ForeignKey(Movement)
-    employee = models.CharField(max_length=100)
-    destination = models.CharField(max_length=100)
+class Output(Movement):
+    employee = models.ForeignKey(Employee, null=True)
+    destination = models.CharField(max_length=100, null=True)
     replacer = models.ForeignKey(Organization, null=True, blank=True)
 
 class Lending(models.Model):
-    movement = models.ForeignKey(Movement)
-    employee = models.CharField(max_length=100)
-    destination = models.CharField(max_length=100)
+    date = models.DateTimeField(auto_now_add=True)
+    organization_storage = models.ForeignKey(Organization_Storage)
+    employee = models.ForeignKey(Employee, null=True)
+    customer = models.ForeignKey(Customer, null=True)
     returned = models.BooleanField(default=False)
     returned_date = models.DateTimeField(null=True)
+    products = models.ManyToManyField(Product, through='Lending_Product')
 
-class Input_Product(models.Model):
-    input_reg = models.ForeignKey(Input)
-    product = models.ForeignKey(Product)
-    amount = models.IntegerField()
-    price = models.DecimalField(max_digits=9, decimal_places=2)
-
-    @property
-    def product_code(self):
-        return self.product.code
-
-    @property
-    def product_name(self):
-        return self.product.name
-
-    @property
-    def product_description(self):
-        return self.product.description
-
-    @property
-    def product_brand(self):
-        return self.product.brand.name
-
-class Output_Product(models.Model):
-    output_reg = models.ForeignKey(Output)
-    product = models.ForeignKey(Product)
-    amount = models.IntegerField()
-    price = models.DecimalField(max_digits=9, decimal_places=2)
+# class Input_Product(models.Model):
+#     input_reg = models.ForeignKey(Input)
+#     product = models.ForeignKey(Product)
+#     amount = models.IntegerField()
+#     price = models.DecimalField(max_digits=9, decimal_places=2)
+#
+#     @property
+#     def product_code(self):
+#         return self.product.code
+#
+#     @property
+#     def product_name(self):
+#         return self.product.name
+#
+#     @property
+#     def product_description(self):
+#         return self.product.description
+#
+#     @property
+#     def product_brand(self):
+#         return self.product.brand.name
+#
+# class Output_Product(models.Model):
+#     output_reg = models.ForeignKey(Output)
+#     product = models.ForeignKey(Product)
+#     amount = models.IntegerField()
+#     price = models.DecimalField(max_digits=9, decimal_places=2)
 
 class Lending_Product(models.Model):
     lending = models.ForeignKey(Lending)

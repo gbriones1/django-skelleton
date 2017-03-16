@@ -1,3 +1,10 @@
+import os
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mysite.settings")
+import django
+django.setup()
+
+from database.models import *
+
 import sqlite3
 import mysql.connector
 import sys
@@ -10,11 +17,10 @@ appliances = {}
 products = {}
 organizations = {}
 
+organization_storage = {}
+
 storagetype_ids = {}
 duraznera_storage_ids = {}
-
-cnx = mysql.connector.connect(user='root', password='pass', database='django_test_2')
-cursor = cnx.cursor()
 
 conn = sqlite3.connect(sys.argv[1])
 c = conn.cursor()
@@ -22,151 +28,113 @@ c = conn.cursor()
 try:
     c.execute('SELECT * FROM database_provider;')
     for provider in c.fetchall():
-        print provider
+        print(provider)
         pk = int(provider[0])
         providers[pk] = {'name':provider[1], 'email':provider[2]}
-        # query = 'INSERT INTO warehouse_provider (name, email) VALUES ("{name}", "{email}")'.format(**providers[pk])
-        # print query
-        # cursor.execute(query)
-        query = 'INSERT INTO warehouse_provider (name, email) VALUES (%(name)s, %(email)s)'
-        cursor.execute(query, providers[pk])
-        providers[pk]['new_id'] = cursor.lastrowid
+        contact, created = Contact.objects.get_or_create(name='desconocido', email=provider[2])
+        provider, created = Provider.objects.get_or_create(name=provider[1])
+        provider.contacts.add(contact)
     c.execute('SELECT * FROM database_brand;')
     for brand in c.fetchall():
-        print brand
+        print(brand)
         pk = int(brand[0])
         brands[pk] = {'name':brand[1]}
-        # query = 'INSERT INTO warehouse_brand (name) VALUES ("{name}")'.format(**brands[pk])
-        # print query
-        # cursor.execute(query)
-        query = 'INSERT INTO warehouse_brand (name) VALUES (%(name)s)'
-        cursor.execute(query, brands[pk])
-        brands[pk]['new_id'] = cursor.lastrowid
+        Brand.objects.get_or_create(name=brand[1])
     c.execute('SELECT * FROM database_appliance;')
     for appliance in c.fetchall():
-        print appliance
+        print(appliance)
         pk = int(appliance[0])
         appliances[pk] = {'name':appliance[1]}
-        # query = 'INSERT INTO warehouse_appliance (name) VALUES ("{name}")'.format(**appliances[pk])
-        # print query
-        # cursor.execute(query)
-        query = 'INSERT INTO warehouse_appliance (name) VALUES (%(name)s)'
-        cursor.execute(query, appliances[pk])
-        appliances[pk]['new_id'] = cursor.lastrowid
-    c.execute('SELECT * FROM database_product_appliance;')
-    for pa in c.fetchall():
-        # print pa
-        pk = int(pa[0])
-        products[pa[1]] = {'appliance':appliances[int(pa[2])]["new_id"]}
+        Appliance.objects.get_or_create(name=appliance[1])
     c.execute('SELECT * FROM database_percentage;')
     for pr in c.fetchall():
-        query = 'INSERT INTO warehouse_percentage (max_price_limit, percentage_1, percentage_2, percentage_3) VALUES ({}, {}, {}, {})'.format(pr[1], pr[2], pr[3], pr[4])
-        cursor.execute(query)
-
+        print(pr)
+        Percentage.objects.get_or_create(max_price_limit=pr[1], sale_percentage_1=pr[2], sale_percentage_2=pr[3], sale_percentage_3=pr[4], service_percentage_1=100, service_percentage_2=100, service_percentage_3=100)
     for st in ['Consignacion', 'Propias', 'Obsoletas']:
-        query = 'INSERT INTO warehouse_storagetype (name) VALUES ("{}")'.format(st)
-        # print query
-        cursor.execute(query)
-        storagetype_ids[st] = cursor.lastrowid
+        print(st)
+        StorageType.objects.get_or_create(name=st)
     c.execute('SELECT * FROM database_organization;')
     for org in c.fetchall():
-        query = 'INSERT INTO warehouse_organization (name) VALUES ("{}")'.format(org[1])
-        # print query
-        cursor.execute(query)
-        organizations[org[0]] = {"name": org[1], "new_id":cursor.lastrowid}
+        print(org)
+        organization, created = Organization.objects.get_or_create(name=org[1])
+        organizations[org[0]] = {"name": org[1], "object":organization}
         if org[1] == "DURAZNERA":
-            for st in storagetype_ids.keys():
-                query = 'INSERT INTO warehouse_organization_storage (organization_id, storage_type_id) VALUES ({}, {})'.format(organizations[org[0]]["new_id"], storagetype_ids[st])
-                # print query
-                cursor.execute(query)
-                duraznera_storage_ids[st] = cursor.lastrowid
-
-
-    c.execute('SELECT * FROM database_product;')
+            for st in StorageType.objects.all():
+                org_st, created = Organization_Storage.objects.get_or_create(organization=organization, storage_type=st)
+                print(org_st)
+                organization_storage[st.name] = org_st
+    c.execute('SELECT database_product.*, database_product_appliance.appliance_id FROM database_product LEFT JOIN database_product_appliance ON database_product_appliance.product_id = database_product.code;')
     for product in c.fetchall():
         pk = product[0]
-        if not pk in products.keys():
-            products[pk] = {'appliance':''}
+        products[pk] = {}
         products[pk]["code"] = product[0]
         products[pk]["name"] = product[1].encode("utf-8")
         products[pk]["description"] = product[2].encode("utf-8")
         products[pk]["price"] = product[3]
         products[pk]["discount"] = product[11]
-        products[pk]["provider"] = providers[int(product[5])]["new_id"]
-        products[pk]["brand"] = brands[int(product[10])]["new_id"]
-        print products[pk]
-        if products[pk]["appliance"]:
-            # product_values = '("{code}", "{name}", "{description}", {price}, {discount}, {provider}, {brand}, {appliance})'.format(**products[pk])
-            # query = "INSERT INTO warehouse_product (code, name, description, price, discount, provider_id, brand_id, appliance_id) VALUES "+product_values
-            # print query
-            # cursor.execute(query)
-            product_values = '(%(code)s, %(name)s, %(description)s, %(price)s, %(discount)s, %(provider)s, %(brand)s, %(appliance)s)'
-            query = "INSERT INTO warehouse_product (code, name, description, price, discount, provider_id, brand_id, appliance_id) VALUES "+product_values
-        else:
-            # product_values = '("{code}", "{name}", "{description}", {price}, {discount}, {provider}, {brand})'.format(**products[pk])
-            # query = "INSERT INTO warehouse_product (code, name, description, price, discount, provider_id, brand_id) VALUES "+product_values
-            # print query
-            # cursor.execute(query)
-            product_values = '(%(code)s, %(name)s, %(description)s, %(price)s, %(discount)s, %(provider)s, %(brand)s)'
-            query = "INSERT INTO warehouse_product (code, name, description, price, discount, provider_id, brand_id) VALUES "+product_values
-        cursor.execute(query, products[pk])
-        products[pk]["new_id"] = cursor.lastrowid
-        query = 'INSERT INTO warehouse_storage_product (amount, organization_storage_id, product_id, must_have) VALUES ({}, {}, {}, {})'.format(product[4], duraznera_storage_ids["Consignacion"], products[pk]["new_id"], product[8])
-        cursor.execute(query)
-        query = 'INSERT INTO warehouse_storage_product (amount, organization_storage_id, product_id, must_have) VALUES ({}, {}, {}, {})'.format(product[6], duraznera_storage_ids["Propias"], products[pk]["new_id"], product[9])
-        cursor.execute(query)
-        query = 'INSERT INTO warehouse_storage_product (amount, organization_storage_id, product_id, must_have) VALUES ({}, {}, {}, NULL)'.format(product[7], duraznera_storage_ids["Obsoletas"], products[pk]["new_id"])
-        cursor.execute(query)
-
+        print(products[pk])
+        appliance = None
+        if product[12]:
+            appliance = Appliance.objects.filter(name=appliances.get(int(product[12]))["name"]).first()
+        p, created = Product.objects.get_or_create(
+            code=product[0],
+            name=product[1].encode("utf-8"),
+            description=product[2].encode("utf-8"),
+            price=float(product[3]),
+            discount=product[11],
+            provider=Provider.objects.get(name=providers[int(product[5])]["name"]),
+            brand=Brand.objects.get(name=brands[int(product[10])]["name"]),
+            appliance=appliance
+        )
+        products[pk]["object"] = p
+        Storage_Product.objects.get_or_create(organization_storage=organization_storage["Consignacion"], product=p, amount=int(product[4]), must_have=int(product[8]))
+        Storage_Product.objects.get_or_create(organization_storage=organization_storage["Propias"], product=p, amount=int(product[6]), must_have=int(product[9]))
+        Storage_Product.objects.get_or_create(organization_storage=organization_storage["Obsoletas"], product=p, amount=int(product[7]))
     c.execute('SELECT * FROM database_input;')
     for inp in c.fetchall():
-        old_input_id = inp[0]
-        storage_id = duraznera_storage_ids["Consignacion"]
+        print(inp)
+        c.execute('SELECT * FROM database_input_product WHERE input_reg_id = {}'.format(inp[0]))
+        prods = c.fetchall()
+        total_price = sum(map(lambda x: float(x[4]) * float(x[1]), prods))
+        invoice = None
+        if inp[3]:
+            invoice = Invoice.objects.filter(number=inp[3])
+            if invoice:
+                invoice = invoice[0]
+                invoice.price = float(invoice.price) + total_price
+            else:
+                invoice, _ = Invoice.objects.get_or_create(number=inp[3], date=inp[1][:10], price=total_price)
+        org_sto = organization_storage["Consignacion"]
         if inp[2] == 'S':
-            storage_id = duraznera_storage_ids["Propias"]
-        query = 'INSERT INTO warehouse_movement (date, organization_storage_id) VALUES ("{}", {})'.format(inp[1], storage_id)
-        print query
-        cursor.execute(query)
-        movement_id = cursor.lastrowid
-        invoice_number = '"{}"'.format(inp[3]) if inp[3] else 'NULL'
-        query = 'INSERT INTO warehouse_input (invoice_number, movement_id) VALUES ({}, {})'.format(invoice_number, movement_id)
-        print query
-        cursor.execute(query)
-        input_id = cursor.lastrowid
-        c.execute('SELECT * FROM database_input_product WHERE input_reg_id = {}'.format(old_input_id))
-        for reg in c.fetchall():
-            query = 'INSERT INTO warehouse_input_product (amount, price, input_reg_id, product_id) VALUES ({},{},{},{})'.format(reg[1], reg[4], input_id, products[reg[2]]["new_id"])
-            print query
-            cursor.execute(query)
-
+            org_sto = organization_storage["Propias"]
+        if invoice and Input.objects.filter(invoice=invoice):
+            input_reg = Input.objects.get(invoice=invoice)
+        else:
+            input_reg, _ = Input.objects.get_or_create(date=inp[1][:22], organization_storage=org_sto, invoice=invoice)
+        for prod in prods:
+            mp = Movement_Product(movement=input_reg, product=products[prod[2]]["object"], amount=int(prod[1]), price=float(prod[4]))
+            mp.save()
     c.execute('SELECT * FROM database_output;')
     for outp in c.fetchall():
-        old_output_id = outp[0]
-        storage_id = duraznera_storage_ids["Consignacion"]
+        print(outp)
+        c.execute('SELECT * FROM database_output_product WHERE output_reg_id = {}'.format(outp[0]))
+        prods = c.fetchall()
+        employee = None
+        customer = None
+        replacer = None
+        if outp[4]:
+            employee, _ = Employee.objects.get_or_create(name=outp[4])
+        if outp[3]:
+            customer, _  = Customer.objects.get_or_create(name=outp[3])
+        if outp[5]:
+            replacer = organizations[outp[5]]["object"]
+        org_sto = organization_storage["Consignacion"]
         if outp[2] == 'S':
-            storage_id = duraznera_storage_ids["Propias"]
-        query = 'INSERT INTO warehouse_movement (date, organization_storage_id) VALUES ("{}", {})'.format(outp[1], storage_id)
-        print query
-        cursor.execute(query)
-        movement_id = cursor.lastrowid
-        replacer_id = organizations[outp[5]]["new_id"] if outp[5] else 'NULL'
-        query = 'INSERT INTO warehouse_output (employee, destination, movement_id, replacer_id) VALUES ("{}", "{}", {}, {})'.format(outp[4], outp[3].encode("utf-8"), movement_id, replacer_id)
-        print query
-        cursor.execute(query)
-        output_id = cursor.lastrowid
-        c.execute('SELECT * FROM database_output_product WHERE output_reg_id = {}'.format(old_output_id))
-        for reg in c.fetchall():
-            query = 'INSERT INTO warehouse_output_product (amount, price, output_reg_id, product_id) VALUES ({},{},{},{})'.format(reg[1], reg[4], output_id, products[reg[2]]["new_id"])
-            print query
-            cursor.execute(query)
-
-    cnx.commit()
+            org_sto = organization_storage["Propias"]
+        output_reg, _ = Output.objects.get_or_create(date=outp[1][:22], organization_storage=org_sto, employee=employee, destination=customer, replacer=replacer)
+        for prod in prods:
+            mp = Movement_Product(movement=output_reg, product=products[prod[2]]["object"], amount=int(prod[1]), price=float(prod[4]))
+            mp.save()
 except Exception as e:
-    print e
+    print(e)
     import pdb; pdb.set_trace()
-    cnx.rollback()
-
-cursor.close()
-
-conn.close()
-cnx.close()

@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
                 ('price', models.DecimalField(decimal_places=2, max_digits=9)),
-                ('input_reg', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Input')),
+                ('input_reg', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Input')),
             ],
         ),
         migrations.CreateModel(
@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
                 ('returned_amount', models.IntegerField()),
-                ('lending', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Lending')),
+                ('lending', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Lending')),
             ],
         ),
         migrations.CreateModel(
@@ -80,7 +80,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
                 ('returned_amount', models.IntegerField()),
-                ('lending', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Lending')),
+                ('lending', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Lending')),
             ],
         ),
         migrations.CreateModel(
@@ -105,7 +105,7 @@ class Migration(migrations.Migration):
                 ('amount', models.IntegerField()),
                 ('status', models.CharField(choices=[('P', 'Por pedir'), ('A', 'Pedido'), ('C', 'Cancelado'), ('R', 'Recibido')], max_length=1, null=True)),
                 ('received_date', models.DateTimeField(null=True)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Order')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Order')),
             ],
         ),
         migrations.CreateModel(
@@ -119,7 +119,7 @@ class Migration(migrations.Migration):
             name='Organization_Storage',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization')),
+                ('organization', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Organization')),
             ],
         ),
         migrations.CreateModel(
@@ -128,8 +128,8 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('employee', models.CharField(max_length=100)),
                 ('destination', models.CharField(max_length=100)),
-                ('movement', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Movement')),
-                ('replacer', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization')),
+                ('movement', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Movement')),
+                ('replacer', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='database.Organization')),
             ],
         ),
         migrations.CreateModel(
@@ -138,7 +138,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
                 ('price', models.DecimalField(decimal_places=2, max_digits=9)),
-                ('output_reg', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Output')),
+                ('output_reg', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Output')),
             ],
         ),
         migrations.CreateModel(
@@ -160,8 +160,8 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(blank=True, max_length=255, null=True)),
                 ('price', models.DecimalField(decimal_places=2, max_digits=9)),
                 ('discount', models.DecimalField(decimal_places=2, max_digits=9)),
-                ('appliance', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='warehouse.Appliance')),
-                ('brand', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='warehouse.Brand')),
+                ('appliance', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='database.Appliance')),
+                ('brand', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='database.Brand')),
             ],
         ),
         migrations.CreateModel(
@@ -177,8 +177,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
-                ('organization_storage', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization_Storage')),
-                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Product')),
+                ('organization_storage', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Organization_Storage')),
+                ('product', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Product')),
             ],
         ),
         migrations.CreateModel(
@@ -186,7 +186,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('amount', models.IntegerField()),
-                ('organization_storage', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization_Storage')),
+                ('organization_storage', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Organization_Storage')),
             ],
         ),
         migrations.CreateModel(
@@ -209,76 +209,76 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='storage_tool',
             name='tool',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Tool'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Tool'),
         ),
         migrations.AddField(
             model_name='product',
             name='provider',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='warehouse.Provider'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='database.Provider'),
         ),
         migrations.AddField(
             model_name='output_product',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Product'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Product'),
         ),
         migrations.AddField(
             model_name='organization_storage',
             name='products',
-            field=models.ManyToManyField(through='warehouse.Storage_Product', to='warehouse.Product'),
+            field=models.ManyToManyField(through='database.Storage_Product', to='database.Product'),
         ),
         migrations.AddField(
             model_name='organization_storage',
             name='storage_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.StorageType'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.StorageType'),
         ),
         migrations.AddField(
             model_name='organization_storage',
             name='tools',
-            field=models.ManyToManyField(through='warehouse.Storage_Tool', to='warehouse.Tool'),
+            field=models.ManyToManyField(through='database.Storage_Tool', to='database.Tool'),
         ),
         migrations.AddField(
             model_name='order_product',
             name='organization_storage',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization_Storage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Organization_Storage'),
         ),
         migrations.AddField(
             model_name='order_product',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Product'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Product'),
         ),
         migrations.AddField(
             model_name='order',
             name='provider',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Provider'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Provider'),
         ),
         migrations.AddField(
             model_name='movement',
             name='organization_storage',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Organization_Storage'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Organization_Storage'),
         ),
         migrations.AddField(
             model_name='lending_tool',
             name='tool',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Tool'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Tool'),
         ),
         migrations.AddField(
             model_name='lending_product',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Product'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Product'),
         ),
         migrations.AddField(
             model_name='lending',
             name='movement',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Movement'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Movement'),
         ),
         migrations.AddField(
             model_name='input_product',
             name='product',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Product'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Product'),
         ),
         migrations.AddField(
             model_name='input',
             name='movement',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='warehouse.Movement'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='database.Movement'),
         ),
     ]

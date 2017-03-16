@@ -7,7 +7,7 @@ import shutil
 import datetime
 
 class WarehouseConfig(AppConfig):
-    name = 'warehouse'
+    name = 'database'
 
 
 class BackupManager(object):
