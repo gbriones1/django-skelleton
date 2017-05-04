@@ -51,7 +51,7 @@ class HTMLButton(HTMLObject):
 
 class HTMLTable(HTMLObject):
 
-    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, filters=True, use_rest=None):
+    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, filters=True, use_rest=None, use_cache=True):
         super(HTMLTable, self).__init__('table', name)
         self.root.set("class", "table table-bordred table-striped table-hover")
         header = ET.Element('thead')
@@ -91,6 +91,8 @@ class HTMLTable(HTMLObject):
         if use_rest:
             self.root.set("data-rest", use_rest)
             self.root.set("class", self.root.get('class')+" use-rest")
+        if use_cache:
+            self.root.set("use-cache", 'true')
         else:
             for row in rows:
                 tr = ET.Element('tr')
@@ -129,9 +131,9 @@ class Section(object):
 
 class Table(Section):
 
-    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None):
+    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None, use_cache=True):
         super(Table, self).__init__("table")
-        self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest)
+        self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest, use_cache)
         self.html = self.table.stringify()
         self.title = title
         self.buttons = buttons

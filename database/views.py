@@ -8,11 +8,13 @@ from rest_framework.response import Response
 
 import time
 import json
+import urllib
 
 from database.models import (
     Provider, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
     Organization_Storage, Storage_Product, PriceList, Employee_Work,
     Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
+    Order_Product,
 )
 from database.forms import (
     NewProductForm, EditProductForm, DeleteProductForm,
@@ -32,6 +34,9 @@ from database.forms import (
     NewQuotationForm, EditQuotationForm, DeleteQuotationForm,
     NewPaymentForm, EditPaymentForm, DeletePaymentForm,
     NewWorkForm, EditWorkForm, DeleteWorkForm,
+    ChangeStorageProductForm,
+    OrderOutputForm,
+    DateRangeFilterForm
 )
 from database.serializers import (
     ProviderSerializer, CustomerSerializer, EmployeeSerializer,
@@ -42,6 +47,7 @@ from database.serializers import (
 )
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
+from mysite.email_client import send_email
 
 @login_required
 def main(request, name):
@@ -54,8 +60,10 @@ def main(request, name):
     global_messages = []
     scripts = ["tables"]
     if name in object_map.keys():
+        cache_name = name+"-"+urllib.urlencode(request.GET)
         if request.method == 'POST':
             action = request.POST.get('action')
+            vs = None
             if action == 'new':
                 vs = object_map[name]['viewset'].as_view({'post': 'create'})(request)
             elif action == 'edit':
@@ -71,32 +79,40 @@ def main(request, name):
                     vs =  object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
                 if not ids:
                     notifications.append(Notification(message="No elements selected", level="danger"))
+            elif action:
+                vs = object_map[name]['viewset'].as_view({'post': action})(request)
             if vs and vs.status_code/100 != 2:
                 notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
-                cache.set(name+'-table-update', int(time.time()*1000))
+                cache.set(cache_name+'-table-update', int(time.time()*1000))
                 return HttpResponseRedirect(request.get_full_path())
-        actions = []
-        if not 'remove_reg_actions' in object_map[name] or not object_map[name]['remove_reg_actions']:
-            actions = graphics.Action.edit_and_delete()
-        buttons = []
-        if not 'remove_table_actions' in object_map[name] or not object_map[name]['remove_table_actions']:
-            buttons = graphics.Action.new_and_multidelete()
-        if 'custom_reg_actions' in object_map[name]:
-            actions.extend(object_map[name]['custom_reg_actions'])
-        add_fields = object_map[name]['add_fields'] if 'add_fields' in object_map[name] else []
-        remove_fields = object_map[name]['remove_fields'] if 'remove_fields' in object_map[name] else []
-        checkbox = True
-        if 'remove_checkbox' in object_map[name] and object_map[name]['remove_checkbox']:
-            checkbox = False
+        actions = [] if object_map[name].get('remove_reg_actions') else graphics.Action.edit_and_delete()
+        buttons = [] if object_map[name].get('remove_table_actions') else graphics.Action.new_and_multidelete()
+        actions.extend(object_map[name].get('custom_reg_actions', []))
+        buttons.extend(object_map[name].get('custom_table_actions', []))
+        add_fields = object_map[name].get('add_fields', [])
+        remove_fields = object_map[name].get('remove_fields', [])
+        filter_form = object_map[name].get('filter_form', None)
+        use_cache = object_map[name].get('use_cache', True)
+        if filter_form:
+            if not request.GET:
+                filters = {x:y.initial for x,y in filter_form.fields.items()}
+                return HttpResponseRedirect(request.get_full_path()+"?"+urllib.urlencode(filters))
+            for key in request.GET.keys():
+                filter_form.fields[key].initial = request.GET[key]
+        checkbox = False if object_map[name].get('remove_checkbox') else True
+        rest_url = object_map[name]['api_path']
+        if request.GET:
+            rest_url += "?"+urllib.urlencode(request.GET)
         table = graphics.Table(
-            name+"-table",
+            cache_name+"-table",
             object_map[name]['name'],
             object_map[name]['model'].get_fields(remove_fields=remove_fields, add_fields=add_fields),
             actions=actions,
             buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
-            use_rest=object_map[name]['api_path'],
-            checkbox=checkbox
+            use_rest=rest_url,
+            use_cache=use_cache,
+            checkbox=checkbox,
         )
         contents = [table]
         for action in actions+buttons:
@@ -106,8 +122,8 @@ def main(request, name):
             modal = graphics.Modal.from_action(action, [content])
             contents.append(modal)
         global_messages.append(Message(
-            action=name+'-table-update',
-            parameter=cache.get_or_set(name+'-table-update', int(time.time()*1000))
+            action=cache_name+'-table-update',
+            parameter=cache.get_or_set(cache_name+'-table-update', int(time.time()*1000))
         ))
         scripts.extend(object_map[name].get('js', []))
     else:
@@ -129,6 +145,14 @@ class APIWrapper(viewsets.ModelViewSet):
     #     self.perform_create(serializer)
     #     headers = self.get_success_headers(serializer.data)
     #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    def list(self, request, *args, **kwargs):
+        return super(APIWrapper, self).list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        return super(APIWrapper, self).retrieve(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        return super(APIWrapper, self).destroy(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
         # import pdb; pdb.set_trace()
@@ -139,14 +163,39 @@ class APIWrapper(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         return super(APIWrapper, self).update(request, *args, **kwargs)
 
-    # def update(self, request, *args, **kwargs):
-    #     return super(ProductViewSet, self).update(request, *args, **kwargs)
-    #
-    # def partial_update(self, request, *args, **kwargs):
-    #     return super(ProductViewSet, self).partial_update(request, *args, **kwargs)
+    def partial_update(self, request, *args, **kwargs):
+        return super(APIWrapper, self).partial_update(request, *args, **kwargs)
 
     def get_queryset(self):
+        # import pdb; pdb.set_trace()
         return self.queryset.filter(**self.request.query_params.dict())
+        # model_fields = list(map(lambda x: x.name, self.queryset.model._meta.fields))
+        # model_filters = {}
+        # function_filters = {}
+        # for x,y in self.request.query_params.dict().items():
+        #     if x in model_fields:
+        #         model_filters[x] = y
+        #     else:
+        #         function_filters[x] = y
+        # results = self.queryset.filter(**model_filters)
+        # for function_filter in function_filters.keys():
+        #     method = function_filter.split("__")
+        #     field = method[0]
+        #     op = 'eq' if len(method) == 1 else method[1]
+        #     if results and hasattr(results[0], field):
+        #         if op == 'eq':
+        #             results = filter(lambda x:getattr(x, field) == function_filters[function_filter], results)
+        #         elif op == 'gt':
+        #             results = filter(lambda x:getattr(x, field) > function_filters[function_filter], results)
+        #         elif op == 'gte':
+        #             results = filter(lambda x:getattr(x, field) >= function_filters[function_filter], results)
+        #         elif op == 'lt':
+        #             results = filter(lambda x:getattr(x, field) < function_filters[function_filter], results)
+        #         elif op == 'lte':
+        #             results = filter(lambda x:getattr(x, field) <= function_filters[function_filter], results)
+        #         elif op == 'not':
+        #             results = filter(lambda x:getattr(x, field) != function_filters[function_filter], results)
+        # return results
 
 
 class ProviderViewSet(viewsets.ModelViewSet):
@@ -195,47 +244,95 @@ class StorageProductViewSet(APIWrapper):
     serializer_class = StorageProductSerializer
 
 
-class InputViewSet(viewsets.ModelViewSet):
-    queryset = Input.objects.order_by('-date')[:500]
+class InputViewSet(APIWrapper):
+    queryset = Input.objects.order_by('-date')
     serializer_class = InputSerializer
 
-class OutputViewSet(viewsets.ModelViewSet):
-    queryset = Output.objects.order_by('-date')[:500]
+class OutputViewSet(APIWrapper):
+    queryset = Output.objects.order_by('-date')
     serializer_class = OutputSerializer
 
-class LendingViewSet(viewsets.ModelViewSet):
-    queryset = Lending.objects.order_by('-date')[:500]
+    def order(self, request, *args, **kwargs):
+        provider_map = {}
+        for product_info in json.loads(request.POST.get('products', '[]')):
+            p = Product.objects.get(id=product_info["id"])
+            p.amount = product_info["amount"]
+            if p.provider.id in provider_map:
+                provider_map[p.provider.id]['products'].append(p)
+            else:
+                provider_map[p.provider.id] = {
+                    'provider': p.provider,
+                    'products': [p]
+                }
+        status = 200
+        response = []
+        for email_info in provider_map.values():
+            message = request.POST.get('message')+"\n\n"
+            for p in email_info['products']:
+                message += "{} {} {}. \tCantidad: {}\n".format(p.code, p.name, p.description, p.amount)
+            dest = []
+            for pc in email_info['provider'].provider_contact:
+                if pc.for_orders and pc.contact.email:
+                    dest.append(pc.contact.email)
+            if dest:
+                # if send_email(";".join(dest), 'Pedido de productos', message):
+                if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+email_info['provider'].name, message):
+                    claimant = Employee.objects.filter(id=request.POST.get("claimant") or None)
+                    claimant = claimant[0] if claimant else None
+                    order = Order(
+                        provider=email_info['provider'],
+                        claimant=claimant,
+                        organization_storage=Organization_Storage.objects.get(id=request.POST.get("organization_storage"))
+                    )
+                    order.save()
+                    for p in email_info["products"]:
+                        op = Order_Product(
+                            order=order,
+                            product=p,
+                            amount=p.amount,
+                            status=Order.STATUS_ASKED
+                        )
+                        op.save()
+                else:
+                    status = 499
+                    response.append("Fallo envio de email a {}".format('gbriones.gdl@gmail.com'))
+            else:
+                status = 498
+                response.append("No se encontraron destinatarios para el proveedor {}".format(email_info["provider"].name))
+        return Response(response, status=status)
+
+class LendingViewSet(APIWrapper):
+    queryset = Lending.objects.order_by('-date')
     serializer_class = LendingSerializer
 
-class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.order_by('-date')[:500]
+class OrderViewSet(APIWrapper):
+    queryset = Order.objects.order_by('-date')
     serializer_class = OrderSerializer
 
-class QuotationViewSet(viewsets.ModelViewSet):
-    queryset = Quotation.objects.order_by('-date')[:500]
+class QuotationViewSet(APIWrapper):
+    queryset = Quotation.objects.order_by('-date')
     serializer_class = QuotationSerializer
 
-class InvoiceViewSet(viewsets.ModelViewSet):
-    queryset = Invoice.objects.order_by('-date')[:500]
+class InvoiceViewSet(APIWrapper):
+    queryset = Invoice.objects.order_by('-date')
     serializer_class = InvoiceSerializer
 
-class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.order_by('-date')[:500]
+class PaymentViewSet(APIWrapper):
+    queryset = Payment.objects.order_by('-date')
     serializer_class = PaymentSerializer
 
-class WorkViewSet(viewsets.ModelViewSet):
-    queryset = Work.objects.order_by('-date')[:500]
+class WorkViewSet(APIWrapper):
+    queryset = Work.objects.order_by('-date')
     serializer_class = WorkSerializer
 
-class EmployeeWorkViewSet(viewsets.ModelViewSet):
-    queryset = Employee_Work.objects.order_by('-work__date')[:500]
+class EmployeeWorkViewSet(APIWrapper):
+    queryset = Employee_Work.objects.order_by('-work__date')
     serializer_class = EmployeeWorkSerializer
 
 object_map = {
     'product': {
         'name': 'Refacciones',
         'api_path': '/database/api/product',
-        'use_cache': True,
         'model': Product,
         'viewset': ProductViewSet,
         'action_forms': {
@@ -254,19 +351,21 @@ object_map = {
     'provider': {
         'name': 'Provedores',
         'api_path': '/database/api/provider',
-        'use_cache': True,
         'model': Provider,
         'viewset': ProviderViewSet,
         'action_forms': {
             'new': NewProviderForm,
             'edit': EditProviderForm,
             'delete': DeleteProviderForm,
-        }
+        },
+        'add_fields': [
+            ('product_count', 'Productos', 'IntegerField'),
+            ('contacts', 'Contactos', 'ManyToManyField'),
+        ],
     },
     'customer': {
         'name': 'Clientes',
         'api_path': '/database/api/customer',
-        'use_cache': True,
         'model': Customer,
         'viewset': CustomerViewSet,
         'action_forms': {
@@ -278,7 +377,6 @@ object_map = {
     'employee': {
         'name': 'Empleado',
         'api_path': '/database/api/employee',
-        'use_cache': True,
         'model': Employee,
         'viewset': EmployeeViewSet,
         'action_forms': {
@@ -290,7 +388,6 @@ object_map = {
     'brand': {
         'name': 'Marcas',
         'api_path': '/database/api/brand',
-        'use_cache': True,
         'model': Brand,
         'viewset': BrandViewSet,
         'action_forms': {
@@ -302,7 +399,6 @@ object_map = {
     'appliance': {
         'name': 'Applicaciones',
         'api_path': '/database/api/appliance',
-        'use_cache': True,
         'model': Appliance,
         'viewset': ApplianceViewSet,
         'action_forms': {
@@ -314,7 +410,6 @@ object_map = {
     'percentage': {
         'name': 'Porcentajes',
         'api_path': '/database/api/percentage',
-        'use_cache': True,
         'model': Percentage,
         'viewset': PercentageViewSet,
         'action_forms': {
@@ -326,7 +421,6 @@ object_map = {
     'organization': {
         'name': 'Organizaciones',
         'api_path': '/database/api/organization',
-        'use_cache': True,
         'model': Organization,
         'viewset': OrganizationViewSet,
         'action_forms': {
@@ -338,7 +432,6 @@ object_map = {
     'organization_storage': {
         'name': 'Almacenes',
         'api_path': '/database/api/organization_storage',
-        'use_cache': True,
         'model': Organization_Storage,
         'viewset': OrganizationStorageViewSet,
         'action_forms': {
@@ -350,7 +443,6 @@ object_map = {
     'pricelist': {
         'name': 'Listas de precios',
         'api_path': '/database/api/pricelist',
-        'use_cache': True,
         'model': PriceList,
         'viewset': PriceListViewSet,
         'action_forms': {
@@ -359,11 +451,10 @@ object_map = {
     'storage_product': {
         'name': 'Productos en almacen',
         'api_path': '/database/api/storage_product',
-        'use_cache': True,
         'model': Storage_Product,
         'viewset': StorageProductViewSet,
         'action_forms': {
-            # 'edit': EditInputForm,
+            'edit': ChangeStorageProductForm,
         },
         'add_fields': [
             ('product_code', 'Product Code', 'CharField'),
@@ -379,7 +470,7 @@ object_map = {
         'remove_checkbox': True,
         'remove_table_actions': True,
         'remove_reg_actions': True,
-        'custom_reg_actions': [graphics.Action('change', 'modal', text='Cambiar', icon='calculator', style='success', method="POST")],
+        'custom_reg_actions': [graphics.Action('edit', 'modal', text='Cambiar', icon='calculator', style='success', method="POST")],
     },
     'input': {
         'name': 'Entradas',
@@ -394,12 +485,14 @@ object_map = {
         },
         'add_fields': [
             ('date', 'Movement Date', 'DateTimeField'),
+            ('invoice_number', 'Invoice', 'ForeignKey'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('organization', 'Organization Name', 'CharField'),
             ('storage', 'Storage Name', 'CharField'),
         ],
-        'remove_fields': ['organization_storage'],
-        'js': ['multiset', 'input']
+        'remove_fields': ['organization_storage', 'invoice'],
+        'js': ['multiset', 'input'],
+        'filter_form': DateRangeFilterForm()
     },
     'output': {
         'name': 'Salidas',
@@ -411,7 +504,21 @@ object_map = {
             'new': NewOutputForm,
             'edit': EditOutputForm,
             'delete': DeleteOutputForm,
-        }
+            'order': OrderOutputForm,
+        },
+        'add_fields': [
+            ('date', 'Movement Date', 'DateTimeField'),
+            ('products', 'Product Set', 'ManyToManyField'),
+            ('employee_name', 'Employee', 'ForeignKey'),
+            ('destination_name', 'Destination', 'ForeignKey'),
+            ('replacer_name', 'Replacer', 'ForeignKey'),
+            ('organization', 'Organization Name', 'CharField'),
+            ('storage', 'Storage Name', 'CharField'),
+        ],
+        'remove_fields': ['organization_storage', 'employee', 'destination', 'replacer'],
+        'js': ['multiset', 'output'],
+        'custom_reg_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
+        'filter_form': DateRangeFilterForm()
     },
     'lending': {
         'name': 'Prestamos',
@@ -423,7 +530,16 @@ object_map = {
             'new': NewLendingForm,
             'edit': EditLendingForm,
             'delete': DeleteLendingForm,
-        }
+        },
+        'add_fields': [
+            ('date', 'Movement Date', 'DateTimeField'),
+            ('products', 'Product Set', 'ManyToManyField'),
+            ('organization', 'Organization Name', 'CharField'),
+            ('storage', 'Storage Name', 'CharField'),
+        ],
+        'remove_fields': ['organization_storage'],
+        'js': ['multiset'],
+        'filter_form': DateRangeFilterForm()
     },
     'order': {
         'name': 'Pedidos',
@@ -435,7 +551,16 @@ object_map = {
             'new': NewOrderForm,
             'edit': EditOrderForm,
             'delete': DeleteOrderForm,
-        }
+        },
+        'add_fields': [
+            ('date', 'Movement Date', 'DateTimeField'),
+            ('products', 'Product Set', 'ManyToManyField'),
+            ('organization', 'Organization Name', 'CharField'),
+            ('storage', 'Storage Name', 'CharField'),
+        ],
+        'remove_fields': ['organization_storage'],
+        'js': ['multiset'],
+        'filter_form': DateRangeFilterForm()
     },
     'quotation': {
         'name': 'Cotizaciones',
@@ -447,7 +572,8 @@ object_map = {
             'new': NewQuotationForm,
             'edit': EditQuotationForm,
             'delete': DeleteQuotationForm,
-        }
+        },
+        'filter_form': DateRangeFilterForm()
     },
     'invoice': {
         'name': 'Facturas de compras',
@@ -459,7 +585,8 @@ object_map = {
             'new': NewInvoiceForm,
             'edit': EditInvoiceForm,
             'delete': DeleteInvoiceForm,
-        }
+        },
+        'filter_form': DateRangeFilterForm()
     },
     'payment': {
         'name': 'Pagos',
@@ -471,7 +598,8 @@ object_map = {
             'new': NewPaymentForm,
             'edit': EditPaymentForm,
             'delete': DeletePaymentForm,
-        }
+        },
+        'filter_form': DateRangeFilterForm()
     },
     'work': {
         'name': 'Hojas de trabajo',
@@ -483,7 +611,8 @@ object_map = {
             'new': NewWorkForm,
             'edit': EditWorkForm,
             'delete': DeleteWorkForm,
-        }
+        },
+        'filter_form': DateRangeFilterForm()
     },
     'employee_work': {
         'name': 'Comisiones',
@@ -492,6 +621,7 @@ object_map = {
         'model': Employee_Work,
         'viewset': EmployeeWorkViewSet,
         'action_forms': {
-        }
+        },
+        'filter_form': DateRangeFilterForm()
     }
 }

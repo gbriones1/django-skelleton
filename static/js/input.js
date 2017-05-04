@@ -4,12 +4,12 @@ $('div.modal form button[type="submit"]').each(function () {
 })
 
 $(document).on('click', 'div.modal form button.evaluator', function () {
-    var products = JSON.parse($(this).closest('form').find('input#id_input_product_set').val())
+    var products = JSON.parse($(this).closest('form').find('input#id_products').val())
     var confirmTable = $('<table>')
     $('#ProductMultiSet-confirm .modal-body table').remove()
     for (i in products){
         var product = $(this).closest('form').find('#ProductMultiSet-table tr[data-id="'+products[i].id+'"]').data()
-        confirmTable.append('<tr><td>'+product.code+" - "+product.name+' - '+product.description+'</td><td><input type="number" class="form-control user-success" value="0.0"></td></tr>')
+        confirmTable.append('<tr><td>'+product.code+" - "+product.name+' - '+product.description+'</td><td><input type="number" class="form-control user-success" value="'+product.price+'"></td></tr>')
     }
     $('#ProductMultiSet-confirm .modal-body').append(confirmTable)
     $('#ProductMultiSet-confirm').modal('show');

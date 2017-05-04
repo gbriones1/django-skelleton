@@ -9,6 +9,8 @@ import sqlite3
 import mysql.connector
 import sys
 
+from datetime import datetime
+
 print("Migrating", sys.argv[1])
 
 providers = {}
@@ -31,9 +33,10 @@ try:
         print(provider)
         pk = int(provider[0])
         providers[pk] = {'name':provider[1], 'email':provider[2]}
-        contact, created = Contact.objects.get_or_create(name='desconocido', email=provider[2])
+        contact, created = Contact.objects.get_or_create(name='Pedidos '+provider[1], department='Ventas', email=provider[2])
         provider, created = Provider.objects.get_or_create(name=provider[1])
-        provider.contacts.add(contact)
+        pc = Provider_Contact(contact=contact, provider=provider, for_orders=True)
+        pc.save()
     c.execute('SELECT * FROM database_brand;')
     for brand in c.fetchall():
         print(brand)
@@ -103,14 +106,24 @@ try:
                 invoice = invoice[0]
                 invoice.price = float(invoice.price) + total_price
             else:
-                invoice, _ = Invoice.objects.get_or_create(number=inp[3], date=inp[1][:10], price=total_price)
+                invoice = Invoice.objects.filter(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"), price=total_price)
+                if invoice:
+                    invoice = invoice[0]
+                else:
+                    invoice = Invoice(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"), price=total_price)
+                    invoice.save()
         org_sto = organization_storage["Consignacion"]
         if inp[2] == 'S':
             org_sto = organization_storage["Propias"]
         if invoice and Input.objects.filter(invoice=invoice):
             input_reg = Input.objects.get(invoice=invoice)
         else:
-            input_reg, _ = Input.objects.get_or_create(date=inp[1][:22], organization_storage=org_sto, invoice=invoice)
+            input_reg = Input.objects.filter(date=datetime.strptime(inp[1][:19], "%Y-%m-%d %H:%M:%S"), organization_storage=org_sto, invoice=invoice)
+            if input_reg:
+                input_reg = input_reg[0]
+            else:
+                input_reg = Input(date=datetime.strptime(inp[1][:19], "%Y-%m-%d %H:%M:%S"), organization_storage=org_sto, invoice=invoice)
+                input_reg.save()
         for prod in prods:
             mp = Movement_Product(movement=input_reg, product=products[prod[2]]["object"], amount=int(prod[1]), price=float(prod[4]))
             mp.save()
@@ -131,7 +144,12 @@ try:
         org_sto = organization_storage["Consignacion"]
         if outp[2] == 'S':
             org_sto = organization_storage["Propias"]
-        output_reg, _ = Output.objects.get_or_create(date=outp[1][:22], organization_storage=org_sto, employee=employee, destination=customer, replacer=replacer)
+        output_reg = Output.objects.filter(date=datetime.strptime(outp[1][:19], "%Y-%m-%d %H:%M:%S"), organization_storage=org_sto, employee=employee, destination=customer, replacer=replacer)
+        if output_reg:
+            output_reg = output_reg[0]
+        else:
+            output_reg = Output(date=datetime.strptime(outp[1][:19], "%Y-%m-%d %H:%M:%S"), organization_storage=org_sto, employee=employee, destination=customer, replacer=replacer)
+            output_reg.save()
         for prod in prods:
             mp = Movement_Product(movement=output_reg, product=products[prod[2]]["object"], amount=int(prod[1]), price=float(prod[4]))
             mp.save()

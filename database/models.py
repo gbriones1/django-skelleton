@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import datetime
+
 from django.db import models
 
 VALID_FIELDS = ['Field', 'CharField']
@@ -49,11 +51,15 @@ class Contact(models.Model):
     phone = models.CharField(max_length=15, blank=True, null=True)
 
     def __unicode__(self):
-        return self.name
+        return self.name + " - " + self.department
 
 class Provider(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    contacts = models.ManyToManyField(Contact)
+    contacts = models.ManyToManyField(Contact, through='Provider_Contact')
+
+    @property
+    def provider_contact(self):
+        return Provider_Contact.objects.filter(provider=self)
 
     def __unicode__(self):
         return self.name
@@ -64,6 +70,11 @@ class Provider(models.Model):
 
     class Meta:
         ordering = ['name']
+
+class Provider_Contact(models.Model):
+    provider = models.ForeignKey(Provider)
+    contact = models.ForeignKey(Contact)
+    for_orders = models.BooleanField(default=False)
 
 class Invoice(models.Model):
     number = models.CharField(max_length=30, unique=True)
@@ -240,7 +251,7 @@ class PriceList_Product(models.Model):
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
 class Quotation(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=datetime.datetime.now)
     pricelist = models.ForeignKey(PriceList, null=True)
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
@@ -270,7 +281,7 @@ class Employee_Work(models.Model):
         unique_together = ('work', 'employee',)
 
 class Movement(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=datetime.datetime.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     products = models.ManyToManyField(Product, through='Movement_Product')
 
@@ -280,7 +291,7 @@ class Movement(models.Model):
 
 class Movement_Product(models.Model):
     movement = models.ForeignKey(Movement)
-    product = models.ForeignKey(Product, related_name='xxx')
+    product = models.ForeignKey(Product)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
@@ -289,45 +300,17 @@ class Input(Movement):
 
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True)
-    destination = models.CharField(max_length=100, null=True)
+    destination = models.ForeignKey(Customer, null=True)
     replacer = models.ForeignKey(Organization, null=True, blank=True)
 
 class Lending(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=datetime.datetime.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     employee = models.ForeignKey(Employee, null=True)
     customer = models.ForeignKey(Customer, null=True)
     returned = models.BooleanField(default=False)
     returned_date = models.DateTimeField(null=True)
     products = models.ManyToManyField(Product, through='Lending_Product')
-
-# class Input_Product(models.Model):
-#     input_reg = models.ForeignKey(Input)
-#     product = models.ForeignKey(Product)
-#     amount = models.IntegerField()
-#     price = models.DecimalField(max_digits=9, decimal_places=2)
-#
-#     @property
-#     def product_code(self):
-#         return self.product.code
-#
-#     @property
-#     def product_name(self):
-#         return self.product.name
-#
-#     @property
-#     def product_description(self):
-#         return self.product.description
-#
-#     @property
-#     def product_brand(self):
-#         return self.product.brand.name
-#
-# class Output_Product(models.Model):
-#     output_reg = models.ForeignKey(Output)
-#     product = models.ForeignKey(Product)
-#     amount = models.IntegerField()
-#     price = models.DecimalField(max_digits=9, decimal_places=2)
 
 class Lending_Product(models.Model):
     lending = models.ForeignKey(Lending)
@@ -352,15 +335,19 @@ class Order(models.Model):
         (STATUS_CANCELED, 'Cancelado'),
         (STATUS_RECEIVED, 'Recibido'),
     )
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(default=datetime.datetime.now)
     provider = models.ForeignKey(Provider)
-    claimant = models.CharField(max_length=100, null=True, blank=True)
+    organization_storage = models.ForeignKey(Organization_Storage)
+    claimant = models.ForeignKey(Employee, null=True)
+
+    @property
+    def order_product(self):
+        return Order_Product.objects.filter(order=self)
 
 class Order_Product(models.Model):
     order = models.ForeignKey(Order)
     product = models.ForeignKey(Product)
     amount = models.IntegerField()
-    organization_storage = models.ForeignKey(Organization_Storage)
     status = models.CharField(max_length=1, choices=Order.STATUS_CHOICES, null=True)
     received_date = models.DateTimeField(null=True)
 

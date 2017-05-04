@@ -11,7 +11,7 @@ function build_table(table, data, actions, selectable) {
     var body = $(table.find('tbody'));
     var headers = $(table.find('thead tr th'));
     for (index in data){
-        if (filter_data(data[index])){
+        // if (filter_data(data[index])){
             var tr = $('<tr>');
             if (table.data().selectable){
                 tr.append($('<td><input type="checkbox" class="checkthis"></td>'));
@@ -58,7 +58,7 @@ function build_table(table, data, actions, selectable) {
                 tr.attr("data-"+key, value);
             });
             body.append(tr);
-        }
+        // }
     }
     $(table.find('tfoot th')).each( function () {
         var title = $(this).text();
@@ -76,10 +76,14 @@ function build_table(table, data, actions, selectable) {
 function build_data_table(table) {
     var unsortable = []
     var sorting = 0
+    var order = 'asc'
     var headers = $(table.find('thead tr th'));
     if (table.data().selectable){
         unsortable.push(0)
         sorting = 1
+    }
+    if ($(headers[sorting]).data('name') == 'date'){
+        order = 'desc'
     }
     for (i = 0; i < headers.length; i++){
         if ($(headers[i]).hasClass('table-action')){
@@ -96,7 +100,7 @@ function build_data_table(table) {
             'bSortable' : false,
             'aTargets' : unsortable
             }],
-        "aaSorting": [[sorting,'asc']]
+        "aaSorting": [[sorting,order]]
     });
     // table.closest('.dataTables_scroll').find('.dataTables_scrollFoot table').appendTo('.dataTables_scrollHeadInner')
     dt.columns().every( function () {
@@ -113,20 +117,25 @@ function build_data_table(table) {
 $('table.use-rest').each(function () {
     var table = $(this);
     var name = table.attr("id");
+    var useCache = table.attr("use-cache");
     $('.loading').show()
-    if (name + "-update" in messages){
-        var oldupdate = sessionStorage.getItem(name + "-update")
-        if (oldupdate && (oldupdate < messages[name + "-update"])) {
-            sessionStorage.removeItem(name)
+    if (useCache){
+        if (name + "-update" in messages){
+            var oldupdate = sessionStorage.getItem(name + "-update")
+            if (oldupdate && (oldupdate < messages[name + "-update"])) {
+                sessionStorage.removeItem(name)
+            }
+            sessionStorage.setItem(name + "-update", messages[name + "-update"]);
         }
-        sessionStorage.setItem(name + "-update", messages[name + "-update"]);
+        else{
+            sessionStorage.setItem(name + "-update", new Date().getTime()+"");
+        }
     }
-    else{
-        sessionStorage.setItem(name + "-update", new Date().getTime()+"");
-    }
-    if (!sessionStorage.getItem(name)){
+    if (!sessionStorage.getItem(name) || !useCache){
         $.get( window.location.origin + table.data().rest, function( data ) {
-            sessionStorage.setItem(name, JSON.stringify(data));
+            if (useCache){
+                sessionStorage.setItem(name, JSON.stringify(data));
+            }
             build_table(table, data)
             $('.loading').hide()
         });
@@ -143,8 +152,25 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     var data = $(this).closest('tr').data()
     var editform = $("#edit form");
     editform[0].reset();
+    editform.find('select').each(function (){
+        $(this).val("");
+    })
     for (key in data){
-        editform.find('input[name="'+ key +'"]').val(data[key]);
+        var value = data[key]
+        if (key == "date"){
+            var d = new Date(data[key]);
+            value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+        } else if (typeof(data[key]) == "object"){
+            value = JSON.stringify(data[key]);
+        }
+        editform.find('input[name="'+ key +'"]').val(value);
+        var selected = ''
+        editform.find('select[name="'+ key +'"] option').each(function (){
+            if ($(this).val() == data[key]){
+                selected = $(this).val()
+            }
+        })
+        editform.find('select[name="'+ key +'"]').val(selected);
     }
 });
 

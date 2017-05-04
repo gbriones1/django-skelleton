@@ -12,7 +12,7 @@ from database.models import (
     StorageType, Organization_Storage, Storage_Product, PriceList,
     Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
 )
-from datetime import datetime
+from datetime import datetime, date, timedelta
 import json
 
 class Datalist(forms.widgets.Select):
@@ -56,6 +56,8 @@ class MultiSet(forms.widgets.Select):
             value = ''
         final_attrs = self.build_attrs(attrs, name=name)
         final_attrs["type"] = 'hidden'
+        final_attrs["class"] = 'multiset'
+        final_attrs["data-model"] = model_name
         output = []
         output.append(format_html('<div{}>', flatatt({"class": "row"})))
         output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
@@ -390,26 +392,27 @@ class DeleteOrganizationStorageForm(forms.ModelForm):
 
 class NewInputForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    input_product_set = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    invoice = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Factura")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
         model = Input
-        fields = '__all__'
-        exclude = ('movement',)
+        fields = ('date', 'organization_storage', 'invoice', 'products')
 
 
 class EditInputForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    input_product_set = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    invoice = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Factura")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Input
-        fields = '__all__'
+        fields = ('date', 'organization_storage', 'invoice', 'products')
 
 
 class DeleteInputForm(forms.ModelForm):
@@ -422,7 +425,11 @@ class DeleteInputForm(forms.ModelForm):
 
 class NewOutputForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
+    employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
+    destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     action = HiddenField(initial='new')
 
     class Meta:
@@ -432,6 +439,12 @@ class NewOutputForm(forms.ModelForm):
 
 class EditOutputForm(forms.ModelForm):
     id = HiddenField()
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
+    employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
+    destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -474,6 +487,8 @@ class DeleteLendingForm(forms.ModelForm):
 
 class NewOrderForm(forms.ModelForm):
     action = HiddenField(initial='new')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
 
     class Meta:
         model = Order
@@ -482,6 +497,8 @@ class NewOrderForm(forms.ModelForm):
 
 class EditOrderForm(forms.ModelForm):
     id = HiddenField()
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -604,3 +621,32 @@ class DeleteWorkForm(forms.ModelForm):
     class Meta:
         model = Work
         fields = ["id"]
+
+class ChangeStorageProductForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+    product = HiddenField()
+    organization_storage = HiddenField()
+    amount = forms.IntegerField(label='Cantidad')
+    must_have = forms.IntegerField(label="Debe haber")
+
+    class Meta:
+        model = Storage_Product
+        fields = ["id", "action", "amount", "must_have"]
+
+class OrderOutputForm(forms.ModelForm):
+    id = HiddenField()
+    message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), initial="Este es un mensaje")
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    claimant = forms.CharField(max_length=200, label='Solicitante')
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True), empty_label=None)
+    action = HiddenField(initial='order')
+
+    class Meta:
+        model = Output
+        fields = ['message', 'organization_storage', 'claimant', 'products']
+
+
+class DateRangeFilterForm(forms.Form):
+    date__gte = forms.DateField(widget=DateInput(), initial=date.today() - timedelta(28), label='Desde')
+    date__lt = forms.DateField(widget=DateInput(), initial=date.today() + timedelta(1), label='Hasta')
