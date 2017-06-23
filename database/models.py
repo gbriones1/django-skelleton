@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 
 import datetime
+import json
 
 from django.db import models
+from django.utils import timezone
 
-VALID_FIELDS = ['Field', 'CharField']
+VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin',]
 
 def get_fields(cls, remove_fields=[], add_fields=[]):
     fields = []
@@ -129,6 +131,14 @@ class Product(models.Model):
     @property
     def real_price(self):
         return "${:.2f}".format(self.get_real_price())
+
+    @property
+    def in_storage(self):
+        storage_products = Storage_Product.objects.filter(product=self)
+        result = {}
+        for sp in storage_products:
+            result[sp.organization_storage.id] = sp.amount
+        return json.dumps(result)
 
     @property
     def percentage_1(self):
@@ -281,16 +291,44 @@ class Employee_Work(models.Model):
         unique_together = ('work', 'employee',)
 
 class Movement(models.Model):
-    date = models.DateTimeField(default=datetime.datetime.now)
+    date = models.DateTimeField(default=timezone.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     products = models.ManyToManyField(Product, through='Movement_Product')
 
-    @property
-    def movement_product(self):
-        return Movement_Product.objects.filter(movement=self)
+    def save(self, *args, **kwargs):
+        super(Movement, self).save(*args, **kwargs)
+        if hasattr(self, 'products_desc'):
+            for mp in self.products_desc:
+                product = Product.objects.get(id=mp['product'])
+                if mp['status'] == 'new':
+                    movement_product = Movement_Product(movement=self, product=product, amount=int(mp["amount"]), price=product.price)
+                    movement_product.save()
+                elif mp['status'] == 'update':
+                    movement_product = self.movement_product.get(id=mp['id'])
+                    movement_product.amount = int(mp['amount'])
+                    movement_product.save()
+                elif mp['status'] == 'delete':
+                    movement_product = self.movement_product.get(id=mp['id'])
+                    movement_product.delete()
+                for organization_storage_id in mp['restock'].keys():
+                    organization_storage = Organization_Storage.objects.get(id=organization_storage_id)
+                    storage_product = Storage_Product.objects.get(organization_storage=organization_storage, product=product)
+                    storage_product.amount += mp['restock'][organization_storage_id]
+                    storage_product.save()
+
+    def delete(self, *args, **kwargs):
+        for mp in self.movement_product:
+            storage_product = Storage_Product.objects.get(organization_storage=self.organization_storage, product=mp.product)
+            diff = mp.amount
+            if self.__class__.__name__ == "Input":
+                diff *= -1
+            storage_product.amount += diff
+            storage_product.save()
+            mp.delete()
+        super(Movement, self).delete(*args, **kwargs)
 
 class Movement_Product(models.Model):
-    movement = models.ForeignKey(Movement)
+    movement = models.ForeignKey(Movement, null=True)
     product = models.ForeignKey(Product)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
@@ -298,10 +336,27 @@ class Movement_Product(models.Model):
 class Input(Movement):
     invoice = models.ForeignKey(Invoice, null=True)
 
+    @property
+    def movement_product(self):
+        return Movement_Product.objects.filter(movement=self)
+
+    @movement_product.setter
+    def movement_product(self, products):
+        self.products_desc = products
+
+
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True)
     destination = models.ForeignKey(Customer, null=True)
     replacer = models.ForeignKey(Organization, null=True, blank=True)
+
+    @property
+    def movement_product(self):
+        return Movement_Product.objects.filter(movement=self)
+
+    @movement_product.setter
+    def movement_product(self, products):
+        self.products_desc = products
 
 class Lending(models.Model):
     date = models.DateTimeField(default=datetime.datetime.now)
@@ -329,27 +384,55 @@ class Order(models.Model):
     STATUS_ASKED = 'A'
     STATUS_CANCELED = 'C'
     STATUS_RECEIVED = 'R'
+    STATUS_INCOMPLETE = 'I'
     STATUS_CHOICES = (
         (STATUS_PENDING, 'Por pedir'),
         (STATUS_ASKED, 'Pedido'),
         (STATUS_CANCELED, 'Cancelado'),
         (STATUS_RECEIVED, 'Recibido'),
+        (STATUS_INCOMPLETE, 'Incompleto'),
     )
-    date = models.DateTimeField(default=datetime.datetime.now)
+    date = models.DateTimeField(default=timezone.now)
     provider = models.ForeignKey(Provider)
     organization_storage = models.ForeignKey(Organization_Storage)
     claimant = models.ForeignKey(Employee, null=True)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES, null=True, default=STATUS_PENDING)
+    received_date = models.DateTimeField(null=True)
 
     @property
     def order_product(self):
         return Order_Product.objects.filter(order=self)
 
+    @order_product.setter
+    def order_product(self, products):
+        self.products_desc = products
+
+    def save(self, *args, **kwargs):
+        super(Order, self).save(*args, **kwargs)
+        if hasattr(self, 'products_desc'):
+            for op in self.products_desc:
+                product = Product.objects.get(id=op['product'])
+                if op['status'] == 'new':
+                    order_product = Order_Product(order=self, product=product, amount=int(op["amount"]))
+                    order_product.save()
+                elif op['status'] == 'update':
+                    order_product = self.order_product.get(id=op['id'])
+                    order_product.amount = int(op['amount'])
+                    order_product.save()
+                elif op['status'] == 'delete':
+                    order_product = self.order_product.get(id=op['id'])
+                    order_product.delete()
+
+    def delete(self, *args, **kwargs):
+        for op in self.order_product:
+            op.delete()
+        super(Order, self).delete(*args, **kwargs)
+
 class Order_Product(models.Model):
     order = models.ForeignKey(Order)
     product = models.ForeignKey(Product)
     amount = models.IntegerField()
-    status = models.CharField(max_length=1, choices=Order.STATUS_CHOICES, null=True)
-    received_date = models.DateTimeField(null=True)
+    amount_received = models.IntegerField(default=0)
 
 class Configuration(models.Model):
     sender_email = models.EmailField(null=True)

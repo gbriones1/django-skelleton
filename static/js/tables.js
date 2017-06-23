@@ -37,7 +37,27 @@ function build_table(table, data, actions, selectable) {
                             for (reg_index in value){
                                 var subbr = $('<tr>')
                                 for (subdata in value[reg_index]){
-                                    subbr.append($("<td>").text(value[reg_index][subdata]))
+                                    if (typeof(value[reg_index][subdata]) == "object"){
+                                        var subt2 = $('<table>')
+                                        // var subh2 = $('<thead>')
+                                        var subb2 = $('<tbody>')
+                                        // var subhr2 = $('<tr>')
+                                        // for (field_index in Object.keys(value[reg_index][subdata])){
+                                        //     subhr2.append($("<th>").text(Object.keys(value[reg_index][subdata])[field_index]))
+                                        // }
+                                        // subh2.append(subhr2)
+                                        var subbr2 = $('<tr>')
+                                        for (reg_index2 in value[reg_index][subdata]){
+                                            subbr2.append($("<td>").text(value[reg_index][subdata][reg_index2]))
+                                        }
+                                        subb2.append(subbr2)
+                                        // subt2.append(subh2)
+                                        subt2.append(subb2)
+                                        subbr.append($('<td>').append(subt2))
+                                    }
+                                    else {
+                                        subbr.append($("<td>").text(value[reg_index][subdata]))
+                                    }
                                 }
                                 subb.append(subbr)
                             }
@@ -159,7 +179,12 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
         var value = data[key]
         if (key == "date"){
             var d = new Date(data[key]);
-            value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+            if (editform.find('input[name="'+ key +'"]').attr('type') == "datetime-local"){
+                value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)+"T"+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2);
+            }
+            else{
+                value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+            }
         } else if (typeof(data[key]) == "object"){
             value = JSON.stringify(data[key]);
         }

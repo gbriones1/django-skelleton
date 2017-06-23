@@ -1,4 +1,4 @@
-$('div.modal form button[type="submit"]').each(function () {
+$('div#new.modal form button[type="submit"]').each(function () {
     $(this).attr("type", "button")
     $(this).addClass("evaluator")
 })
@@ -7,9 +7,10 @@ $(document).on('click', 'div.modal form button.evaluator', function () {
     var products = JSON.parse($(this).closest('form').find('input#id_products').val())
     var confirmTable = $('<table>')
     $('#ProductMultiSet-confirm .modal-body table').remove()
+    confirmTable.append('<tr><th>Producto</th><th>Precio de lista</th><th>Descuento</th></tr>')
     for (i in products){
         var product = $(this).closest('form').find('#ProductMultiSet-table tr[data-id="'+products[i].id+'"]').data()
-        confirmTable.append('<tr><td>'+product.code+" - "+product.name+' - '+product.description+'</td><td><input type="number" class="form-control user-success" value="'+product.price+'"></td></tr>')
+        confirmTable.append('<tr class="product-input-eval" data-product=\''+JSON.stringify(product)+'\'><td>'+product.code+" - "+product.name+' - '+product.description+'</td><td><input type="number" class="form-control user-success" value="'+product.price+'"></td><td><input type="number" class="form-control user-success" value="'+product.discount+'"></td></tr>')
     }
     $('#ProductMultiSet-confirm .modal-body').append(confirmTable)
     $('#ProductMultiSet-confirm').modal('show');
@@ -23,6 +24,9 @@ $(document).on('hidden.bs.modal', '#ProductMultiSet-confirm', function(){
 
 $(document).on('click', '#ProductMultiSet-evaluate', function(){
     console.log("Evaluating");
+    $('#ProductMultiSet-confirm .modal-body table tr.product-input-eval').each(function () {
+        console.log($(this).data('product'))
+    });
     return false;
 });
 

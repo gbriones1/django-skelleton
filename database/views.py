@@ -4,6 +4,7 @@ from django.http import Http404, HttpResponseRedirect
 from django.template import RequestContext
 from django.core.cache import cache
 from rest_framework import viewsets
+from rest_framework import status
 from rest_framework.response import Response
 
 import time
@@ -14,7 +15,7 @@ from database.models import (
     Provider, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
     Organization_Storage, Storage_Product, PriceList, Employee_Work,
     Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
-    Order_Product,
+    Order_Product, Movement_Product,
 )
 from database.forms import (
     NewProductForm, EditProductForm, DeleteProductForm,
@@ -35,8 +36,8 @@ from database.forms import (
     NewPaymentForm, EditPaymentForm, DeletePaymentForm,
     NewWorkForm, EditWorkForm, DeleteWorkForm,
     ChangeStorageProductForm,
-    OrderOutputForm,
-    DateRangeFilterForm
+    OrderOutputForm, InputOrderForm, MailOrderForm,
+    DateRangeFilterForm, DateTimeRangeFilterForm,
 )
 from database.serializers import (
     ProviderSerializer, CustomerSerializer, EmployeeSerializer,
@@ -74,18 +75,30 @@ def main(request, name):
                 vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
             elif action == 'multi-delete':
                 request.method = 'DELETE'
+                request.POST._mutable = True
                 ids = json.loads(request.POST.get('ids', '[]'))
                 for pk in ids:
-                    vs =  object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+                    request.POST['id'] = pk
+                    vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
                 if not ids:
                     notifications.append(Notification(message="No elements selected", level="danger"))
             elif action:
                 vs = object_map[name]['viewset'].as_view({'post': action})(request)
             if vs and vs.status_code/100 != 2:
-                notifications.append(Notification(message=str(vs.data), level="danger"))
+                if hasattr(vs.data, 'iterkeys'):
+                    for key in vs.data.keys():
+                        notifications.append(Notification(message=str(key)+": "+str(vs.data[key]), level="danger"))
+                elif type(vs.data) == type([]):
+                    for error in vs.data:
+                        notifications.append(Notification(message=str(error), level="danger"))
+                else:
+                    notifications.append(Notification(message=str(vs.data), level="danger"))
             else:
                 cache.set(cache_name+'-table-update', int(time.time()*1000))
-                return HttpResponseRedirect(request.get_full_path())
+                redirect = request.get_full_path()
+                if hasattr(vs, "redirect_to"):
+                    redirect = vs.redirect_to
+                return HttpResponseRedirect(redirect)
         actions = [] if object_map[name].get('remove_reg_actions') else graphics.Action.edit_and_delete()
         buttons = [] if object_map[name].get('remove_table_actions') else graphics.Action.new_and_multidelete()
         actions.extend(object_map[name].get('custom_reg_actions', []))
@@ -139,12 +152,6 @@ def product(request):
 
 class APIWrapper(viewsets.ModelViewSet):
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     headers = self.get_success_headers(serializer.data)
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     def list(self, request, *args, **kwargs):
         return super(APIWrapper, self).list(request, *args, **kwargs)
 
@@ -156,8 +163,12 @@ class APIWrapper(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # import pdb; pdb.set_trace()
-        # obj = get_object_by('viewset', self.__class__)
-        # resolve_foreign_fields(request.POST, obj['model'].get_fields())
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # self.perform_create(serializer)
+        # headers = self.get_success_headers(serializer.data)
+        # self.serializer = serializer
+        # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         return super(APIWrapper, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
@@ -218,9 +229,16 @@ class ApplianceViewSet(viewsets.ModelViewSet):
     queryset = Appliance.objects.order_by('name')
     serializer_class = ApplianceSerializer
 
-class ProductViewSet(viewsets.ModelViewSet):
+class ProductViewSet(APIWrapper):
     queryset = Product.objects.order_by('code')
     serializer_class = ProductSerializer
+
+    def create(self, request, *args, **kwargs):
+        Provider.objects.get_or_create(name=request.data['provider'])
+        Brand.objects.get_or_create(name=request.data['brand'])
+        if request.data['appliance']:
+            Appliance.objects.get_or_create(name=request.data['appliance'])
+        return super(ProductViewSet, self).create(request, *args, **kwargs)
 
 class PercentageViewSet(viewsets.ModelViewSet):
     queryset = Percentage.objects.order_by('max_price_limit')
@@ -248,6 +266,23 @@ class InputViewSet(APIWrapper):
     queryset = Input.objects.order_by('-date')
     serializer_class = InputSerializer
 
+    def create(self, request, *args, **kwargs):
+        if request.POST['invoice']:
+            price = float(request.POST.get('invoice_price', 0.0))
+            if not price:
+                price = 0.0
+                for p in json.loads(request.POST.get('products')):
+                    product = Product.objects.get(id=p["id"])
+                    price += float(product.price)*int(p["amount"])
+            invoice = Invoice.objects.filter(number=request.POST['invoice'], date=request.POST['invoice_date'])
+            if invoice:
+                invoice = invoice[0]
+                invoice.price = float(invoice.price) + price
+            else:
+                invoice = Invoice(number=request.POST['invoice'], date=request.POST['invoice_date'], price=price)
+            invoice.save()
+        return super(InputViewSet, self).create(request, *args, **kwargs)
+
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
     serializer_class = OutputSerializer
@@ -266,40 +301,27 @@ class OutputViewSet(APIWrapper):
                 }
         status = 200
         response = []
+        claimant = Employee.objects.filter(id=request.POST.get("claimant") or None)
+        claimant = claimant[0] if claimant else None
+        organization_storage = Organization_Storage.objects.get(id=request.POST.get("organization_storage"))
         for email_info in provider_map.values():
-            message = request.POST.get('message')+"\n\n"
-            for p in email_info['products']:
-                message += "{} {} {}. \tCantidad: {}\n".format(p.code, p.name, p.description, p.amount)
-            dest = []
-            for pc in email_info['provider'].provider_contact:
-                if pc.for_orders and pc.contact.email:
-                    dest.append(pc.contact.email)
-            if dest:
-                # if send_email(";".join(dest), 'Pedido de productos', message):
-                if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+email_info['provider'].name, message):
-                    claimant = Employee.objects.filter(id=request.POST.get("claimant") or None)
-                    claimant = claimant[0] if claimant else None
-                    order = Order(
-                        provider=email_info['provider'],
-                        claimant=claimant,
-                        organization_storage=Organization_Storage.objects.get(id=request.POST.get("organization_storage"))
-                    )
-                    order.save()
-                    for p in email_info["products"]:
-                        op = Order_Product(
-                            order=order,
-                            product=p,
-                            amount=p.amount,
-                            status=Order.STATUS_ASKED
-                        )
-                        op.save()
-                else:
-                    status = 499
-                    response.append("Fallo envio de email a {}".format('gbriones.gdl@gmail.com'))
-            else:
-                status = 498
-                response.append("No se encontraron destinatarios para el proveedor {}".format(email_info["provider"].name))
-        return Response(response, status=status)
+            order = Order(
+                provider=email_info['provider'],
+                claimant=claimant,
+                organization_storage=organization_storage,
+                status=Order.STATUS_PENDING
+            )
+            order.save()
+            for p in email_info["products"]:
+                op = Order_Product(order=order, product=p, amount=p.amount)
+                op.save()
+            email_response = OrderViewSet.send_email(order, request.POST.get('message'))
+            if email_response:
+                response.append(email_response)
+                status = 499
+        response = Response(response, status=status)
+        response.redirect_to = '/database/order'
+        return response
 
 class LendingViewSet(APIWrapper):
     queryset = Lending.objects.order_by('-date')
@@ -308,6 +330,47 @@ class LendingViewSet(APIWrapper):
 class OrderViewSet(APIWrapper):
     queryset = Order.objects.order_by('-date')
     serializer_class = OrderSerializer
+
+    def create(self, request, *args, **kwargs):
+        result = super(OrderViewSet, self).create(request, *args, **kwargs)
+        status = 200
+        response = OrderViewSet.send_email(Order.objects.get(id=result.data['id']), request.POST.get('message'))
+        if response:
+            status = 499
+        response = Response([response], status=status)
+        return response
+
+    def input(self, request, *args, **kwargs):
+        response = InputViewSet.as_view({'post': 'create'})(request)
+        response.redirect_to = '/database/input'
+        return response
+
+    def mail(self, request, *args, **kwargs):
+        status = 200
+        response = OrderViewSet.send_email(Order.objects.get(id=request.POST['id']), request.POST.get('message'))
+        if response:
+            status = 499
+        return Response([response], status=status)
+
+    @staticmethod
+    def send_email(order, message):
+        message = message+"\n\n"
+        for p in order.order_product:
+            message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
+        dest = []
+        for pc in order.provider.provider_contact:
+            if pc.for_orders and pc.contact.email:
+                dest.append(pc.contact.email)
+        if dest:
+            # if send_email(";".join(dest), 'Pedido de productos para Muelles Obrero', message):
+            if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+order.provider.name, message):
+                order.status = Order.STATUS_ASKED
+                order.save()
+            else:
+                return "Fallo envio de email a {}".format('gbriones.gdl@gmail.com')
+        else:
+            return "No se encontraron destinatarios para el proveedor {}".format(order.provider.name)
+        return None
 
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
@@ -341,10 +404,7 @@ object_map = {
             'delete': DeleteProductForm,
         },
         'add_fields': [
-            ('real_price', 'Real Price', 'CharField'),
-            ('percentage_1', 'Percentage 1', 'CharField'),
-            ('percentage_2', 'Percentage 2', 'CharField'),
-            ('percentage_3', 'Percentage 3', 'CharField'),
+            ('real_price', 'Precio Real', 'CharField'),
         ],
         'remove_fields': ['price', 'discount']
     },
@@ -486,6 +546,7 @@ object_map = {
         'add_fields': [
             ('date', 'Movement Date', 'DateTimeField'),
             ('invoice_number', 'Invoice', 'ForeignKey'),
+            ('invoice_price', 'Invoice Price', 'CharField'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('organization', 'Organization Name', 'CharField'),
             ('storage', 'Storage Name', 'CharField'),
@@ -518,7 +579,7 @@ object_map = {
         'remove_fields': ['organization_storage', 'employee', 'destination', 'replacer'],
         'js': ['multiset', 'output'],
         'custom_reg_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
-        'filter_form': DateRangeFilterForm()
+        'filter_form': DateTimeRangeFilterForm()
     },
     'lending': {
         'name': 'Prestamos',
@@ -551,16 +612,25 @@ object_map = {
             'new': NewOrderForm,
             'edit': EditOrderForm,
             'delete': DeleteOrderForm,
+            'input': InputOrderForm,
+            'mail': MailOrderForm,
         },
         'add_fields': [
             ('date', 'Movement Date', 'DateTimeField'),
             ('products', 'Product Set', 'ManyToManyField'),
+            ('provider_name', 'Provider', 'CharField'),
+            ('claimant_name', 'Claimant', 'CharField'),
             ('organization', 'Organization Name', 'CharField'),
             ('storage', 'Storage Name', 'CharField'),
+            ('status', 'Status', 'CharField'),
         ],
-        'remove_fields': ['organization_storage'],
-        'js': ['multiset'],
-        'filter_form': DateRangeFilterForm()
+        'remove_fields': ['organization_storage', 'provider', 'claimant', 'status'],
+        'js': ['multiset', 'order'],
+        'custom_reg_actions': [
+            graphics.Action('input', 'modal', text='Entrada', icon='sign-in', style='info', method="POST"),
+            graphics.Action('mail', 'modal', text='Reenviar', icon='envelope', style='info', method="POST"),
+            ],
+        'filter_form': DateTimeRangeFilterForm()
     },
     'quotation': {
         'name': 'Cotizaciones',
