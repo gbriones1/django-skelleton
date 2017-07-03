@@ -8,17 +8,15 @@ from database.models import (
 from rest_framework import serializers
 
 class ProviderContactSerializer(serializers.ModelSerializer):
-    # Nombre = serializers.SlugRelatedField(source='contact', slug_field='name', queryset=Contact.objects.all(), allow_null=True)
-    Nombre = serializers.CharField(source='contact.name')
-    Departamento = serializers.CharField(source='contact.department')
-    Telefono = serializers.CharField(source='contact.phone')
-    Email = serializers.CharField(source='contact.email')
-    Pedidos = serializers.SerializerMethodField('get_for_orders_value')
+    name = serializers.CharField(source='contact.name')
+    department = serializers.CharField(source='contact.department')
+    phone = serializers.CharField(source='contact.phone')
+    email = serializers.CharField(source='contact.email')
+    for_orders = serializers.SerializerMethodField('get_for_orders_value')
 
     class Meta:
         model = Provider_Contact
         exclude = (
-            'id',
             'provider',
             'contact',
             'for_orders'
@@ -39,9 +37,47 @@ class ProviderSerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         return len(Product.objects.filter(provider=obj))
 
+    def validate_contacts(self, value):
+        value = json.loads(self.initial_data['contacts'])
+        for c in value:
+            c['status'] = 'new'
+        provider_id = self.initial_data.get("id")
+        if provider_id:
+            provider = Provider.objects.get(id=provider_id)
+            for contact in provider.provider_contact:
+                for c in value:
+                    if c.get('id') == contact.id:
+                        c['status'] = 'update'
+                        break
+                else:
+                    value.append({
+                        'id': contact.id,
+                        'status': 'delete',
+                    })
+        return value
+
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Brand
+        model = Customer
+
+    def validate_contacts(self, value):
+        value = json.loads(self.initial_data['contacts'])
+        for c in value:
+            c['status'] = 'new'
+        customer_id = self.initial_data.get("id")
+        if customer_id:
+            customer = Customer.objects.get(id=customer_id)
+            for contact in customer.contacts.all():
+                for c in value:
+                    if c.get('id') == contact.id:
+                        c['status'] = 'update'
+                        break
+                else:
+                    value.append({
+                        'id': contact.id,
+                        'status': 'delete',
+                    })
+        return value
 
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -111,8 +147,46 @@ class OrganizationStorageSerializer(serializers.ModelSerializer):
         model = Organization_Storage
 
 class PriceListSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+
     class Meta:
         model = PriceList
+        fields = (
+            'customer',
+            'customer_name'
+        )
+
+    def validate_products(self, value):
+        value = json.loads(self.initial_data['products'])
+        pricelist_id = self.initial_data.get("id")
+        if pricelist_id:
+            pricelist = PriceList.objects.get(id=pricelist_id)
+            for pp in value:
+                pp['product'] = pp['id']
+                for pricelist_pp in pricelist.pricelist_product:
+                    if pp['product'] == pricelist_pp.product.id:
+                        pp['id'] = pricelist_pp.id
+                        pp['status'] = 'update'
+                        break
+                else:
+                    pp['id'] = None
+                    pp['status'] = 'new'
+            for pricelist_pp in pricelist.pricelist_product:
+                for pp in value:
+                    if pp['product'] == pricelist_pp.product.id:
+                        break
+                else:
+                    value.append({
+                        'id': pricelist_pp.id,
+                        'product': pricelist_pp.product.id,
+                        'status': 'delete',
+                    })
+        else:
+            for pp in value:
+                pp['product'] = pp['id']
+                pp['id'] = None
+                pp['status'] = 'new'
+        return value
 
 class StorageProductSerializer(serializers.ModelSerializer):
     product_code = serializers.ReadOnlyField()
@@ -373,8 +447,21 @@ class OrderSerializer(serializers.ModelSerializer):
         return obj.get_status_display()
 
 class QuotationSerializer(serializers.ModelSerializer):
+    date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
+    pricelist_name = serializers.ReadOnlyField(source='pricelist.customer.name')
+
     class Meta:
         model = Quotation
+        fields = (
+            "date",
+            "pricelist",
+            "unit",
+            "plates",
+            "authorized",
+            "service",
+            "discount",
+            "pricelist_name",
+        )
 
 class InvoiceSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d-%B-%Y")

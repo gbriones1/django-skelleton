@@ -1,17 +1,25 @@
-// console.log(modelName)
-// console.log(inputSetId)
+// console.log(multiSetModelName)
+// console.log(multiSetInputSetId)
 
-function refreshInput(form) {
+function refreshMutliSetInputs(form) {
     var valueSet = []
     form.find('input.multiset').each(function () {
         var inputSet = $(this);
         var model = inputSet.data('model');
-        var multiple = form.find('table#'+modelName+'MultiSet-table').attr('data-multiple')
+        var multiple = form.find('table#'+model+'MultiSet-table').attr('data-multiple')
+        var editable = form.find('table#'+model+'MultiSet-table').attr('data-editable')
         form.find('#'+model+'MultiSet-added tr').each(function () {
             var itemData = null;
-            if (multiple){
+            if (multiple || editable){
                 itemData = $(this).data();
-                itemData["amount"] = parseInt($(this).find('.'+modelName+'MultiSet-amount').val())
+                if (multiple){
+                    itemData["amount"] = parseInt($(this).find('.'+model+'MultiSet-amount').val())
+                }
+                if (editable) {
+                    $(this).find('.'+model+'MultiSet-editable').each(function () {
+                        itemData[$(this).attr("data-field")] = $(this).val()
+                    });
+                }
             }
             else{
                 itemData = $(this).data('id');
@@ -22,10 +30,9 @@ function refreshInput(form) {
     });
 }
 
-function applySearch(search){
-    var val = search.val()
-    search.closest('form').find('table#'+modelName+'MultiSet-table tr').each(function(){
-        if ($($(this).children()[0]).text().match(new RegExp(val, "i"))){
+function applySearch(search, table){
+    table.find('tr').each(function(){
+        if ($($(this).children()[0]).text().match(new RegExp(search, "i"))){
             $(this).show()
         } else {
             $(this).hide()
@@ -33,71 +40,132 @@ function applySearch(search){
     });
 }
 
-$(document).on('keyup change', '#'+modelName+'MultiSet-search', function() {
-    applySearch($(this));
+function initialMultiSetData(form, modelName, data) {
+    var added = form.find('#'+modelName+'MultiSet-added')
+    added.empty()
+    for (index in data){
+        var text = $(form.find('#'+modelName+'MultiSet-table tr[data-id="'+data[index].id+'"]').children()[0]).text()
+        var row = '<tr data-id="'+data[index].id+'"><td>'+text+'</td>'
+        if (form.find('#'+modelName+'MultiSet-table').attr('data-multiple')){
+            row += '<td><input type="number" class="form-control '+modelName+'MultiSet-amount" value="'+data[index].amount+'"></td>'
+        }
+        var editable = $(this).closest('table').attr('data-editable')
+        if (editable){
+            var fields = JSON.parse(editable);
+            for (fieldName in fields){
+                var fieldValue = $(this).closest('tr').attr('data-'+fieldName)
+                if (fields[fieldName].tag == 'input'){
+                    row += '<td><input type="'+fields[fieldName].type+'" class="form-control '+multiSetModelName+'MultiSet-editable" data-field="'+fieldName+'" value="'+fieldValue+'"></td>'
+                }
+            }
+        }
+        row += '<td><button type="buttton" class="btn btn-sm btn-danger '+modelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
+        row += '</tr>'
+        added.append(row)
+    }
+    refreshMutliSetInputs(form);
+}
+
+$(document).on('keyup change', '#'+multiSetModelName+'MultiSet-search-available', function() {
+    var table = $(this).closest('form').find('table#'+multiSetModelName+'MultiSet-table')
+    applySearch($(this).val(), table);
 });
 
-$(document).on('click', '.'+modelName+'MultiSet-add', function(){
+$(document).on('keyup change', '#'+multiSetModelName+'MultiSet-search-added', function() {
+    var table = $(this).closest('form').find('table#'+multiSetModelName+'MultiSet-added')
+    applySearch($(this).val(), table);
+});
+
+$(document).on('click', '.'+multiSetModelName+'MultiSet-add', function(){
     var val = $(this).closest('tr').attr('data-id')
     var multiple = $(this).closest('table').attr('data-multiple')
+    var editable = $(this).closest('table').attr('data-editable')
     var text = $($(this).closest('tr').children()[0]).text()
-    var added = $(this).closest('form').find('#'+modelName+'MultiSet-added')
+    var added = $(this).closest('form').find('#'+multiSetModelName+'MultiSet-added')
     if (added.find('tr[data-id="'+val+'"]').length){
-        var amount = parseInt(added.find('tr[data-id="'+val+'"] .'+modelName+'MultiSet-amount').val()) || 0;
+        var amount = parseInt(added.find('tr[data-id="'+val+'"] .'+multiSetModelName+'MultiSet-amount').val()) || 0;
         if (amount){
             amount += 1
-            added.find('tr[data-id="'+val+'"] .'+modelName+'MultiSet-amount').val(amount);
+            added.find('tr[data-id="'+val+'"] .'+multiSetModelName+'MultiSet-amount').val(amount);
         }
     } else {
         var row = '<tr data-id="'+val+'"><td>'+text+'</td>'
         if (multiple){
-            row += '<td><input type="number" class="form-control '+modelName+'MultiSet-amount" min="1" value="'+1+'"></td>'
+            row += '<td><input type="number" class="form-control '+multiSetModelName+'MultiSet-amount" min="1" value="'+1+'"></td>'
         }
-        row += '<td><button type="buttton" class="btn btn-sm btn-danger '+modelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
+        if (editable){
+            var fields = JSON.parse(editable);
+            for (fieldName in fields){
+                var fieldValue = $(this).closest('tr').attr('data-'+fieldName)
+                if (fields[fieldName].tag == 'input'){
+                    row += '<td><input type="'+fields[fieldName].type+'" class="form-control '+multiSetModelName+'MultiSet-editable" data-field="'+fieldName+'" value="'+fieldValue+'"></td>'
+                }
+            }
+        }
+        row += '<td><button type="buttton" class="btn btn-sm btn-danger '+multiSetModelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
         row += '</tr>'
         added.append(row)
     }
-    refreshInput($(this).closest('form'))
+    refreshMutliSetInputs($(this).closest('form'))
     return false;
 });
 
-$(document).on('change', '.'+modelName+'MultiSet-amount', function () {
-    refreshInput($(this).closest('form'));
+$(document).on('change', '.'+multiSetModelName+'MultiSet-amount', function () {
+    refreshMutliSetInputs($(this).closest('form'));
 });
 
-$(document).on('click', '.'+modelName+'MultiSet-delete', function() {
+$(document).on('click', '.'+multiSetModelName+'MultiSet-delete', function() {
     var thisForm = $(this).closest('form');
     $(this).closest('tr').remove();
-    refreshInput(thisForm);
+    refreshMutliSetInputs(thisForm);
     return false;
 });
 
-$(document).on('click', '.'+modelName+'MultiSet-remove', function() {
-    var amount = parseInt($($(this).closest('tr').children()[1]).text())-1
-    if (amount == 0){
-        $(this).closest('tr').remove()
-    } else {
-        $($($(this).closest('tr').children()[1]).children()[0]).text(amount)
-    }
-    refreshInput($(this).closest('form'))
+$(document).on('click', '.'+multiSetModelName+'MultiSet-add-all', function(){
+    var form = $(this).closest('form');
+    var added = form.find('#'+multiSetModelName+'MultiSet-added');
+    var multiple = form.find('#'+multiSetModelName+'MultiSet-table').attr('data-multiple');
+    var editable = form.find('#'+multiSetModelName+'MultiSet-table').attr('data-editable');
+    form.find('#'+multiSetModelName+'MultiSet-table tbody tr').each(function() {
+        if (this.style.display != 'none'){
+            var val = $(this).attr('data-id')
+            var text = $($(this).children()[0]).text()
+            if (!(added.find('tr[data-id="'+val+'"]').length)) {
+                var row = '<tr data-id="'+val+'"><td>'+text+'</td>'
+                if (multiple){
+                    row += '<td><input type="number" class="form-control '+multiSetModelName+'MultiSet-amount" min="1" value="1"></td>'
+                }
+                if (editable){
+                    var fields = JSON.parse(editable);
+                    for (fieldName in fields){
+                        var fieldValue = $(this).closest('tr').attr('data-'+fieldName)
+                        if (fields[fieldName].tag == 'input'){
+                            row += '<td><input type="'+fields[fieldName].type+'" class="form-control '+multiSetModelName+'MultiSet-editable" data-field="'+fieldName+'" value="'+fieldValue+'"></td>'
+                        }
+                    }
+                }
+                row += '<td><button type="buttton" class="btn btn-sm btn-danger '+multiSetModelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
+                row += '</tr>'
+                added.append(row)
+            }
+        }
+    })
+    refreshMutliSetInputs($(this).closest('form'))
+    return false;
+});
+
+$(document).on('click', '.'+multiSetModelName+'MultiSet-delete-all', function() {
+    var form = $(this).closest('form');
+    form.find('#'+multiSetModelName+'MultiSet-added tr').remove();
+    refreshMutliSetInputs(form);
     return false;
 });
 
 $(document).on('click', 'button[data-target="#edit"]', function () {
-    var data = $(this).closest('tr').data()
-    var editform = $("#edit form");
-    var added = editform.find('#'+modelName+'MultiSet-added')
-    added.empty()
-    var elements = JSON.parse(editform.find('input#'+inputSetId).val())
-    for (index in elements){
-        var text = $(editform.find('#'+modelName+'MultiSet-table tr[data-id="'+elements[index].id+'"]').children()[0]).text()
-        var row = '<tr data-id="'+elements[index].id+'"><td>'+text+'</td>'
-        if (editform.find('#'+modelName+'MultiSet-table').attr('data-multiple')){
-            row += '<td><input type="number" class="form-control '+modelName+'MultiSet-amount" value="'+elements[index].amount+'"></td>'
-        }
-        row += '<td><button type="buttton" class="btn btn-sm btn-danger '+modelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
-        row += '</tr>'
-        added.append(row)
+    var form = $("#edit form");
+    var value = form.find('input#'+multiSetInputSetId).val() || "[]"
+    if (value){
+        value = JSON.parse(value)
     }
-    refreshInput(editform);
+    initialMultiSetData(form, multiSetModelName, value)
 });

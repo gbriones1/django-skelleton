@@ -172,9 +172,10 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     var data = $(this).closest('tr').data()
     var editform = $("#edit form");
     editform[0].reset();
+    editform.trigger("reset");
     editform.find('select').each(function (){
         $(this).val("");
-    })
+    });
     for (key in data){
         var value = data[key]
         if (key == "date"){
@@ -189,6 +190,14 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
             value = JSON.stringify(data[key]);
         }
         editform.find('input[name="'+ key +'"]').val(value);
+        var field = editform.find('input[name="'+ key +'"]')
+        if (field.attr("type") == "checkbox"){
+            if (value == "Si" || value == "True"){
+                field.prop('checked', true);
+            }else {
+                field.prop('checked', false);
+            }
+        }
         var selected = ''
         editform.find('select[name="'+ key +'"] option').each(function (){
             if ($(this).val() == data[key]){
@@ -196,6 +205,9 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
             }
         })
         editform.find('select[name="'+ key +'"]').val(selected);
+        editform.find('input[type="checkbox"]').each(function () {
+            $(this).val("Si")
+        });
     }
 });
 

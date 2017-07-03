@@ -32,6 +32,7 @@ from database.forms import (
     NewLendingForm, EditLendingForm, DeleteLendingForm,
     NewOrderForm, EditOrderForm, DeleteOrderForm,
     NewInvoiceForm, EditInvoiceForm, DeleteInvoiceForm,
+    NewPriceListForm, EditPriceListForm, DeletePriceListForm,
     NewQuotationForm, EditQuotationForm, DeleteQuotationForm,
     NewPaymentForm, EditPaymentForm, DeletePaymentForm,
     NewWorkForm, EditWorkForm, DeleteWorkForm,
@@ -142,6 +143,16 @@ def main(request, name):
     else:
         raise Http404("Page does not exist")
     return render(request, 'pages/database.html', locals())
+
+
+@login_required
+def index(request):
+    APPNAME = configurations.APPNAME
+    YEAR = configurations.YEAR
+    VERSION = configurations.VERSION
+    PAGE_TITLE = configurations.PAGE_TITLE
+    return render(request, 'pages/database.html', locals())
+
 
 @login_required
 def product(request):
@@ -422,6 +433,7 @@ object_map = {
             ('product_count', 'Productos', 'IntegerField'),
             ('contacts', 'Contactos', 'ManyToManyField'),
         ],
+        'js': ['formset'],
     },
     'customer': {
         'name': 'Clientes',
@@ -432,7 +444,11 @@ object_map = {
             'new': NewCustomerForm,
             'edit': EditCustomerForm,
             'delete': DeleteCustomerForm,
-        }
+        },
+        'add_fields': [
+            ('contacts', 'Contactos', 'ManyToManyField'),
+        ],
+        'js': ['formset'],
     },
     'employee': {
         'name': 'Empleado',
@@ -506,7 +522,15 @@ object_map = {
         'model': PriceList,
         'viewset': PriceListViewSet,
         'action_forms': {
-        }
+            'new': NewPriceListForm,
+            'edit': EditPriceListForm,
+            'delete': DeletePriceListForm,
+        },
+        'add_fields': [
+            ('customer_name', 'Customer', 'CharField'),
+        ],
+        'remove_fields': ['customer'],
+        'js': ['multiset', 'pricelist'],
     },
     'storage_product': {
         'name': 'Productos en almacen',
@@ -553,7 +577,7 @@ object_map = {
         ],
         'remove_fields': ['organization_storage', 'invoice'],
         'js': ['multiset', 'input'],
-        'filter_form': DateRangeFilterForm()
+        'filter_form': DateTimeRangeFilterForm()
     },
     'output': {
         'name': 'Salidas',
@@ -643,7 +667,11 @@ object_map = {
             'edit': EditQuotationForm,
             'delete': DeleteQuotationForm,
         },
-        'filter_form': DateRangeFilterForm()
+        'add_fields': [
+            ('pricelist_name', 'Pricelist', 'CharField'),
+        ],
+        'remove_fields': ['pricelist'],
+        'filter_form': DateTimeRangeFilterForm()
     },
     'invoice': {
         'name': 'Facturas de compras',

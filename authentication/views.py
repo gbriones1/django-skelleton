@@ -5,7 +5,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
 
-from authentication.forms import UserForm, UpdateUserForm
+from authentication.forms import *
 
 import json
 import pdb
@@ -14,6 +14,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from authentication.serializers import UserSerializer, GroupSerializer
 from mysite import settings
+from mysite import graphics
 
 def signin(request):
     next = request.GET.get(REDIRECT_FIELD_NAME, '')
@@ -41,24 +42,26 @@ def users(request):
     accounts_active = "active"
     if request.method == "POST":
         action = request.POST.get('action', '')
-        if action == "CREATE":
-            userform = UserForm(request.POST)
+        if action == "new":
+            userform = NewUserForm(request.POST)
             if userform.is_valid():
                 userform.instance.set_password(request.POST['password'])
                 userform.save()
-        elif action == "UPDATE":
+        elif action == "edit":
             user = User.objects.get(id=request.POST['id'])
-            userform = UpdateUserForm(request.POST, instance=user)
+            userform = EditUserForm(request.POST, instance=user)
             if userform.is_valid():
                 userform.save()
-        elif action == "DELETE":
+        elif action == "delete":
             for user in User.objects.filter(id__in=json.loads(str(request.POST.get('user_id',"[]")))):
                 user.delete()
         return HttpResponseRedirect('/accounts/users/')
-    form = UserForm()
+    modals = [
+        graphics.Modal.from_action(graphics.Action.crud_button('new'), [NewUserForm()]),
+        graphics.Modal.from_action(graphics.Action.crud_button('edit'), [EditUserForm()])
+    ]
     users = User.objects.all()
-    user_forms = {u.id:UpdateUserForm(instance=u) for u in users}
-    scripts = ["users"]
+    scripts = ["tables"]
     return render_to_response('pages/accounts.html', locals(), context_instance=RequestContext(request))
 
 def update_pass(request):

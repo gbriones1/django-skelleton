@@ -138,7 +138,7 @@ try:
         if outp[4]:
             employee, _ = Employee.objects.get_or_create(name=outp[4])
         if outp[3]:
-            customer, _  = Customer.objects.get_or_create(name=outp[3])
+            customer, _  = Customer.objects.get_or_create(name=outp[3].encode("utf-8"))
         if outp[5]:
             replacer = organizations[outp[5]]["object"]
         org_sto = organization_storage["Consignacion"]

@@ -6,7 +6,7 @@ import json
 from django.db import models
 from django.utils import timezone
 
-VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin',]
+VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin', 'DateField']
 
 def get_fields(cls, remove_fields=[], add_fields=[]):
     fields = []
@@ -63,8 +63,43 @@ class Provider(models.Model):
     def provider_contact(self):
         return Provider_Contact.objects.filter(provider=self)
 
+    @provider_contact.setter
+    def provider_contact(self, contacts):
+        self.contacts_desc = contacts
+
     def __unicode__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super(Provider, self).save(*args, **kwargs)
+        if hasattr(self, 'contacts_desc'):
+            for c in self.contacts_desc:
+                if c['status'] == 'new':
+                    contact = Contact(name=c['name'], department=c['department'], email=c['email'], phone=c['phone'])
+                    contact.save()
+                    provider_contact = Provider_Contact(provider=self, contact=contact, for_orders=bool(c["for_orders"]))
+                    provider_contact.save()
+                elif c['status'] == 'update':
+                    provider_contact = self.provider_contact.get(id=c['id'])
+                    provider_contact.contact.name = c['name']
+                    provider_contact.contact.department = c['department']
+                    provider_contact.contact.email = c['email']
+                    provider_contact.contact.phone = c['phone']
+                    provider_contact.contact.save()
+                    provider_contact.for_orders = c['for_orders']
+                    provider_contact.save()
+                elif c['status'] == 'delete':
+                    provider_contact = self.provider_contact.get(id=c['id'])
+                    contact = provider_contact.contact
+                    provider_contact.delete()
+                    contact.delete()
+
+    def delete(self, *args, **kwargs):
+        for pc in self.provider_contact:
+            contact = pc.contact
+            pc.delete()
+            contact.delete()
+        super(Provider, self).delete(*args, **kwargs)
 
     def products_related(self):
         products = Product.objects.filter(provider=self)
@@ -101,6 +136,34 @@ class Customer(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super(Customer, self).save(*args, **kwargs)
+        if hasattr(self, 'contacts_desc'):
+            for c in self.contacts_desc:
+                if c['status'] == 'new':
+                    contact = Contact(name=c['name'], department=c['department'], email=c['email'], phone=c['phone'])
+                    contact.save()
+                    self.contacts.add(contact)
+                    self.save()
+                elif c['status'] == 'update':
+                    contact = self.contacts.get(id=c['id'])
+                    contact.name = c['name']
+                    contact.department = c['department']
+                    contact.email = c['email']
+                    contact.phone = c['phone']
+                    contact.save()
+                elif c['status'] == 'delete':
+                    contact = self.contacts.get(id=c['id'])
+                    contact.delete()
+
+    def delete(self, *args, **kwargs):
+        for cc in self.contacts:
+            cc.delete()
+        super(Customer, self).delete(*args, **kwargs)
+
+    class Meta:
+        ordering = ['name']
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)
@@ -254,6 +317,35 @@ class Percentage(models.Model):
 class PriceList(models.Model):
     customer = models.OneToOneField(Customer)
 
+    @property
+    def pricelist_product(self):
+        return PriceList_Product.objects.filter(pricelist=self)
+
+    @pricelist_product.setter
+    def pricelist_product(self, products):
+        self.products_desc = products
+
+    def save(self, *args, **kwargs):
+        super(PriceList, self).save(*args, **kwargs)
+        if hasattr(self, 'products_desc'):
+            for pp in self.products_desc:
+                product = Product.objects.get(id=pp['product'])
+                if pp['status'] == 'new':
+                    pricelist_product = PriceList_Product(pricelist=self, product=product, price=float(pp["amount"]))
+                    pricelist_product.save()
+                elif pp['status'] == 'update':
+                    pricelist_product = self.pricelist_product.get(id=pp['id'])
+                    pricelist_product.price = int(pp['price'])
+                    pricelist_product.save()
+                elif pp['status'] == 'delete':
+                    pricelist_product = self.pricelist_product.get(id=pp['id'])
+                    pricelist_product.delete()
+
+    def delete(self, *args, **kwargs):
+        for pp in self.pricelist_product:
+            pp.delete()
+        super(PriceList, self).delete(*args, **kwargs)
+
 class PriceList_Product(models.Model):
     pricelist = models.ForeignKey(PriceList)
     product = models.ForeignKey(Product)
@@ -272,6 +364,12 @@ class Quotation(models.Model):
 class Quotation_Product(models.Model):
     quotation = models.ForeignKey(Quotation)
     product = models.ForeignKey(Product)
+    amount = models.IntegerField()
+    price = models.DecimalField(max_digits=9, decimal_places=2)
+
+class Quotation_Others(models.Model):
+    quotation = models.ForeignKey(Quotation)
+    description = models.CharField(max_length=60)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 

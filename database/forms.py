@@ -1,117 +1,13 @@
 from django import forms
-from django.utils.encoding import (
-    force_str, force_text, python_2_unicode_compatible,
-)
-from django.utils.html import conditional_escape, format_html
-from django.forms.utils import flatatt
-from django.utils.safestring import mark_safe
-from django.core import serializers
 from django.utils import timezone
 
-from database.models import (
-    Provider, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
-    StorageType, Organization_Storage, Storage_Product, PriceList,
-    Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
-)
+from database.models import *
+from database.serializers import PercentageSerializer
 from datetime import datetime, date, timedelta
+
+from mysite.forms import *
+
 import json
-
-class Datalist(forms.widgets.Select):
-    def render(self, name, value, attrs=None, choices=()):
-        if value is None:
-            value = ''
-        datalist_attrs = attrs
-        final_attrs = self.build_attrs(attrs, name=name)
-        final_attrs["list"] = final_attrs.pop("id")
-        if value != '':
-            if name == "brand":
-                final_attrs["value"] = Brand.objects.get(id=value).name
-            elif name == "provider":
-                final_attrs["value"] = Provider.objects.get(id=value).name
-        output = [format_html('<input{} />', flatatt(final_attrs)), format_html('<datalist{}>', flatatt(datalist_attrs))]
-        options = self.render_options(choices, [value])
-        if options:
-            output.append(options)
-        output.append('</datalist>')
-        return mark_safe('\n'.join(output))
-
-    def render_option(self, selected_choices, option_value, option_label):
-        if option_value is None:
-            option_value = ''
-        if option_value == "":
-            option_label = ""
-        option_value = force_text(option_value)
-        return format_html('<option value="{}"></option>',
-                           force_text(option_label))
-
-class MultiSet(forms.widgets.Select):
-
-    def __init__(self, search=True, amounts=False, include=[]):
-        super(forms.widgets.Select, self).__init__()
-        self.search = search
-        self.amounts = amounts
-        self.include = include
-
-    def render(self, name, value, attrs=None, choices=()):
-        model_name = self.choices.queryset.model.__name__
-        if value is None:
-            value = ''
-        final_attrs = self.build_attrs(attrs, name=name)
-        final_attrs["type"] = 'hidden'
-        final_attrs["class"] = 'multiset'
-        final_attrs["data-model"] = model_name
-        output = []
-        output.append(format_html('<div{}>', flatatt({"class": "row"})))
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
-        table_attrs = {"class": "table", "id":model_name+"MultiSet-table"}
-        if self.amounts:
-            table_attrs['data-multiple'] = 'true'
-        output.append(format_html('<table{} >', flatatt(table_attrs)))
-        for choice in self.choices.queryset:
-            tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
-            tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
-            tr_attr["data-id"] = choice.id
-            for field in self.include:
-                if hasattr(choice, field):
-                    tr_attr["data-"+field] = getattr(choice, field)
-            output.append(format_html('<tr {}>', flatatt(tr_attr)))
-            output.append('<td>{}</td>'.format(str(choice)))
-            output.append(format_html('<td><button{}>+</button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
-            output.append('</tr>')
-        output.append('</table>')
-        output.append('</div>')
-
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
-        output.append(format_html('<table{} >', flatatt({"class": "table", 'id':model_name+"MultiSet-added"})))
-        output.append('</table>')
-        output.append('</div>')
-        output.append('</div>')
-
-        if self.search:
-            output.append(format_html('<div{}>', flatatt({"class": "row"})))
-            output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search"})))
-            output.append('</div>')
-            output.append('</div>')
-
-        output.append(format_html('<input{} />', flatatt(final_attrs)))
-        output.append('<script>var modelName="'+model_name+'"; var inputSetId="'+final_attrs["id"]+'"</script>')
-
-        return mark_safe('\n'.join(output))
-
-
-class HiddenField(forms.Field):
-    widget = forms.widgets.HiddenInput
-
-    def __init__(self, *args, **kwargs):
-        super(HiddenField, self).__init__(label='', *args, **kwargs)
-
-class DateInput(forms.DateInput):
-    input_type = 'date'
-
-class DateTimeInput(forms.DateTimeInput):
-    input_type = 'datetime-local'
-
 
 class NewProductForm(forms.ModelForm):
     code = forms.CharField(max_length=30, label='Codigo')
@@ -170,10 +66,21 @@ class DeleteProductForm(forms.ModelForm):
         model = Product
         fields = ["id"]
 
+class ProviderContactForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    department = forms.CharField(max_length=200, label='Departamento')
+    email = forms.EmailField(max_length=255, label='Email', required=False)
+    phone = forms.CharField(max_length=200, label='Telefono')
+    for_orders = forms.BooleanField(label="Para pedidos")
+
+    class Meta:
+        model = Provider_Contact
+        fields = '__all__'
+
 
 class NewProviderForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
-    email = forms.EmailField(max_length=255, label='Email', required=False)
+    contacts = forms.ModelChoiceField(queryset=Contact.objects.none(), required=True, label="Contactos", widget=FormSet(form=ProviderContactForm()), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -183,7 +90,7 @@ class NewProviderForm(forms.ModelForm):
 
 class EditProviderForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
-    email = forms.EmailField(max_length=255, label='Email', required=False)
+    contacts = forms.ModelChoiceField(queryset=Contact.objects.none(), required=True, label="Contactos", widget=FormSet(form=ProviderContactForm()), empty_label=None)
     id = HiddenField()
     action = HiddenField(initial='edit')
 
@@ -200,8 +107,19 @@ class DeleteProviderForm(forms.ModelForm):
         model = Provider
         fields = ["id"]
 
+class ContactForm(forms.ModelForm):
+    name = forms.CharField(max_length=200, label='Nombre')
+    department = forms.CharField(max_length=200, label='Departamento')
+    email = forms.EmailField(max_length=255, label='Email', required=False)
+    phone = forms.CharField(max_length=200, label='Telefono')
+
+    class Meta:
+        model = Contact
+        fields = '__all__'
+
 class NewCustomerForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
+    contacts = forms.ModelChoiceField(queryset=Contact.objects.none(), required=True, label="Contactos", widget=FormSet(form=ContactForm()), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -211,6 +129,7 @@ class NewCustomerForm(forms.ModelForm):
 
 class EditCustomerForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
+    contacts = forms.ModelChoiceField(queryset=Contact.objects.none(), required=True, label="Contactos", widget=FormSet(form=ContactForm()), empty_label=None)
     id = HiddenField()
     action = HiddenField(initial='edit')
 
@@ -597,6 +516,38 @@ class DeleteQuotationForm(forms.ModelForm):
 
     class Meta:
         model = Quotation
+        fields = ["id"]
+
+class NewPriceListForm(forms.ModelForm):
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")#, widget=Datalist())
+    base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
+    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(editable_fields=["price"]), empty_label=None)
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = PriceList
+        fields = '__all__'
+
+
+class EditPriceListForm(forms.ModelForm):
+    id = HiddenField()
+    base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
+    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(editable_fields=["price"]), empty_label=None)
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = PriceList
+        fields = '__all__'
+
+
+class DeletePriceListForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = PriceList
         fields = ["id"]
 
 class NewPaymentForm(forms.ModelForm):

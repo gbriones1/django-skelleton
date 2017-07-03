@@ -13,7 +13,7 @@ $(document).on('click', 'button[data-target="#order"]', function () {
         row += '</tr>'
         added.append(row)
     }
-    refreshInput(orderform);
+    refreshMutliSetInputs(orderform);
     orderform.find('select[name="organization_storage"]').val(data.organization_storage);
 });
 
@@ -38,7 +38,9 @@ $(document).on('change', 'select#id_organization_storage', function() {
     form.find('table#ProductMultiSet-table tr').each(function(){
         $(this).show()
     });
-    applySearch(form.find('#ProductMultiSet-search'))
+    var search = form.find('#ProductMultiSet-search-available').val()
+    var table = form.find('#ProductMultiSet-table')
+    applySearch(search, table)
     renderFilter(form)
 });
 
