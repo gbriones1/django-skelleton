@@ -227,6 +227,10 @@ class Product(models.Model):
             sell_price = sell_price+sell_price*percentage[0].sale_percentage_3/100
         return "${:.2f}".format(sell_price)
 
+    @property
+    def pricelist_related(self):
+        return [int(x.pricelist.id) for x in PriceList_Product.objects.filter(product=self)]
+
     def get_real_price(self):
         return self.price-(self.price*(self.discount/100))
 
@@ -317,6 +321,9 @@ class Percentage(models.Model):
 class PriceList(models.Model):
     customer = models.OneToOneField(Customer)
 
+    def __unicode__(self):
+        return self.customer.name
+
     @property
     def pricelist_product(self):
         return PriceList_Product.objects.filter(pricelist=self)
@@ -331,11 +338,11 @@ class PriceList(models.Model):
             for pp in self.products_desc:
                 product = Product.objects.get(id=pp['product'])
                 if pp['status'] == 'new':
-                    pricelist_product = PriceList_Product(pricelist=self, product=product, price=float(pp["amount"]))
+                    pricelist_product = PriceList_Product(pricelist=self, product=product, price=float(pp["price"]))
                     pricelist_product.save()
                 elif pp['status'] == 'update':
                     pricelist_product = self.pricelist_product.get(id=pp['id'])
-                    pricelist_product.price = int(pp['price'])
+                    pricelist_product.price = float(pp['price'])
                     pricelist_product.save()
                 elif pp['status'] == 'delete':
                     pricelist_product = self.pricelist_product.get(id=pp['id'])
@@ -352,14 +359,74 @@ class PriceList_Product(models.Model):
     alt_code = models.CharField(max_length=30, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
+    def __str__(self):
+        return self.product.code+" - "+self.product.name.encode('ascii', 'ignore')+" - "+self.product.description.encode('ascii', 'ignore')
+
+    def __unicode__(self):
+        return self.product.code+" - "+self.product.name+" - "+self.product.description
+
 class Quotation(models.Model):
-    date = models.DateTimeField(default=datetime.datetime.now)
+    date = models.DateTimeField(default=timezone.now)
     pricelist = models.ForeignKey(PriceList, null=True)
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
     authorized = models.BooleanField(default=False)
     service = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
+
+    @property
+    def quotation_product(self):
+        return Quotation_Product.objects.filter(quotation=self)
+
+    @quotation_product.setter
+    def quotation_product(self, products):
+        self.products_desc = products
+
+    @property
+    def quotation_other(self):
+        return Quotation_Others.objects.filter(quotation=self)
+
+    @quotation_other.setter
+    def quotation_other(self, others):
+        self.others_desc = others
+
+    def save(self, *args, **kwargs):
+        super(Quotation, self).save(*args, **kwargs)
+        if hasattr(self, 'products_desc'):
+            for qp in self.products_desc:
+                product = Product.objects.get(id=qp['product'])
+                if qp['status'] == 'new':
+                    quotation_product = Quotation_Product(quotation=self, product=product, amount=int(qp["amount"]), price=float(qp["price"]))
+                    quotation_product.save()
+                elif qp['status'] == 'update':
+                    quotation_product = self.quotation_product.get(id=qp['id'])
+                    quotation_product.price = float(qp['price'])
+                    quotation_product.amount = int(qp['amount'])
+                    quotation_product.save()
+                elif qp['status'] == 'delete':
+                    quotation_product = self.quotation_product.get(id=qp['id'])
+                    quotation_product.delete()
+        if hasattr(self, 'others_desc'):
+            for qo in self.others_desc:
+                if qo['status'] == 'new':
+                    quotation_other = Quotation_Others(quotation=self, description=qo["description"], amount=int(qo["amount"]), price=float(qo["price"]))
+                    quotation_other.save()
+                elif qo['status'] == 'update':
+                    quotation_other = self.quotation_other.get(id=qo['id'])
+                    quotation_other.description = qo['description']
+                    quotation_other.price = float(qo['price'])
+                    quotation_other.amount = int(qo['amount'])
+                    quotation_other.save()
+                elif qo['status'] == 'delete':
+                    quotation_other = self.quotation_other.get(id=qo['id'])
+                    quotation_other.delete()
+
+    def delete(self, *args, **kwargs):
+        for qp in self.quotation_product:
+            qp.delete()
+        for qo in self.quotation_other:
+            qo.delete()
+        super(Quotation, self).delete(*args, **kwargs)
 
 class Quotation_Product(models.Model):
     quotation = models.ForeignKey(Quotation)
@@ -375,6 +442,7 @@ class Quotation_Others(models.Model):
 
 class Work(models.Model):
     date = models.DateField()
+    folio = models.CharField(max_length=10, null=True)
     start_time = models.TimeField(null=True)
     end_time = models.TimeField(null=True)
     unit_section = models.CharField(max_length=30, null=True)
@@ -457,7 +525,7 @@ class Output(Movement):
         self.products_desc = products
 
 class Lending(models.Model):
-    date = models.DateTimeField(default=datetime.datetime.now)
+    date = models.DateTimeField(default=timezone.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     employee = models.ForeignKey(Employee, null=True)
     customer = models.ForeignKey(Customer, null=True)

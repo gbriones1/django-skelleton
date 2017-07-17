@@ -11,42 +11,9 @@ import time
 import json
 import urllib
 
-from database.models import (
-    Provider, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
-    Organization_Storage, Storage_Product, PriceList, Employee_Work,
-    Input, Output, Lending, Order, Quotation, Invoice, Payment, Work,
-    Order_Product, Movement_Product,
-)
-from database.forms import (
-    NewProductForm, EditProductForm, DeleteProductForm,
-    NewCustomerForm, EditCustomerForm, DeleteCustomerForm,
-    NewEmployeeForm, EditEmployeeForm, DeleteEmployeeForm,
-    NewProviderForm, EditProviderForm, DeleteProviderForm,
-    NewBrandForm, EditBrandForm, DeleteBrandForm,
-    NewApplianceForm, EditApplianceForm, DeleteApplianceForm,
-    NewPercentageForm, EditPercentageForm, DeletePercentageForm,
-    NewOrganizationForm, EditOrganizationForm, DeleteOrganizationForm,
-    NewOrganizationStorageForm, EditOrganizationStorageForm, DeleteOrganizationStorageForm,
-    NewInputForm, EditInputForm, DeleteInputForm,
-    NewOutputForm, EditOutputForm, DeleteOutputForm,
-    NewLendingForm, EditLendingForm, DeleteLendingForm,
-    NewOrderForm, EditOrderForm, DeleteOrderForm,
-    NewInvoiceForm, EditInvoiceForm, DeleteInvoiceForm,
-    NewPriceListForm, EditPriceListForm, DeletePriceListForm,
-    NewQuotationForm, EditQuotationForm, DeleteQuotationForm,
-    NewPaymentForm, EditPaymentForm, DeletePaymentForm,
-    NewWorkForm, EditWorkForm, DeleteWorkForm,
-    ChangeStorageProductForm,
-    OrderOutputForm, InputOrderForm, MailOrderForm,
-    DateRangeFilterForm, DateTimeRangeFilterForm,
-)
-from database.serializers import (
-    ProviderSerializer, CustomerSerializer, EmployeeSerializer,
-    BrandSerializer, ApplianceSerializer, ProductSerializer, PercentageSerializer, OrganizationSerializer,
-    OrganizationStorageSerializer, StorageProductSerializer, PriceListSerializer, EmployeeWorkSerializer,
-    InputSerializer, OutputSerializer, LendingSerializer, OrderSerializer,
-    QuotationSerializer, InvoiceSerializer, PaymentSerializer, WorkSerializer,
-)
+from database.models import *
+from database.forms import *
+from database.serializers import *
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
 from mysite.email_client import send_email
@@ -146,6 +113,18 @@ def main(request, name):
 
 
 @login_required
+def reports(request):
+    APPNAME = configurations.APPNAME
+    YEAR = configurations.YEAR
+    VERSION = configurations.VERSION
+    PAGE_TITLE = configurations.PAGE_TITLE
+    contents = [
+        graphics.Table("reports-table", "Reportes", [("name", "Nombre")], rows=[{"name":"Unidades mas conflictivas"}], checkbox=False, use_cache=False)
+    ]
+    return render(request, 'pages/database.html', locals())
+
+
+@login_required
 def index(request):
     APPNAME = configurations.APPNAME
     YEAR = configurations.YEAR
@@ -183,6 +162,17 @@ class APIWrapper(viewsets.ModelViewSet):
         return super(APIWrapper, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
+        # import pdb; pdb.set_trace()
+        # partial = kwargs.pop('partial', False)
+        # instance = self.get_object()
+        # serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        # serializer.is_valid(raise_exception=True)
+        # self.perform_update(serializer)
+        #
+        # if getattr(instance, '_prefetched_objects_cache', None):
+        #     instance._prefetched_objects_cache = {}
+        #
+        # return Response(serializer.data)
         return super(APIWrapper, self).update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
@@ -264,7 +254,7 @@ class OrganizationStorageViewSet(APIWrapper):
     serializer_class = OrganizationStorageSerializer
 
 
-class PriceListViewSet(viewsets.ModelViewSet):
+class PriceListViewSet(APIWrapper):
     queryset = PriceList.objects.order_by('customer')
     serializer_class = PriceListSerializer
 
@@ -386,6 +376,18 @@ class OrderViewSet(APIWrapper):
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
     serializer_class = QuotationSerializer
+
+    def mail(self, request, *args, **kwargs):
+        response = Response([], status=200)
+        return response
+
+    def work(self, request, *args, **kwargs):
+        response = Response([], status=200)
+        return response
+
+    def output(self, request, *args, **kwargs):
+        response = Response([], status=200)
+        return response
 
 class InvoiceViewSet(APIWrapper):
     queryset = Invoice.objects.order_by('-date')
@@ -666,12 +668,23 @@ object_map = {
             'new': NewQuotationForm,
             'edit': EditQuotationForm,
             'delete': DeleteQuotationForm,
+            'mail': QuotationMailForm,
+            'work': QuotationWorkForm,
+            'output': QuotationOutputForm,
         },
         'add_fields': [
+            ('id', 'Id', 'CharField'),
+            ('total', 'Total', 'CharField'),
             ('pricelist_name', 'Pricelist', 'CharField'),
         ],
         'remove_fields': ['pricelist'],
-        'filter_form': DateTimeRangeFilterForm()
+        'filter_form': DateTimeRangeFilterForm(),
+        'custom_reg_actions': [
+            graphics.Action('mail', 'modal', text='Email', icon='envelope', style='info', method="POST"),
+            graphics.Action('work', 'modal', text='Trabajo', icon='wrench', style='info', method="POST"),
+            graphics.Action('output', 'modal', text='Salida', icon='sign-out', style='info', method="POST"),
+            ],
+        'js': ['formset', 'multiset', 'quotation'],
     },
     'invoice': {
         'name': 'Facturas de compras',

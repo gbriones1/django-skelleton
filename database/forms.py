@@ -491,23 +491,77 @@ class DeleteInvoiceForm(forms.ModelForm):
         model = Invoice
         fields = ["id"]
 
+class QuotationOtherForm(forms.ModelForm):
+    description = forms.CharField(max_length=200, label='Descripcion')
+    amount = forms.IntegerField(label='Cantidad', required=True, min_value=0, initial=0)
+    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio unitario', required=True, min_value=0, initial=0)
+
+    class Meta:
+        model = Quotation_Others
+        fields = (
+            'description',
+            'amount',
+            'price'
+        )
+
 class NewQuotationForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
+    unit = forms.CharField(max_length=60, label='Unidad')
+    plates = forms.CharField(max_length=10, label='Placas')
+    base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
+    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=False, label="Refacciones", widget=MultiSet(amounts=True, include=["pricelist_related"], editable_fields=['price']), empty_label=None)
+    others = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
+    service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
+    authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
         model = Quotation
-        fields = '__all__'
+        fields = (
+            'unit',
+            'plates',
+            'base_price',
+            'percentages',
+            'pricelist',
+            'products',
+            'others',
+            'service',
+            'discount',
+            'authorized'
+        )
 
 
 class EditQuotationForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
     id = HiddenField()
     action = HiddenField(initial='edit')
+    unit = forms.CharField(max_length=60, label='Unidad')
+    plates = forms.CharField(max_length=10, label='Placas')
+    base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
+    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=False, label="Refacciones", widget=MultiSet(amounts=True, include=["pricelist_related"], editable_fields=['price']), empty_label=None)
+    others = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
+    service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
+    authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
         model = Quotation
-        fields = '__all__'
+        fields = (
+            'id',
+            'unit',
+            'plates',
+            'base_price',
+            'percentages',
+            'pricelist',
+            'products',
+            'others',
+            'service',
+            'discount',
+            'authorized'
+        )
 
 
 class DeleteQuotationForm(forms.ModelForm):
@@ -539,7 +593,11 @@ class EditPriceListForm(forms.ModelForm):
 
     class Meta:
         model = PriceList
-        fields = '__all__'
+        fields = (
+            'id',
+            'base_price',
+            'products',
+        )
 
 
 class DeletePriceListForm(forms.ModelForm):
@@ -616,6 +674,45 @@ class ChangeStorageProductForm(forms.ModelForm):
         model = Storage_Product
         fields = ["id", "action", "amount", "must_have"]
 
+class QuotationMailForm(forms.Form):
+    id = HiddenField()
+    subject = forms.CharField(label="Asunto", initial="Cotizacion de Muelles Obrero")
+    message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje se envia la siguente cotizacion")
+    action = HiddenField(initial='mail')
+
+class QuotationWorkForm(forms.ModelForm):
+    date = forms.DateTimeField(widget=DateInput(), label='Fecha', initial=timezone.localtime(timezone.now()).strftime("%Y-%m-%d"))
+    folio = forms.CharField(label="Folio")
+    start_time = forms.TimeField(label="Hora de Inicio")
+    end_time = forms.TimeField(label="Hora de Fin")
+    unit_section = forms.CharField(label="Seccion en la unidad")
+    quotation = HiddenField()
+    action = HiddenField(initial='work')
+
+    class Meta:
+        model = Work
+        fields = (
+            "date",
+            "folio",
+            "start_time",
+            "end_time",
+            "unit_section",
+            "quotation"
+        )
+
+class QuotationOutputForm(forms.ModelForm):
+    date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=timezone.localtime(timezone.now()).strftime("%Y-%m-%dT%H:%M:%S"))
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True, include=["in_storage"]), empty_label=None)
+    employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
+    destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
+    action = HiddenField(initial='output')
+
+    class Meta:
+        model = Output
+        fields = '__all__'
+
 class OrderOutputForm(forms.ModelForm):
     id = HiddenField()
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
@@ -657,5 +754,5 @@ class DateRangeFilterForm(forms.Form):
     date__lt = forms.DateField(widget=DateInput(), initial=date.today() + timedelta(1), label='Hasta')
 
 class DateTimeRangeFilterForm(forms.Form):
-    date__gte = forms.DateTimeField(widget=DateTimeInput(), initial=datetime(year=(datetime.now() - timedelta(28)).year, month=(datetime.now() - timedelta(28)).month, day=(datetime.now() - timedelta(28)).day).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Desde')
-    date__lt = forms.DateTimeField(widget=DateTimeInput(), initial=datetime(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day, hour=23, minute=59).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Hasta')
+    date__gte = forms.DateTimeField(widget=DateTimeInput(), initial=timezone.make_aware(datetime(year=(timezone.now() - timedelta(28)).year, month=(timezone.now() - timedelta(28)).month, day=(timezone.now() - timedelta(28)).day)).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Desde')
+    date__lt = forms.DateTimeField(widget=DateTimeInput(), initial=timezone.make_aware(datetime(year=timezone.now().year, month=timezone.now().month, day=timezone.now().day, hour=23, minute=59)).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Hasta')

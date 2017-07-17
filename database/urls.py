@@ -31,5 +31,6 @@ router.register(r'order', views.OrderViewSet)
 urlpatterns = [
 	url(r'^api/', include(router.urls)),
 	url(r'^$', views.index),
+	url(r'^reports/$', views.reports),
 	url(r'^(?P<name>\w+\W*\w*)/$', views.main),
 ]

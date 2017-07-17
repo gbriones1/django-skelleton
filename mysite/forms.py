@@ -60,29 +60,14 @@ class MultiSet(forms.widgets.Select):
         final_attrs["class"] = 'multiset'
         final_attrs["data-model"] = model_name
         output = []
+
         output.append(format_html('<div{}>', flatatt({"class": "row"})))
         output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
         output.append(format_html('<h4{} >Available</h4>', flatatt({"style": "float: left;"})))
         output.append(format_html('<button{}><i class="fa fa-forward"></i></button>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add-all", "type":"button", "style": "float: right;"})))
-        output.append('</div>')
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-        output.append(format_html('<h4{}>Added</h4>', flatatt({"style": "float: left;"})))
-        output.append(format_html('<button{}><i class="fa fa-backward"></i></button>', flatatt({"class":"btn btn-danger btn-sm "+model_name+"MultiSet-delete-all", "type":"button", "style": "float: right;"})))
-        output.append('</div>')
-        output.append('</div>')
-
         if self.search:
-            output.append(format_html('<div{}>', flatatt({"class": "row"})))
-            output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
             output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search-available"})))
-            output.append('</div>')
-            output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search-added"})))
-            output.append('</div>')
-            output.append('</div>')
-
-        output.append(format_html('<div{}>', flatatt({"class": "row"})))
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
+        output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
         table_attrs = {"class": "table", "id":model_name+"MultiSet-table"}
         if self.amounts:
             table_attrs['data-multiple'] = 'true'
@@ -115,10 +100,17 @@ class MultiSet(forms.widgets.Select):
             output.append('</tr>')
         output.append('</table>')
         output.append('</div>')
+        output.append('</div>')
 
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6", "style":"height: 600px;overflow-y: auto;padding: 0"})))
+        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
+        output.append(format_html('<h4{}>Added</h4>', flatatt({"style": "float: left;"})))
+        output.append(format_html('<button{}><i class="fa fa-backward"></i></button>', flatatt({"class":"btn btn-danger btn-sm "+model_name+"MultiSet-delete-all", "type":"button", "style": "float: right;"})))
+        if self.search:
+            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search-added"})))
+        output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
         output.append(format_html('<table{} >', flatatt({"class": "table", 'id':model_name+"MultiSet-added"})))
         output.append('</table>')
+        output.append('</div>')
         output.append('</div>')
         output.append('</div>')
 
@@ -150,7 +142,7 @@ class FormSet(forms.widgets.Select):
         if self.allow_create:
             table_attrs['data-allow_create'] = 'true'
         output.append(format_html('<div{}>', flatatt({"class": "row"})))
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-12", "style":"height: 600px;overflow-y: auto;padding: 0"})))
+        output.append(format_html('<div{}>', flatatt({"class": "col-sm-12", "style":"height: 300px;overflow-y: auto;padding: 0"})))
         output.append(format_html('<table{} >', flatatt(table_attrs)))
         output.append('<thead><tr>')
         form_fields = []

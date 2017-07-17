@@ -58,11 +58,23 @@ $(document).on('click', '.ProductMultiSet-add', function(){
     return false;
 });
 
+$(document).on('click', '.ProductMultiSet-add-all', function(){
+    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
+    return false;
+});
+
 $(document).on('click', '.ProductMultiSet-delete', function(){
     $('input.multiset').each(function functionName() {
-        if (!$(this).val() || JSON.parse($(this).val()).length == 0){
+        if ($(this).closest('form').find('#ProductMultiSet-added tbody').children().length == 0){
             $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
         }
+    })
+    return false;
+});
+
+$(document).on('click', '.ProductMultiSet-delete-all', function(){
+    $('input.multiset').each(function functionName() {
+        $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
     })
     return false;
 });

@@ -49,11 +49,11 @@ function initialMultiSetData(form, modelName, data) {
         if (form.find('#'+modelName+'MultiSet-table').attr('data-multiple')){
             row += '<td><input type="number" class="form-control '+modelName+'MultiSet-amount" value="'+data[index].amount+'"></td>'
         }
-        var editable = $(this).closest('table').attr('data-editable')
+        var editable = form.find('#'+modelName+'MultiSet-table').attr('data-editable')
         if (editable){
             var fields = JSON.parse(editable);
             for (fieldName in fields){
-                var fieldValue = $(this).closest('tr').attr('data-'+fieldName)
+                var fieldValue = data[index][fieldName]
                 if (fields[fieldName].tag == 'input'){
                     row += '<td><input type="'+fields[fieldName].type+'" class="form-control '+multiSetModelName+'MultiSet-editable" data-field="'+fieldName+'" value="'+fieldValue+'"></td>'
                 }
@@ -63,7 +63,7 @@ function initialMultiSetData(form, modelName, data) {
         row += '</tr>'
         added.append(row)
     }
-    refreshMutliSetInputs(form);
+    // refreshMutliSetInputs(form);
 }
 
 $(document).on('keyup change', '#'+multiSetModelName+'MultiSet-search-available', function() {
@@ -106,18 +106,18 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add', function(){
         row += '</tr>'
         added.append(row)
     }
-    refreshMutliSetInputs($(this).closest('form'))
+    // refreshMutliSetInputs($(this).closest('form'))
     return false;
 });
 
-$(document).on('change', '.'+multiSetModelName+'MultiSet-amount', function () {
-    refreshMutliSetInputs($(this).closest('form'));
-});
+// $(document).on('change', '.'+multiSetModelName+'MultiSet-amount', function () {
+//     refreshMutliSetInputs($(this).closest('form'));
+// });
 
 $(document).on('click', '.'+multiSetModelName+'MultiSet-delete', function() {
     var thisForm = $(this).closest('form');
     $(this).closest('tr').remove();
-    refreshMutliSetInputs(thisForm);
+    // refreshMutliSetInputs(thisForm);
     return false;
 });
 
@@ -150,14 +150,14 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add-all', function(){
             }
         }
     })
-    refreshMutliSetInputs($(this).closest('form'))
+    // refreshMutliSetInputs($(this).closest('form'))
     return false;
 });
 
 $(document).on('click', '.'+multiSetModelName+'MultiSet-delete-all', function() {
     var form = $(this).closest('form');
     form.find('#'+multiSetModelName+'MultiSet-added tr').remove();
-    refreshMutliSetInputs(form);
+    // refreshMutliSetInputs(form);
     return false;
 });
 
@@ -168,4 +168,9 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
         value = JSON.parse(value)
     }
     initialMultiSetData(form, multiSetModelName, value)
+});
+
+$('input.multiset').closest('form').submit(function () {
+    var form = $(this).closest("form");
+    refreshMutliSetInputs(form);
 });

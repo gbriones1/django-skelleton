@@ -107,7 +107,7 @@ class HTMLTable(HTMLObject):
                     td = ET.Element('td')
                     td.text = row[column[0]]
                     tr.append(td)
-                    tr.set("data-"+row[column[1]], row[column[0]])
+                    tr.set("data-"+column[0], row[column[0]])
                 if actions:
                     for action in actions:
                         td = ET.Element('td')

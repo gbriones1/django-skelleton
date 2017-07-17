@@ -1,11 +1,17 @@
 import json
 
-from database.models import (
-    Provider, Provider_Contact, Contact, Customer, Employee, Brand, Appliance, Product, Percentage, Organization,
-    StorageType, Organization_Storage, Storage_Product, PriceList, Movement_Product, Lending_Product, Order_Product,
-    Movement, Input, Output, Lending, Order, Quotation, Invoice, Payment, Work, Employee_Work
-)
+from database.models import *
 from rest_framework import serializers
+
+class CheckboxField(serializers.BooleanField):
+
+    def run_validation(self, data=serializers.empty):
+        true_values = ["on"]
+        if data in true_values:
+            data=True
+        else:
+            data=False
+        return super(CheckboxField, self).run_validation(data)
 
 class ProviderContactSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='contact.name')
@@ -146,13 +152,28 @@ class OrganizationStorageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization_Storage
 
+class PriceListProductSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='product.id')
+    product = VeryShortProductSerializer()
+    price = serializers.DecimalField(max_digits=9, decimal_places=2)
+
+    class Meta:
+        model = PriceList_Product
+        exclude = (
+            'pricelist',
+            )
+
 class PriceListSerializer(serializers.ModelSerializer):
+    customer = serializers.SlugRelatedField(slug_field='name', queryset=Customer.objects.all(), required=False)
     customer_name = serializers.ReadOnlyField(source='customer.name')
+    products = PriceListProductSerializer(source='pricelist_product', many=True)
 
     class Meta:
         model = PriceList
         fields = (
+            'id',
             'customer',
+            'products',
             'customer_name'
         )
 
@@ -186,6 +207,10 @@ class PriceListSerializer(serializers.ModelSerializer):
                 pp['product'] = pp['id']
                 pp['id'] = None
                 pp['status'] = 'new'
+        return value
+
+    def validate_customer(self, value):
+        import pdb; pdb.set_trace()
         return value
 
 class StorageProductSerializer(serializers.ModelSerializer):
@@ -446,22 +471,138 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_status(self, obj):
         return obj.get_status_display()
 
+class QuotationProductSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='product.id')
+    product = VeryShortProductSerializer()
+    price = serializers.DecimalField(max_digits=9, decimal_places=2)
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Quotation_Product
+        exclude = (
+            'quotation',
+            )
+
+class QuotationOtherSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+    description = serializers.CharField()
+    price = serializers.DecimalField(max_digits=9, decimal_places=2)
+    amount = serializers.IntegerField()
+
+    class Meta:
+        model = Quotation_Others
+        exclude = (
+            'quotation',
+            )
+
 class QuotationSerializer(serializers.ModelSerializer):
-    date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
+    date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
+    pricelist = serializers.PrimaryKeyRelatedField(queryset=PriceList.objects.all(), allow_null=True, required=False)
     pricelist_name = serializers.ReadOnlyField(source='pricelist.customer.name')
+    products = QuotationProductSerializer(source='quotation_product', many=True)
+    others = QuotationOtherSerializer(source='quotation_other', many=True)
+    authorized = CheckboxField()
+    total = serializers.SerializerMethodField()
 
     class Meta:
         model = Quotation
         fields = (
+            "id",
             "date",
             "pricelist",
             "unit",
             "plates",
             "authorized",
+            "products",
+            "others",
             "service",
             "discount",
             "pricelist_name",
+            "total",
         )
+
+    def get_total(self, obj):
+        price = 0.0
+        for quotation_product in obj.quotation_product:
+            price += float(quotation_product.price)*quotation_product.amount
+        for quotation_other in obj.quotation_other:
+            price += float(quotation_other.price)*quotation_other.amount
+        price += float(obj.service)
+        price -= float(obj.discount)
+        return price
+
+    def validate_products(self, value):
+        value = json.loads(self.initial_data['products'])
+        quotation_id = self.initial_data.get("id")
+        if quotation_id:
+            quotation = Quotation.objects.get(id=quotation_id)
+            for qp in value:
+                qp['product'] = qp['id']
+                for quotation_qp in quotation.quotation_product:
+                    if qp['product'] == quotation_qp.product.id:
+                        qp['id'] = quotation_qp.id
+                        qp['status'] = 'update'
+                        break
+                else:
+                    qp['id'] = None
+                    qp['status'] = 'new'
+            for quotation_qp in quotation.quotation_product:
+                for qp in value:
+                    if qp['product'] == quotation_qp.product.id:
+                        break
+                else:
+                    value.append({
+                        'id': quotation_qp.id,
+                        'product': quotation_qp.product.id,
+                        'status': 'delete',
+                    })
+        else:
+            for qp in value:
+                qp['product'] = qp['id']
+                qp['id'] = None
+                qp['status'] = 'new'
+        pricelist = self.initial_data.get('pricelist')
+        if pricelist:
+            pricelist = PriceList.objects.get(id=pricelist)
+            for qp in value:
+                for pricelist_pp in pricelist.pricelist_product:
+                    if pricelist_pp.product.id == qp['product']:
+                        qp['price'] = pricelist_pp.price
+                        break
+        return value
+
+    def validate_others(self, value):
+        others = self.initial_data.get('others')
+        value = json.loads(others) if others else []
+        quotation_id = self.initial_data.get("id")
+        if quotation_id:
+            quotation = Quotation.objects.get(id=quotation_id)
+            for qo in value:
+                for quotation_qo in quotation.quotation_other:
+                    if qo['id'] == quotation_qo.id:
+                        qo['status'] = 'update'
+                        break
+                else:
+                    qo['id'] = None
+                    qo['status'] = 'new'
+            for quotation_qo in quotation.quotation_other:
+                for qo in value:
+                    if qo['id'] == quotation_qo.id:
+                        break
+                else:
+                    value.append({
+                        'id': quotation_qo.id,
+                        'status': 'delete',
+                    })
+        else:
+            for qo in value:
+                qo['id'] = None
+                qo['status'] = 'new'
+        return value
+
+    def validate_pricelist(self, value):
+        # import pdb; pdb.set_trace()
+        return value
 
 class InvoiceSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%d-%B-%Y")

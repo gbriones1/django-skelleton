@@ -141,6 +141,10 @@ button > p {
 	margin: 0;
 }
 
+.modal {
+	overflow: auto;
+}
+
 @media (min-width: 1000px){
 	.modal-lg {
 	    width: 1000px;
