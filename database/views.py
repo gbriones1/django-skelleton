@@ -407,7 +407,6 @@ class QuotationViewSet(APIWrapper):
         return response
 
     def output(self, request, *args, **kwargs):
-        import pdb; pdb.set_trace()
         response = OutputViewSet.as_view({'post': 'create'})(request)
         if response.status_code/100 == 2:
             response.redirect_to = '/database/output'
