@@ -8,7 +8,7 @@ function refreshMutliSetInputs(form) {
         var model = inputSet.data('model');
         var multiple = form.find('table#'+model+'MultiSet-table').attr('data-multiple')
         var editable = form.find('table#'+model+'MultiSet-table').attr('data-editable')
-        form.find('#'+model+'MultiSet-added tr').each(function () {
+        form.find('#'+model+'MultiSet-added tbody tr').each(function () {
             var itemData = null;
             if (multiple || editable){
                 itemData = $(this).data();
@@ -43,13 +43,26 @@ function applySearch(search, table){
 function initialMultiSetData(form, modelName, data) {
     var added = form.find('#'+modelName+'MultiSet-added')
     added.empty()
+    var multiple = form.find('#'+modelName+'MultiSet-table').attr('data-multiple')
+    var editable = form.find('#'+modelName+'MultiSet-table').attr('data-editable')
+    var thead = "<thead><tr><th>Nombre</td>"
+    if (multiple){
+        thead += "<th>Cant</th>"
+    }
+    if (editable){
+        var fields = JSON.parse(editable);
+        for (fieldName in fields){
+            thead += "<th>"+fieldName+"</th>"
+        }
+    }
+    thead += "</tr></thead>"
+    added.append(thead)
     for (index in data){
         var text = $(form.find('#'+modelName+'MultiSet-table tr[data-id="'+data[index].id+'"]').children()[0]).text()
         var row = '<tr data-id="'+data[index].id+'"><td>'+text+'</td>'
-        if (form.find('#'+modelName+'MultiSet-table').attr('data-multiple')){
+        if (multiple){
             row += '<td><input type="number" class="form-control '+modelName+'MultiSet-amount" value="'+data[index].amount+'"></td>'
         }
-        var editable = form.find('#'+modelName+'MultiSet-table').attr('data-editable')
         if (editable){
             var fields = JSON.parse(editable);
             for (fieldName in fields){
@@ -82,6 +95,20 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add', function(){
     var editable = $(this).closest('table').attr('data-editable')
     var text = $($(this).closest('tr').children()[0]).text()
     var added = $(this).closest('form').find('#'+multiSetModelName+'MultiSet-added')
+    if (!added.find('thead').children().length){
+        var thead = "<thead><tr><th>Nombre</td>"
+        if (multiple){
+            thead += "<th>Cant</th>"
+        }
+        if (editable){
+            var fields = JSON.parse(editable);
+            for (fieldName in fields){
+                thead += "<th>"+fieldName+"</th>"
+            }
+        }
+        thead += "</tr></thead>"
+        added.append(thead)
+    }
     if (added.find('tr[data-id="'+val+'"]').length){
         var amount = parseInt(added.find('tr[data-id="'+val+'"] .'+multiSetModelName+'MultiSet-amount').val()) || 0;
         if (amount){
@@ -156,7 +183,7 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add-all', function(){
 
 $(document).on('click', '.'+multiSetModelName+'MultiSet-delete-all', function() {
     var form = $(this).closest('form');
-    form.find('#'+multiSetModelName+'MultiSet-added tr').remove();
+    form.find('#'+multiSetModelName+'MultiSet-added tbody tr').remove();
     // refreshMutliSetInputs(form);
     return false;
 });

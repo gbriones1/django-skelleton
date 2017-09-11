@@ -145,7 +145,9 @@ class Modal(Section):
     @staticmethod
     def from_action(action, body=[]):
         if action.name == 'multi-delete':
-            body = [MultiDeleteInput, MultiDeleteAction]
+            body = [MultiDeleteInput, MultiDeleteAction, "Seguro que desea eliminar los elementos seleccionados?"]
+        elif action.name == 'delete':
+            body.append("Seguro que desea eliminar el elemento actual?")
         return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method)
 
     def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method=''):

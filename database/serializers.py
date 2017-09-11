@@ -13,6 +13,12 @@ class CheckboxField(serializers.BooleanField):
             data=False
         return super(CheckboxField, self).run_validation(data)
 
+class ContactSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Contact
+        fields = '__all__'
+
 class ProviderContactSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='contact.name')
     department = serializers.CharField(source='contact.department')
@@ -35,16 +41,17 @@ class ProviderContactSerializer(serializers.ModelSerializer):
 
 class ProviderSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
-    contacts = ProviderContactSerializer(source='provider_contact', many=True)
+    contacts = ContactSerializer(source='contacts', many=True)
 
     class Meta:
         model = Provider
+        fields = '__all__'
 
     def get_product_count(self, obj):
         return len(Product.objects.filter(provider=obj))
 
     def validate_contacts(self, value):
-        value = json.loads(self.initial_data['contacts'])
+        value = json.loads(self.initial_data.get('contacts', '[]') or '[]')
         for c in value:
             c['status'] = 'new'
         provider_id = self.initial_data.get("id")
@@ -63,11 +70,14 @@ class ProviderSerializer(serializers.ModelSerializer):
         return value
 
 class CustomerSerializer(serializers.ModelSerializer):
+    contacts = ContactSerializer(source='customer_contact', many=True)
+
     class Meta:
         model = Customer
+        fields = '__all__'
 
     def validate_contacts(self, value):
-        value = json.loads(self.initial_data['contacts'])
+        value = json.loads(self.initial_data.get('contacts', '[]') or '[]')
         for c in value:
             c['status'] = 'new'
         customer_id = self.initial_data.get("id")
@@ -88,14 +98,17 @@ class CustomerSerializer(serializers.ModelSerializer):
 class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
+        fields = '__all__'
 
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
+        fields = '__all__'
 
 class ApplianceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appliance
+        fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
     provider = serializers.SlugRelatedField(slug_field='name', queryset=Provider.objects.all(), allow_null=True)
@@ -108,6 +121,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
+        fields = '__all__'
 
 class ShortProductSerializer(serializers.ModelSerializer):
     provider = serializers.SlugRelatedField(slug_field='name', queryset=Provider.objects.all(), allow_null=True)
@@ -138,10 +152,12 @@ class VeryShortProductSerializer(serializers.ModelSerializer):
 class PercentageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Percentage
+        fields = '__all__'
 
 class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
+        fields = '__all__'
 
 class OrganizationStorageSerializer(serializers.ModelSerializer):
     # storage_type = serializers.SlugRelatedField(slug_field='name', queryset=StorageType.objects.all())
@@ -151,6 +167,7 @@ class OrganizationStorageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Organization_Storage
+        fields = '__all__'
 
 class PriceListProductSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='product.id')
@@ -164,7 +181,7 @@ class PriceListProductSerializer(serializers.ModelSerializer):
             )
 
 class PriceListSerializer(serializers.ModelSerializer):
-    customer = serializers.SlugRelatedField(slug_field='name', queryset=Customer.objects.all(), required=False)
+    # customer = serializers.SlugRelatedField(slug_field='name', queryset=Customer.objects.all(), required=False)
     customer_name = serializers.ReadOnlyField(source='customer.name')
     products = PriceListProductSerializer(source='pricelist_product', many=True)
 
@@ -209,10 +226,6 @@ class PriceListSerializer(serializers.ModelSerializer):
                 pp['status'] = 'new'
         return value
 
-    def validate_customer(self, value):
-        import pdb; pdb.set_trace()
-        return value
-
 class StorageProductSerializer(serializers.ModelSerializer):
     product_code = serializers.ReadOnlyField()
     product_name = serializers.ReadOnlyField()
@@ -223,11 +236,12 @@ class StorageProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Storage_Product
+        fields = '__all__'
 
 class MovementProductSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='product.id')
     product = VeryShortProductSerializer()
-    price = serializers.DecimalField(max_digits=9, decimal_places=2)
+    real_price = serializers.DecimalField(max_digits=9, decimal_places=2, source='price')
     amount = serializers.IntegerField()
 
     class Meta:
@@ -236,9 +250,44 @@ class MovementProductSerializer(serializers.ModelSerializer):
             'movement',
             )
 
+class InputProductSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='product.id')
+    product = VeryShortProductSerializer()
+    price = serializers.ReadOnlyField(source='product.price')
+    discount = serializers.ReadOnlyField(source='product.discount')
+    real_price = serializers.DecimalField(max_digits=9, decimal_places=2, source='price')
+    amount = serializers.IntegerField()
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Movement_Product
+        exclude = (
+            'movement',
+            )
+
+    def get_total_price(self, obj):
+        return obj.price * obj.amount
+
+class OutputProductSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField(source='product.id')
+    product = VeryShortProductSerializer()
+    price = serializers.DecimalField(max_digits=9, decimal_places=2)
+    amount = serializers.IntegerField()
+    total_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Movement_Product
+        exclude = (
+            'movement',
+            )
+
+    def get_total_price(self, obj):
+        return obj.price * obj.amount
+
 class LendingProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lending_Product
+        fields = '__all__'
 
 class OrderProductSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='product.id')
@@ -247,7 +296,9 @@ class OrderProductSerializer(serializers.ModelSerializer):
     # product_name = serializers.ReadOnlyField(source='product.name')
     # product_description = serializers.ReadOnlyField(source='product.description')
     amount = serializers.IntegerField()
-    actions = serializers.SerializerMethodField()
+    price = serializers.ReadOnlyField(source='product.price')
+    discount = serializers.ReadOnlyField(source='product.discount')
+    # actions = serializers.SerializerMethodField()
 
     class Meta:
         model = Order_Product
@@ -267,8 +318,9 @@ class InputSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     organization = serializers.ReadOnlyField(source='organization_storage.organization.name')
     storage = serializers.ReadOnlyField(source='organization_storage.storage_type.name')
-    products = MovementProductSerializer(source='movement_product', many=True)
-    invoice = serializers.SlugRelatedField(slug_field='number', queryset=Invoice.objects.all(), allow_null=True, required=False)
+    products = InputProductSerializer(source='movement_product', many=True)
+    invoice = serializers.SlugRelatedField(slug_field='id', queryset=Invoice.objects.all(), allow_null=True, required=False)
+    # invoice = serializers.SlugRelatedField(slug_field='number', queryset=Invoice.objects.all(), allow_null=True, required=False)
     # invoice_number = serializers.SerializerMethodField()
     invoice_number = serializers.ReadOnlyField(source='invoice.number')
     invoice_date = serializers.ReadOnlyField(source='invoice.date')
@@ -328,22 +380,27 @@ class InputSerializer(serializers.ModelSerializer):
                 mp['id'] = None
                 mp['status'] = 'new'
                 mp['restock'] = {self.initial_data['organization_storage']: int(mp['amount'])}
+        for mp in value:
+            product = Product.objects.get(id=mp['product'])
+            product.price = float(mp['price'])
+            product.discount = float(mp['discount'])
+            product.save()
+            mp['price'] = str(product.price - (product.price*product.discount/100))
         return value
 
-    # def validate_invoice_number(self, value):
-    #     import pdb; pdb.set_trace()
-    #     self.validate_invoice(value)
-    #     return value
-    #
-    # def validate_invoice(self, value):
-    #     import pdb; pdb.set_trace()
-    #     return value
+    def validate_invoice(self, value):
+        if not value:
+            invoice_number = self.initial_data.get("invoice_number")
+            invoice_date = self.initial_data.get("invoice_date")
+            if invoice_number and invoice_date:
+                value = Invoice.objects.get(number=invoice_number, date=invoice_date)
+        return value
 
 class OutputSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S")
     organization = serializers.ReadOnlyField(source='organization_storage.organization.name')
     storage = serializers.ReadOnlyField(source='organization_storage.storage_type.name')
-    products = MovementProductSerializer(source='movement_product', many=True)
+    products = OutputProductSerializer(source='movement_product', many=True)
     replacer_name = serializers.ReadOnlyField(source='replacer.name')
     destination_name = serializers.ReadOnlyField(source='destination.name')
     employee_name = serializers.ReadOnlyField(source='employee.name')
@@ -409,6 +466,7 @@ class LendingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lending
+        fields = '__all__'
 
 class OrderSerializer(serializers.ModelSerializer):
     date = serializers.ReadOnlyField()
@@ -499,6 +557,7 @@ class QuotationSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     pricelist = serializers.PrimaryKeyRelatedField(queryset=PriceList.objects.all(), allow_null=True, required=False)
     pricelist_name = serializers.ReadOnlyField(source='pricelist.customer.name')
+    customer = serializers.ReadOnlyField(source='pricelist.customer.id')
     products = QuotationProductSerializer(source='quotation_product', many=True)
     others = QuotationOtherSerializer(source='quotation_other', many=True)
     authorized = CheckboxField()
@@ -517,6 +576,7 @@ class QuotationSerializer(serializers.ModelSerializer):
             "others",
             "service",
             "discount",
+            "customer",
             "pricelist_name",
             "total",
         )
@@ -610,15 +670,19 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invoice
+        fields = '__all__'
 
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
+        fields = '__all__'
 
 class WorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Work
+        fields = '__all__'
 
 class EmployeeWorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee_Work
+        fields = '__all__'

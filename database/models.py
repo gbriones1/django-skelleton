@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
-import datetime
 import json
+
+from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
@@ -114,7 +115,7 @@ class Provider_Contact(models.Model):
     for_orders = models.BooleanField(default=False)
 
 class Invoice(models.Model):
-    number = models.CharField(max_length=30, unique=True)
+    number = models.CharField(max_length=30)
     date = models.DateField()
     due = models.DateField(null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
@@ -124,6 +125,17 @@ class Invoice(models.Model):
 
     def __unicode__(self):
         return self.number
+
+    class Meta:
+        unique_together = ('number', 'date')
+
+    def recalculate_price(self):
+        price = 0.0
+        for input_reg in self.input_set.all():
+            for mp in input_reg.movement_product:
+                price += float(mp.price) * mp.amount
+        self.price = price
+        self.save()
 
 class Payment(models.Model):
     date = models.DateField()
@@ -137,15 +149,21 @@ class Customer(models.Model):
     def __unicode__(self):
         return self.name
 
+    @property
+    def customer_contact(self):
+        return Contact.objects.filter(customer=self)
+
+    @customer_contact.setter
+    def customer_contact(self, contacts):
+        self.contacts_desc = contacts
+
     def save(self, *args, **kwargs):
-        super(Customer, self).save(*args, **kwargs)
         if hasattr(self, 'contacts_desc'):
             for c in self.contacts_desc:
                 if c['status'] == 'new':
                     contact = Contact(name=c['name'], department=c['department'], email=c['email'], phone=c['phone'])
                     contact.save()
                     self.contacts.add(contact)
-                    self.save()
                 elif c['status'] == 'update':
                     contact = self.contacts.get(id=c['id'])
                     contact.name = c['name']
@@ -156,6 +174,7 @@ class Customer(models.Model):
                 elif c['status'] == 'delete':
                     contact = self.contacts.get(id=c['id'])
                     contact.delete()
+        super(Customer, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         for cc in self.contacts:
@@ -171,6 +190,9 @@ class Employee(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    class Meta:
+        ordering = ['name']
 
 class Tool(models.Model):
     code = models.CharField(max_length=30, unique=True)
@@ -366,7 +388,7 @@ class PriceList_Product(models.Model):
         return self.product.code+" - "+self.product.name+" - "+self.product.description
 
 class Quotation(models.Model):
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=datetime.now)
     pricelist = models.ForeignKey(PriceList, null=True)
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
@@ -457,7 +479,7 @@ class Employee_Work(models.Model):
         unique_together = ('work', 'employee',)
 
 class Movement(models.Model):
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=datetime.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     products = models.ManyToManyField(Product, through='Movement_Product')
 
@@ -467,11 +489,12 @@ class Movement(models.Model):
             for mp in self.products_desc:
                 product = Product.objects.get(id=mp['product'])
                 if mp['status'] == 'new':
-                    movement_product = Movement_Product(movement=self, product=product, amount=int(mp["amount"]), price=product.price)
+                    movement_product = Movement_Product(movement=self, product=product, amount=int(mp["amount"]), price=float(mp['price']))
                     movement_product.save()
                 elif mp['status'] == 'update':
                     movement_product = self.movement_product.get(id=mp['id'])
                     movement_product.amount = int(mp['amount'])
+                    movement_product.price = float(mp['price'])
                     movement_product.save()
                 elif mp['status'] == 'delete':
                     movement_product = self.movement_product.get(id=mp['id'])
@@ -525,7 +548,7 @@ class Output(Movement):
         self.products_desc = products
 
 class Lending(models.Model):
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=datetime.now)
     organization_storage = models.ForeignKey(Organization_Storage)
     employee = models.ForeignKey(Employee, null=True)
     customer = models.ForeignKey(Customer, null=True)
@@ -558,7 +581,7 @@ class Order(models.Model):
         (STATUS_RECEIVED, 'Recibido'),
         (STATUS_INCOMPLETE, 'Incompleto'),
     )
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateTimeField(default=datetime.now)
     provider = models.ForeignKey(Provider)
     organization_storage = models.ForeignKey(Organization_Storage)
     claimant = models.ForeignKey(Employee, null=True)

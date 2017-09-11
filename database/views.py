@@ -209,7 +209,6 @@ class APIWrapper(viewsets.ModelViewSet):
         #             results = filter(lambda x:getattr(x, field) != function_filters[function_filter], results)
         # return results
 
-
 class ProviderViewSet(viewsets.ModelViewSet):
     queryset = Provider.objects.order_by('name')
     serializer_class = ProviderSerializer
@@ -268,21 +267,32 @@ class InputViewSet(APIWrapper):
     serializer_class = InputSerializer
 
     def create(self, request, *args, **kwargs):
-        if request.POST['invoice']:
+        if request.POST.get('invoice_number'):
             price = float(request.POST.get('invoice_price', 0.0))
             if not price:
                 price = 0.0
                 for p in json.loads(request.POST.get('products')):
                     product = Product.objects.get(id=p["id"])
-                    price += float(product.price)*int(p["amount"])
-            invoice = Invoice.objects.filter(number=request.POST['invoice'], date=request.POST['invoice_date'])
+                    price += (float(p["price"]) - (float(p["price"])*float(p["discount"])/100))*int(p["amount"])
+            invoice = Invoice.objects.filter(number=request.POST['invoice_number'], date=request.POST['invoice_date'])
             if invoice:
                 invoice = invoice[0]
                 invoice.price = float(invoice.price) + price
             else:
-                invoice = Invoice(number=request.POST['invoice'], date=request.POST['invoice_date'], price=price)
+                invoice = Invoice(number=request.POST['invoice_number'], date=request.POST['invoice_date'], price=price)
             invoice.save()
         return super(InputViewSet, self).create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        old_invoice = Input.objects.get(id=request.POST["id"]).invoice
+        response = super(InputViewSet, self).update(request, *args, **kwargs)
+        new_invoice = None
+        if request.POST.get('invoice'):
+            new_invoice = Invoice.objects.get(id=request.data["invoice"])
+            new_invoice.recalculate_price()
+        if old_invoice != new_invoice:
+            old_invoice.recalculate_price()
+        return response
 
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
@@ -343,7 +353,18 @@ class OrderViewSet(APIWrapper):
 
     def input(self, request, *args, **kwargs):
         response = InputViewSet.as_view({'post': 'create'})(request)
-        response.redirect_to = '/database/input'
+        if response.status_code/100 == 2:
+            response.redirect_to = '/database/input'
+            products = json.loads(request._request.POST.get('products', '[]'))
+            order = Order.objects.get(id=request._request.POST['order_id'])
+            for op in order.order_product:
+                for product in products:
+                    if op.product.id == product["id"]:
+                        op.amount_received = product["amount"]
+                        op.save()
+                        break
+            order.received_date = datetime.now()
+            order.save()
         return response
 
     def mail(self, request, *args, **kwargs):
@@ -386,7 +407,10 @@ class QuotationViewSet(APIWrapper):
         return response
 
     def output(self, request, *args, **kwargs):
-        response = Response([], status=200)
+        import pdb; pdb.set_trace()
+        response = OutputViewSet.as_view({'post': 'create'})(request)
+        if response.status_code/100 == 2:
+            response.redirect_to = '/database/output'
         return response
 
 class InvoiceViewSet(APIWrapper):
@@ -537,6 +561,7 @@ object_map = {
     'storage_product': {
         'name': 'Productos en almacen',
         'api_path': '/database/api/storage_product',
+        'use_cache': False,
         'model': Storage_Product,
         'viewset': StorageProductViewSet,
         'action_forms': {
@@ -570,7 +595,6 @@ object_map = {
             'delete': DeleteInputForm,
         },
         'add_fields': [
-            ('date', 'Movement Date', 'DateTimeField'),
             ('invoice_number', 'Invoice', 'ForeignKey'),
             ('invoice_price', 'Invoice Price', 'CharField'),
             ('products', 'Product Set', 'ManyToManyField'),
@@ -594,7 +618,6 @@ object_map = {
             'order': OrderOutputForm,
         },
         'add_fields': [
-            ('date', 'Movement Date', 'DateTimeField'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('employee_name', 'Employee', 'ForeignKey'),
             ('destination_name', 'Destination', 'ForeignKey'),
@@ -619,7 +642,6 @@ object_map = {
             'delete': DeleteLendingForm,
         },
         'add_fields': [
-            ('date', 'Movement Date', 'DateTimeField'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('organization', 'Organization Name', 'CharField'),
             ('storage', 'Storage Name', 'CharField'),
@@ -642,7 +664,7 @@ object_map = {
             'mail': MailOrderForm,
         },
         'add_fields': [
-            ('date', 'Movement Date', 'DateTimeField'),
+            # ('date', 'Movement Date', 'DateTimeField'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('provider_name', 'Provider', 'CharField'),
             ('claimant_name', 'Claimant', 'CharField'),

@@ -8,6 +8,83 @@ $('input.multiset').each(function () {
 
 $('select#id_pricelist').attr('disabled', 'disabled');
 
+$(document).on('click', 'button[data-target="#output"]', function () {
+    var data = $(this).closest('tr').data()
+    var form = $("#output form");
+    form[0].reset();
+    form.trigger("reset");
+    form.find('select').each(function (){
+        $(this).val("");
+    });
+    form.find('select[name="destination"]').removeAttr('disabled');
+    form.find('select[name="organization_storage"]').removeAttr('disabled');
+    initialMultiSetData(form, "Product", data.products);
+    refreshMutliSetInputs(form);
+    if (data.customer){
+        form.find('select[name="destination"]').val(data.customer);
+        form.find('select[name="destination"]').attr('disabled', 'disabled');
+    }
+    renderFilterForOutput(form);
+});
+
+function renderFilterForOutput(form) {
+    var selectedStorage = form.find('select#id_organization_storage').val();
+    form.find('table#ProductMultiSet-table tr').each(function(){
+        var inStorage = $(this).data("in_storage");
+        if (!(selectedStorage in inStorage)){
+            $(this).hide();
+        } else if (inStorage[selectedStorage] == 0) {
+            $(this).hide();
+        }
+    });
+}
+
+$(document).on('keyup change', '#output.modal form #ProductMultiSet-search', function() {
+    renderFilterForOutput($(this).closest('form'))
+});
+
+$(document).on('change', '#output.modal form select#id_organization_storage', function() {
+    var form = $(this).closest('form')
+    form.find('table#ProductMultiSet-table tr').each(function(){
+        $(this).show()
+    });
+    var search = form.find('#ProductMultiSet-search-available').val()
+    var table = form.find('#ProductMultiSet-table')
+    applySearch(search, table)
+    renderFilterForOutput(form)
+});
+
+$(document).on('click', '#output.modal form .ProductMultiSet-add', function(){
+    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
+    return false;
+});
+
+$(document).on('click', '#output.modal form .ProductMultiSet-add-all', function(){
+    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
+    return false;
+});
+
+$(document).on('click', '#output.modal form .ProductMultiSet-delete', function(){
+    $('input.multiset').each(function functionName() {
+        if ($(this).closest('form').find('#ProductMultiSet-added tbody').children().length == 0){
+            $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
+        }
+    })
+    return false;
+});
+
+$(document).on('click', '#output.modal form .ProductMultiSet-delete-all', function(){
+    $('input.multiset').each(function functionName() {
+        $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
+    })
+    return false;
+});
+
+$('#output.modal form').submit(function () {
+    $(this).find('select#id_organization_storage').removeAttr('disabled');
+    $(this).find('select#id_destination').removeAttr('disabled');
+});
+
 $(document).on('change', 'select#id_base_price', function(){
     var percentageName = $(this).val()
     if (percentageName == 'pricelist'){
