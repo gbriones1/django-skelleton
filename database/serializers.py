@@ -665,8 +665,8 @@ class QuotationSerializer(serializers.ModelSerializer):
         return value
 
 class InvoiceSerializer(serializers.ModelSerializer):
-    date = serializers.DateTimeField(format="%d-%B-%Y")
-    due = serializers.DateTimeField(format="%d-%B-%Y")
+    date = serializers.DateField(format="%d-%B-%Y")
+    due = serializers.DateField(format="%d-%B-%Y")
 
     class Meta:
         model = Invoice

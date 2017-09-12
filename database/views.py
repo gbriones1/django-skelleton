@@ -10,6 +10,7 @@ from rest_framework.response import Response
 import time
 import json
 import urllib
+from datetime import datetime
 
 from database.models import *
 from database.forms import *
@@ -113,15 +114,37 @@ def main(request, name):
 
 
 @login_required
-def reports(request):
-    APPNAME = configurations.APPNAME
-    YEAR = configurations.YEAR
-    VERSION = configurations.VERSION
-    PAGE_TITLE = configurations.PAGE_TITLE
-    contents = [
-        graphics.Table("reports-table", "Reportes", [("name", "Nombre")], rows=[{"name":"Unidades mas conflictivas"}], checkbox=False, use_cache=False)
-    ]
-    return render(request, 'pages/database.html', locals())
+def reports(request, name):
+    PAGE_TITLE = "Reportes"
+    if not name:
+        APPNAME = configurations.APPNAME
+        YEAR = configurations.YEAR
+        VERSION = configurations.VERSION
+        contents = [
+            graphics.Table("reports-table", "Reportes", [("name", "Nombre")], rows=[
+                {"name":"Finanzas de almacen", "report":"storage_finance"},
+                {"name":"Deudas de facturas", "report":"invoice_debts"},
+                {"name":"Unidades mas conflictivas"},
+                {"name":"Clientes mas rentables"}
+            ],
+            actions=[graphics.Action("view", 'script', icon='eye', style='info')],
+            checkbox=False, use_cache=False)
+        ]
+        scripts = ["reports_index"]
+        return render(request, 'pages/database.html', locals())
+    else:
+        if name == "invoice_debts":
+            today = datetime.now()
+            unpaid = Invoice.objects.filter(paid=False)
+            unpaid_rows = [InvoiceSerializer(x).data for x in unpaid]
+            expired = unpaid.filter(due__lte=today)
+            expired_rows = [InvoiceSerializer(x).data for x in expired]
+            soon = unpaid.filter(due__gt=today)
+            contents = [
+                graphics.Table(name, "Facturas vencidas", Invoice.get_fields(), rows=expired_rows, checkbox=False, use_cache=False),
+                graphics.Table(name, "Facturas sin pagar", Invoice.get_fields(), rows=unpaid_rows, checkbox=False, use_cache=False),
+            ]
+        return render(request, 'pages/reports.html', locals())
 
 
 @login_required
