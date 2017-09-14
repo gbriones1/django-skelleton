@@ -257,6 +257,8 @@ class Product(models.Model):
         return self.price-(self.price*(self.discount/100))
 
     def __str__(self):
+        if self.appliance:
+            return self.code+" - "+self.name.encode('ascii', 'ignore')+" - "+self.description.encode('ascii', 'ignore')+" - "+self.appliance.name
         return self.code+" - "+self.name.encode('ascii', 'ignore')+" - "+self.description.encode('ascii', 'ignore')
 
     def __unicode__(self):

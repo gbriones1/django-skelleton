@@ -1,5 +1,5 @@
 {% extends "layouts/base.html" %}
-{% load extratags %}
+<!-- {% load extratags %} -->
 
 {% block page_title %}
 <title>Muelles Obrero</title>
@@ -22,7 +22,8 @@
             </div>
             <div class="panel-body">
                 <form class="form-horizontal" action="." method="POST">
-                    {% csrf_token %}
+                    <!-- {% csrf_token %} -->
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     {% for field in form %}
                     <div class="form-group {% if field.errors %}has-error{% endif %}">
                         <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
@@ -62,7 +63,8 @@
             </div>
             <div class="panel-body">
                 <form class="form-horizontal" action="./backup/" method="POST" id="backupform">
-                    {% csrf_token %}
+                    <!-- {% csrf_token %} -->
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <input type="hidden" name="action" value="">
                     <div class="form-group">
                         <label class="col-sm-4 control-label">Crear respaldo</label>
@@ -107,7 +109,8 @@
         <h4 class="modal-title custom_align">Restaurar antigua base de datos</h4>
     </div>
     <form class="form-horizontal" action="./backup/" method="POST">
-        {% csrf_token %}
+        <!-- {% csrf_token %} -->
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="action" value="RESTORE">
         <input type="hidden" name="backup" value="">
         <div class="modal-body">
@@ -125,7 +128,8 @@
         <h4 class="modal-title custom_align">Eliminar antigua base de datos</h4>
     </div>
     <form class="form-horizontal" action="./backup/" method="POST">
-        {% csrf_token %}
+        <!-- {% csrf_token %} -->
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         <input type="hidden" name="action" value="DELETE">
         <input type="hidden" name="backup" value="">
         <div class="modal-body">

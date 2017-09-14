@@ -156,3 +156,7 @@ button > p {
 	    width: 1200px;
 	}
 }
+
+input.form-control {
+	min-width: 85px;
+}

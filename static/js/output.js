@@ -1,3 +1,10 @@
+var storages = []
+$("#new form").find('select#id_organization_storage').attr('disabled', 'disabled');
+$.getJSON("/database/special-api/instorage", function (json) {
+    storages = json;
+    $("#new form").find('select#id_organization_storage').removeAttr('disabled');
+});
+
 $(document).on('click', 'button[data-target="#order"]', function () {
     var data = $(this).closest('tr').data()
     var orderform = $("#order form");
@@ -20,16 +27,17 @@ $(document).on('click', 'button[data-target="#order"]', function () {
 function renderFilter(form) {
     var selectedStorage = form.find('select#id_organization_storage').val();
     form.find('table#ProductMultiSet-table tr').each(function(){
-        var inStorage = $(this).data("in_storage");
-        if (!(selectedStorage in inStorage)){
+        var inStorage = storages[selectedStorage];
+        if (!inStorage){
             $(this).hide();
-        } else if (inStorage[selectedStorage] == 0) {
+        }
+        else if (!inStorage[$(this).data("id")]){
             $(this).hide();
         }
     });
 }
 
-$(document).on('keyup change', '#ProductMultiSet-search', function() {
+$(document).on('keyup change', '#ProductMultiSet-search-available', function() {
     renderFilter($(this).closest('form'))
 });
 

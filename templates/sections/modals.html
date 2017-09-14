@@ -1,8 +1,9 @@
-{% load extratags %}
+<!-- % load extratags %} -->
 <div class="modal fade" id="{{ content.name }}" role="dialog">
     <div class="modal-dialog modal-lg">
         <form class="form-horizontal" action="{{ content.form_action }}" autocomplete="off" method="{{ content.form_method }}" id="">
-            {% csrf_token %}
+            <!-- % csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -32,7 +33,7 @@
                             {{ item.obj }}
                         {% endif %}
                     {% endfor %}
-                    {{ content.html|safe }}
+                    <!-- {{ content.html|safe }} -->
                 </div>
                 <div class="modal-footer">
                     {% for button in content.buttons %}

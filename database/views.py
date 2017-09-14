@@ -1,16 +1,19 @@
 from django.shortcuts import render, render_to_response
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template import RequestContext
 from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
+from jinja2 import Environment, FileSystemLoader
 
 import time
 import json
 import urllib
+import os
 from datetime import datetime
+from htmlmin.main import minify
 
 from database.models import *
 from database.forms import *
@@ -18,6 +21,24 @@ from database.serializers import *
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
 from mysite.email_client import send_email
+
+import cProfile
+
+def do_cprofile(func):
+    def profiled_func(*args, **kwargs):
+        profile = cProfile.Profile()
+        try:
+            profile.enable()
+            result = func(*args, **kwargs)
+            profile.disable()
+            return result
+        finally:
+            profile.print_stats()
+    return profiled_func
+
+def minified_render(response):
+    response.content = minify(response.content.decode("utf-8"))
+    return response
 
 @login_required
 def main(request, name):
@@ -110,6 +131,10 @@ def main(request, name):
         scripts.extend(object_map[name].get('js', []))
     else:
         raise Http404("Page does not exist")
+    # start_time = time.time()
+    # response = render(request, 'pages/database.html', locals())
+    # elapsed_time = time.time() - start_time
+    # print(elapsed_time)
     return render(request, 'pages/database.html', locals())
 
 
@@ -145,6 +170,17 @@ def reports(request, name):
                 graphics.Table(name, "Facturas sin pagar", Invoice.get_fields(), rows=unpaid_rows, checkbox=False, use_cache=False),
             ]
         return render(request, 'pages/reports.html', locals())
+    raise Http404("Page does not exist")
+
+@login_required
+def special_api(request, name):
+    print(name)
+    if name == 'instorage':
+        storage_product = {}
+        for sp in Storage_Product.objects.filter(amount__gt=0):
+            storage_product.setdefault(sp.organization_storage.id, {}).setdefault(sp.product.id, sp.amount)
+        return HttpResponse(json.dumps(storage_product), content_type="application/json")
+    raise Http404("Page does not exist")
 
 
 @login_required

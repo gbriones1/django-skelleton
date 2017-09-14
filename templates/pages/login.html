@@ -9,7 +9,8 @@
 <div class="row main">
 	<div>
 	    <form class="onl_loginForm" action="" autocomplete="off" method="POST">
-	    	{% csrf_token %}
+	    	<!-- {% csrf_token %} -->
+			<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 			<h1>Welcome! </h1>
 
 			<div class="input-group">

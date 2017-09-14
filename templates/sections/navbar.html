@@ -132,7 +132,8 @@
 <div class="modal fade" id="update_userpass" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form class="form-horizontal" action="/accounts/password/" autocomplete="off" method="POST">
-            {% csrf_token %}
+            <!-- % csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
             <input type="hidden" name="next" value="">
             <div class="modal-content">
                 <div class="modal-header">

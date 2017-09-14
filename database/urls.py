@@ -30,6 +30,7 @@ router.register(r'order', views.OrderViewSet)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
 	url(r'^api/', include(router.urls)),
+	url(r'^special-api/(?P<name>\W*\w*)', views.special_api),
 	url(r'^$', views.index),
 	url(r'^reports/(?P<name>\W*\w*)$', views.reports),
 	url(r'^(?P<name>\w+\W*\w*)/$', views.main),

@@ -114,28 +114,10 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
 
 var htmlForm = ""
 for (field in formsetFields){
-    htmlForm += `<div class="form-group">
-             <label for="`+formsetFields[field][0]+`" class="col-sm-2 control-label">`+formsetFields[field][1]+`</label>
-             <div class="col-sm-10">`+formsetFields[field][2]+`</div>
-         </div>`
+    htmlForm += '<div class="form-group"><label for="'+formsetFields[field][0]+'" class="col-sm-2 control-label">'+formsetFields[field][1]+'</label><div class="col-sm-10">'+formsetFields[field][2]+'</div></div>'
 }
 
-$('body').append(`<div id="`+formSetModelName+`FormSet-form" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-    <div class="modal-content">
-  <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">`+formSetModelName+`</h4>
-  </div>
-  <div class="modal-body">
-      <form class="form-horizontal">`+htmlForm+`</form></div>
-  <div class="modal-footer">
-    <button type="button" data-dismiss="modal" class="btn">Close</button>
-    <button type="button" class="btn btn-primary" id="`+formSetModelName+`FormSet-ok">Ok</button>
-  </div>
-</div>
-</div>
-</div>`)
+$('body').append('<div id="'+formSetModelName+'FormSet-form" class="modal fade" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">'+formSetModelName+'</h4></div><div class="modal-body"><form class="form-horizontal">'+htmlForm+'</form></div><div class="modal-footer"><button type="button" data-dismiss="modal" class="btn">Close</button><button type="button" class="btn btn-primary" id="'+formSetModelName+'FormSet-ok">Ok</button></div></div></div></div>')
 
 $('div.form-group input').each(function(){
     if ($(this).attr("type")!="checkbox" && $(this).attr("type")!="radio"){

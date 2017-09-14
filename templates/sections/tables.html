@@ -5,7 +5,8 @@
         </div>
         {% for button in content.buttons %}
         <div class="col-md-1 col-sm-2">
-            <p data-placement="top" data-toggle="tooltip" title="{{ button.title }}">{{ button.stringify|safe }}</p>
+            {{ button.stringify|safe }}
+            <!-- <p data-placement="top" data-toggle="tooltip" title="{{ button.title }}">{{ button.stringify|safe }}</p> -->
         </div>
         {% endfor %}</h2>
 </div>

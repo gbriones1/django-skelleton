@@ -10,6 +10,7 @@ class HTMLObject(object):
         if name:
             self.root.set("id", name)
 
+    @property
     def stringify(self):
         return ET.tostring(self.root, method='html')
 
@@ -135,7 +136,7 @@ class Table(Section):
     def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None, use_cache=True):
         super(Table, self).__init__("table")
         self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest, use_cache)
-        self.html = self.table.stringify()
+        self.html = self.table.stringify
         self.title = title
         self.buttons = buttons
         for button in self.buttons:

@@ -13,6 +13,8 @@ from django.core import serializers
 reload(sys)
 sys.setdefaultencoding('utf8')
 
+MULTISET_CACHE = {}
+
 class Datalist(forms.widgets.Select):
     def render(self, name, value, attrs=None, choices=()):
         if value is None:
@@ -42,6 +44,21 @@ class Datalist(forms.widgets.Select):
         #                    force_text(option_label))
         return '<option value="{}"></option>'.format(option_label.encode('utf-8'))
 
+
+import cProfile
+
+def do_cprofile(func):
+    def profiled_func(*args, **kwargs):
+        profile = cProfile.Profile()
+        try:
+            profile.enable()
+            result = func(*args, **kwargs)
+            profile.disable()
+            return result
+        finally:
+            profile.print_stats()
+    return profiled_func
+
 class MultiSet(forms.widgets.Select):
 
     def __init__(self, search=True, amounts=False, include=[], editable_fields=[]):
@@ -52,7 +69,9 @@ class MultiSet(forms.widgets.Select):
         self.editable_fields = editable_fields
 
     def render(self, name, value, attrs=None, choices=()):
+        global MULTISET_CACHE
         model_name = self.choices.queryset.model.__name__
+        print("Rendering multiset form", model_name, self.search, self.amounts, self.include, self.editable_fields)
         if value is None:
             value = ''
         final_attrs = self.build_attrs(attrs, name=name)
@@ -86,19 +105,24 @@ class MultiSet(forms.widgets.Select):
                         'choices': widget.choices,
                     }
             table_attrs['data-editable'] = json.dumps(editable)
-        output.append(format_html('<table{} >', flatatt(table_attrs)))
-        for choice in self.choices.queryset:
-            tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
-            tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
-            tr_attr["data-id"] = choice.id
-            for field in self.include:
-                if hasattr(choice, field):
-                    tr_attr["data-"+field] = getattr(choice, field)
-            output.append(format_html('<tr {}>', flatatt(tr_attr)))
-            output.append('<td>{}</td>'.format(str(choice)))
-            output.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
-            output.append('</tr>')
-        output.append('</table>')
+        if not model_name in MULTISET_CACHE.keys():
+            print("Caching", model_name)
+            cached_table = []
+            cached_table.append(format_html('<table{} >', flatatt(table_attrs)))
+            for choice in self.choices.queryset:
+                tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
+                tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
+                tr_attr["data-id"] = choice.id
+                # for field in self.include:
+                #     if hasattr(choice, field):
+                #         tr_attr["data-"+field] = getattr(choice, field)
+                cached_table.append(format_html('<tr {}>', flatatt(tr_attr)))
+                cached_table.append('<td>{}</td>'.format(str(choice)))
+                cached_table.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
+                cached_table.append('</tr>')
+            cached_table.append('</table>')
+            MULTISET_CACHE[model_name] = cached_table
+        output.extend(MULTISET_CACHE[model_name])
         output.append('</div>')
         output.append('</div>')
 
