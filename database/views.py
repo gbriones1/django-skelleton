@@ -6,14 +6,12 @@ from django.core.cache import cache
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
-from jinja2 import Environment, FileSystemLoader
 
 import time
 import json
 import urllib
 import os
 from datetime import datetime
-from htmlmin.main import minify
 
 from database.models import *
 from database.forms import *
@@ -21,24 +19,6 @@ from database.serializers import *
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
 from mysite.email_client import send_email
-
-import cProfile
-
-def do_cprofile(func):
-    def profiled_func(*args, **kwargs):
-        profile = cProfile.Profile()
-        try:
-            profile.enable()
-            result = func(*args, **kwargs)
-            profile.disable()
-            return result
-        finally:
-            profile.print_stats()
-    return profiled_func
-
-def minified_render(response):
-    response.content = minify(response.content.decode("utf-8"))
-    return response
 
 @login_required
 def main(request, name):
@@ -180,6 +160,11 @@ def special_api(request, name):
         for sp in Storage_Product.objects.filter(amount__gt=0):
             storage_product.setdefault(sp.organization_storage.id, {}).setdefault(sp.product.id, sp.amount)
         return HttpResponse(json.dumps(storage_product), content_type="application/json")
+    elif name == 'pricelistrelated':
+        related = {}
+        for pp in PriceList_Product.objects.all():
+            related.setdefault(pp.pricelist.id, {}).setdefault(pp.product.id, float(pp.price))
+        return HttpResponse(json.dumps(related), content_type="application/json")
     raise Http404("Page does not exist")
 
 
@@ -358,6 +343,7 @@ class OutputViewSet(APIWrapper):
     serializer_class = OutputSerializer
 
     def order(self, request, *args, **kwargs):
+        import pdb; pdb.set_trace()
         provider_map = {}
         for product_info in json.loads(request.POST.get('products', '[]')):
             p = Product.objects.get(id=product_info["id"])

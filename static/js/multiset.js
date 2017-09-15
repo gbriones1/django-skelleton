@@ -57,6 +57,7 @@ function initialMultiSetData(form, modelName, data) {
     }
     thead += "</tr></thead>"
     added.append(thead)
+    var body = $('<tbody>');
     for (index in data){
         var text = $(form.find('#'+modelName+'MultiSet-table tr[data-id="'+data[index].id+'"]').children()[0]).text()
         var row = '<tr data-id="'+data[index].id+'"><td>'+text+'</td>'
@@ -74,8 +75,9 @@ function initialMultiSetData(form, modelName, data) {
         }
         row += '<td><button type="buttton" class="btn btn-sm btn-danger '+modelName+'MultiSet-delete"><i class="fa fa-trash"></i></button></td>'
         row += '</tr>'
-        added.append(row)
+        body.append(row)
     }
+    added.append(body);
     // refreshMutliSetInputs(form);
 }
 
@@ -94,9 +96,10 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add', function(){
     var multiple = $(this).closest('table').attr('data-multiple')
     var editable = $(this).closest('table').attr('data-editable')
     var text = $($(this).closest('tr').children()[0]).text()
-    var added = $(this).closest('form').find('#'+multiSetModelName+'MultiSet-added')
-    if (!added.find('thead').children().length){
-        var thead = "<thead><tr><th>Nombre</td>"
+    var added_thead = $(this).closest('form').find('#'+multiSetModelName+'MultiSet-added thead')
+    var added = $(this).closest('form').find('#'+multiSetModelName+'MultiSet-added tbody')
+    if (added_thead.children().length == 0){
+        var thead = "<tr><th>Nombre</td>"
         if (multiple){
             thead += "<th>Cant</th>"
         }
@@ -106,8 +109,8 @@ $(document).on('click', '.'+multiSetModelName+'MultiSet-add', function(){
                 thead += "<th>"+fieldName+"</th>"
             }
         }
-        thead += "</tr></thead>"
-        added.append(thead)
+        thead += "</tr>"
+        added_thead.append(thead)
     }
     if (added.find('tr[data-id="'+val+'"]').length){
         var amount = parseInt(added.find('tr[data-id="'+val+'"] .'+multiSetModelName+'MultiSet-amount').val()) || 0;

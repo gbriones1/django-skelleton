@@ -1,3 +1,15 @@
+var storages = []
+$("#output form").find('select#id_organization_storage').attr('disabled', 'disabled');
+$.getJSON("/database/special-api/instorage", function (json) {
+    storages = json;
+    $("#output form").find('select#id_organization_storage').removeAttr('disabled');
+});
+
+var pricelistrelated = []
+$.getJSON("/database/special-api/pricelistrelated", function (json) {
+    pricelistrelated = json;
+});
+
 $('input.multiset').each(function () {
     $(this).closest('form').find('#ProductMultiSet-table tbody tr').each( function () {
         $(this).attr("data-base_price", $(this).attr("data-price"));
@@ -29,11 +41,9 @@ $(document).on('click', 'button[data-target="#output"]', function () {
 
 function renderFilterForOutput(form) {
     var selectedStorage = form.find('select#id_organization_storage').val();
+    var inStorage = storages[selectedStorage];
     form.find('table#ProductMultiSet-table tr').each(function(){
-        var inStorage = $(this).data("in_storage");
-        if (!(selectedStorage in inStorage)){
-            $(this).hide();
-        } else if (inStorage[selectedStorage] == 0) {
+        if (!inStorage || !inStorage[$(this).data("id")]){
             $(this).hide();
         }
     });
@@ -88,15 +98,15 @@ $('#output.modal form').submit(function () {
 $(document).on('change', 'select#id_base_price', function(){
     var percentageName = $(this).val()
     if (percentageName == 'pricelist'){
-        $('select#id_pricelist').removeAttr('disabled');
+        $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
         $(this).closest('form').find('#ProductMultiSet-table').removeAttr('data-editable')
         $(this).closest('form').find('#ProductMultiSet-table tbody tr').each(function () {
             $(this).hide();
         });
     }
     else {
-        $('select#id_pricelist').val('');
-        $('select#id_pricelist').attr('disabled', 'disabled');
+        $(this).closest('form').find('select#id_pricelist').val('');
+        $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         var editableBackup = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup')
         $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable', editableBackup)
         var percentagesDef = JSON.parse($(this).closest('form').find('input#id_percentages').val())
@@ -124,18 +134,25 @@ $(document).on('change', 'select#id_pricelist', function(){
         form.find('#ProductMultiSet-table tbody tr').each(function () {
             $(this).show();
         });
+        form.find('select#id_base_price').attr('disabled', 'disabled');
         var search = form.find('#ProductMultiSet-search-available').val()
         var table = form.find('#ProductMultiSet-table')
         applySearch(search, table)
         renderFilter(form)
     }
+    else{
+        form.find('select#id_base_price').removeAttr('disabled');
+        form.find('#ProductMultiSet-table tbody tr').each(function () {
+            $(this).hide();
+        });
+    }
 });
 
 function renderFilter(form) {
     var pricelistId = parseInt(form.find('select#id_pricelist').val());
+    var related = pricelistrelated[pricelistId];
     form.find('#ProductMultiSet-table tbody tr').each(function () {
-        var related = $(this).data("pricelist_related")
-        if (!(related.indexOf(pricelistId)+1)){
+        if (!related || !related[$(this).data("id")]){
             $(this).hide();
         }
     });
@@ -143,6 +160,7 @@ function renderFilter(form) {
 
 $(document).on('click', '.ProductMultiSet-add', function(){
     if($(this).closest('form').find('select#id_pricelist').val()){
+        $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_base_price').attr('disabled', 'disabled');
     }
     else {
@@ -153,6 +171,7 @@ $(document).on('click', '.ProductMultiSet-add', function(){
 
 $(document).on('click', '.ProductMultiSet-add-all', function(){
     if($(this).closest('form').find('select#id_pricelist').val()){
+        $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_base_price').attr('disabled', 'disabled');
     }
     else {
@@ -167,8 +186,10 @@ $(document).on('click', '.ProductMultiSet-delete', function(){
             if ($(this).closest('form').find('select#id_pricelist').val()){
                 $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
             }
-            $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
-            $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
+            else{
+                $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
+                $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
+            }
         }
     })
     return false;
@@ -179,8 +200,10 @@ $(document).on('click', '.ProductMultiSet-delete-all', function(){
         if ($(this).closest('form').find('select#id_pricelist').val()){
             $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
         }
-        $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
-        $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
+        else{
+            $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
+            $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
+        }
     })
     return false;
 });

@@ -44,21 +44,6 @@ class Datalist(forms.widgets.Select):
         #                    force_text(option_label))
         return '<option value="{}"></option>'.format(option_label.encode('utf-8'))
 
-
-import cProfile
-
-def do_cprofile(func):
-    def profiled_func(*args, **kwargs):
-        profile = cProfile.Profile()
-        try:
-            profile.enable()
-            result = func(*args, **kwargs)
-            profile.disable()
-            return result
-        finally:
-            profile.print_stats()
-    return profiled_func
-
 class MultiSet(forms.widgets.Select):
 
     def __init__(self, search=True, amounts=False, include=[], editable_fields=[]):
@@ -105,10 +90,10 @@ class MultiSet(forms.widgets.Select):
                         'choices': widget.choices,
                     }
             table_attrs['data-editable'] = json.dumps(editable)
+        output.append(format_html('<table{} >', flatatt(table_attrs)))
         if not model_name in MULTISET_CACHE.keys():
             print("Caching", model_name)
-            cached_table = []
-            cached_table.append(format_html('<table{} >', flatatt(table_attrs)))
+            cached_rows = []
             for choice in self.choices.queryset:
                 tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
                 tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
@@ -116,13 +101,13 @@ class MultiSet(forms.widgets.Select):
                 # for field in self.include:
                 #     if hasattr(choice, field):
                 #         tr_attr["data-"+field] = getattr(choice, field)
-                cached_table.append(format_html('<tr {}>', flatatt(tr_attr)))
-                cached_table.append('<td>{}</td>'.format(str(choice)))
-                cached_table.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
-                cached_table.append('</tr>')
-            cached_table.append('</table>')
-            MULTISET_CACHE[model_name] = cached_table
+                cached_rows.append(format_html('<tr {}>', flatatt(tr_attr)))
+                cached_rows.append('<td>{}</td>'.format(str(choice)))
+                cached_rows.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm "+model_name+"MultiSet-add", "type":"button"})))
+                cached_rows.append('</tr>')
+            MULTISET_CACHE[model_name] = cached_rows
         output.extend(MULTISET_CACHE[model_name])
+        output.append('</table>')
         output.append('</div>')
         output.append('</div>')
 
@@ -133,7 +118,7 @@ class MultiSet(forms.widgets.Select):
             output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":model_name+"MultiSet-search-added"})))
         output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
         output.append(format_html('<table{} >', flatatt({"class": "table", 'id':model_name+"MultiSet-added"})))
-        output.append('</table>')
+        output.append('<thead></thead><tbody></tbody></table>')
         output.append('</div>')
         output.append('</div>')
         output.append('</div>')
