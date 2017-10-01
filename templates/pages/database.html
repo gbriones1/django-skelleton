@@ -10,7 +10,6 @@
 {% endblock %}
 
 {% block header %}
-<div style="padding-top: 60px;"></div>
 {% endblock %}
 
 {% block sidebar %}
@@ -18,26 +17,25 @@
 {% endblock %}
 
 {% block site_wrapper %}
-<!-- <div class="col-lg-10 col-lg-offset-2 main"> -->
-{% if filter_form %}
-    <div class="filter_form">
-        <form class="form-inline">
-            {% for field in filter_form %}
-                <div class="form-group {% if field.errors %}has-error{% endif %}">
-                    <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
-                    <div class="col-sm-10">
-                        {{ field }}
-                        {% for error in field.errors %}
-                        <span class="help-block">{{ error }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-primary">Apply</button>
-        </form>
-    </div>
-{% endif %}
 <div class="main">
+    {% if filter_form %}
+        <div class="filter_form">
+            <form class="form-inline">
+                {% for field in filter_form %}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label"><h4>{{ field.label }}</h4></label>
+                        <div class="col-sm-10">
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <span class="help-block">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </form>
+        </div>
+    {% endif %}
     {% for content in contents %}
         {% if content.section == 'table' %}
             {% include 'sections/tables.html' %}
