@@ -101,17 +101,16 @@ try:
         total_price = sum(map(lambda x: float(x[4]) * float(x[1]), prods))
         invoice = None
         if inp[3]:
-            invoice = Invoice.objects.filter(number=inp[3])
+            invoice = Invoice.objects.filter(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"))
             if invoice:
                 invoice = invoice[0]
                 invoice.price = float(invoice.price) + total_price
             else:
-                invoice = Invoice.objects.filter(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"), price=total_price)
-                if invoice:
-                    invoice = invoice[0]
-                else:
-                    invoice = Invoice(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"), price=total_price)
-                    invoice.save()
+                provider = None
+                if prods:
+                    provider = products[prods[0][2]]["object"].provider
+                invoice = Invoice(number=inp[3], date=datetime.strptime(inp[1][:10], "%Y-%m-%d"), price=total_price, provider=provider)
+            invoice.save()
         org_sto = organization_storage["Consignacion"]
         if inp[2] == 'S':
             org_sto = organization_storage["Propias"]

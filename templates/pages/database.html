@@ -43,6 +43,8 @@
             {% include 'sections/tables.html' %}
         {% elif content.section == 'modal' %}
             {% include 'sections/modals.html' %}
+        {% elif content.section == 'sheet' %}
+            {% include 'sections/sheet.html' %}
         {% else %}
             {{ content.html|safe }}
         {% endif %}

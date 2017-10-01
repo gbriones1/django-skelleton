@@ -98,6 +98,8 @@ $('#output.modal form').submit(function () {
 $(document).on('change', 'select#id_base_price', function(){
     var percentageName = $(this).val()
     if (percentageName == 'pricelist'){
+        $(this).closest('form').find('select#id_customer').val("");
+        $(this).closest('form').find('select#id_customer').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
         $(this).closest('form').find('#ProductMultiSet-table').removeAttr('data-editable')
         $(this).closest('form').find('#ProductMultiSet-table tbody tr').each(function () {
@@ -105,6 +107,7 @@ $(document).on('change', 'select#id_base_price', function(){
         });
     }
     else {
+        $(this).closest('form').find('select#id_customer').removeAttr('disabled');
         $(this).closest('form').find('select#id_pricelist').val('');
         $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         var editableBackup = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup')
@@ -210,19 +213,24 @@ $(document).on('click', '.ProductMultiSet-delete-all', function(){
 
 $(document).on('submit', 'form', function(){
     $(this).find('select#id_pricelist').removeAttr('disabled');
+    $(this).find('select#id_customer').removeAttr('disabled');
 });
-
-
 
 $(document).on('click', 'button[data-target="#edit"]', function () {
     var form = $("#edit form");
+    form.find('#ProductMultiSet-table tbody tr').each(function () {
+        $(this).show();
+    });
     if (form.find('select#id_pricelist').val()){
         if (form.find('#ProductMultiSet-added tbody').children().length != 0){
             form.find('select#id_pricelist').attr('disabled', 'disabled');
         }
         form.find('select#id_base_price').val("pricelist");
         form.find('select#id_base_price').attr('disabled', 'disabled');
+        form.find('select#id_customer').val('');
+        form.find('select#id_customer').attr('disabled', 'disabled');
         form.find('#ProductMultiSet-table').removeAttr('data-editable')
+        renderFilter(form)
     }
     else {
         var editableBackup = form.find('#ProductMultiSet-table').attr('data-editable-backup')

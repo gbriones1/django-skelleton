@@ -142,6 +142,16 @@ class Table(Section):
         for button in self.buttons:
             button.root.set("class", button.root.get('class')+" btn-lg btn-block")
 
+class DescriptionSheet(Section):
+
+    def __init__(self, name, title, obj_id, fields, use_rest=None):
+        super(DescriptionSheet, self).__init__("sheet")
+        self.name = name
+        self.title = title
+        self.obj_id = obj_id
+        self.fields = fields
+        self.use_rest = use_rest
+
 class Modal(Section):
 
     @staticmethod

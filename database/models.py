@@ -118,6 +118,7 @@ class Invoice(models.Model):
     number = models.CharField(max_length=30)
     date = models.DateField()
     due = models.DateField(null=True)
+    provider = models.ForeignKey(Provider, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
     credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
@@ -183,6 +184,27 @@ class Customer(models.Model):
 
     class Meta:
         ordering = ['name']
+
+class Sell(models.Model):
+    number = models.CharField(max_length=30)
+    date = models.DateField()
+    due = models.DateField(null=True)
+    customer = models.ForeignKey(Customer, null=True)
+    price = models.DecimalField(max_digits=9, decimal_places=2)
+    credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
+    discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
+    paid = models.BooleanField(default=False)
+
+    def __unicode__(self):
+        return self.number
+
+    class Meta:
+        unique_together = ('number', 'date')
+
+class Collection(models.Model):
+    date = models.DateField()
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
+    sell = models.ForeignKey(Sell)
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)
@@ -392,6 +414,7 @@ class PriceList_Product(models.Model):
 class Quotation(models.Model):
     date = models.DateTimeField(default=datetime.now)
     pricelist = models.ForeignKey(PriceList, null=True)
+    customer = models.ForeignKey(Customer, null=True)
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
     authorized = models.BooleanField(default=False)

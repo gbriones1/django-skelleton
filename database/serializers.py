@@ -6,7 +6,7 @@ from rest_framework import serializers
 class CheckboxField(serializers.BooleanField):
 
     def run_validation(self, data=serializers.empty):
-        true_values = ["on"]
+        true_values = ["on", "Si"]
         if data in true_values:
             data=True
         else:
@@ -41,7 +41,7 @@ class ProviderContactSerializer(serializers.ModelSerializer):
 
 class ProviderSerializer(serializers.ModelSerializer):
     product_count = serializers.SerializerMethodField()
-    contacts = ContactSerializer(source='contacts', many=True)
+    contacts = ContactSerializer(many=True)
 
     class Meta:
         model = Provider
@@ -557,7 +557,9 @@ class QuotationSerializer(serializers.ModelSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     pricelist = serializers.PrimaryKeyRelatedField(queryset=PriceList.objects.all(), allow_null=True, required=False)
     pricelist_name = serializers.ReadOnlyField(source='pricelist.customer.name')
-    customer = serializers.ReadOnlyField(source='pricelist.customer.id')
+    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), allow_null=True, required=False)
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    # customer = serializers.ReadOnlyField(source='pricelist.customer.id')
     products = QuotationProductSerializer(source='quotation_product', many=True)
     others = QuotationOtherSerializer(source='quotation_other', many=True)
     authorized = CheckboxField()
@@ -578,6 +580,7 @@ class QuotationSerializer(serializers.ModelSerializer):
             "discount",
             "customer",
             "pricelist_name",
+            "customer_name",
             "total",
         )
 
@@ -660,13 +663,14 @@ class QuotationSerializer(serializers.ModelSerializer):
                 qo['status'] = 'new'
         return value
 
-    def validate_pricelist(self, value):
-        # import pdb; pdb.set_trace()
+    def validate_customer(self, value):
+        if self.initial_data["pricelist"]:
+            value = PriceList.objects.get(id=self.initial_data["pricelist"]).customer
         return value
 
 class InvoiceSerializer(serializers.ModelSerializer):
-    date = serializers.DateField(format="%d-%B-%Y")
-    due = serializers.DateField(format="%d-%B-%Y")
+    provider_name = serializers.ReadOnlyField(source='provider.name')
+    paid = CheckboxField()
 
     class Meta:
         model = Invoice
@@ -675,6 +679,19 @@ class InvoiceSerializer(serializers.ModelSerializer):
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
+        fields = '__all__'
+
+class SellSerializer(serializers.ModelSerializer):
+    customer_name = serializers.ReadOnlyField(source='customer.name')
+    paid = CheckboxField()
+
+    class Meta:
+        model = Sell
+        fields = '__all__'
+
+class CollectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Collection
         fields = '__all__'
 
 class WorkSerializer(serializers.ModelSerializer):

@@ -455,45 +455,6 @@ class DeleteOrderForm(forms.ModelForm):
         model = Order
         fields = ["id"]
 
-class NewInvoiceForm(forms.ModelForm):
-    number = forms.CharField(max_length=200, label='Numero')
-    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    due = forms.DateField(widget=DateInput(), label='Vence')
-    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
-    action = HiddenField(initial='new')
-
-    class Meta:
-        model = Invoice
-        fields = '__all__'
-
-
-class EditInvoiceForm(forms.ModelForm):
-    id = HiddenField()
-    number = forms.CharField(max_length=200, label='Numero')
-    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    due = forms.DateField(widget=DateInput(), label='Vence')
-    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
-    action = HiddenField(initial='edit')
-
-    class Meta:
-        model = Invoice
-        fields = '__all__'
-
-
-class DeleteInvoiceForm(forms.ModelForm):
-    id = HiddenField()
-    action = HiddenField(initial='delete')
-
-    class Meta:
-        model = Invoice
-        fields = ["id"]
-
 class QuotationOtherForm(forms.ModelForm):
     description = forms.CharField(max_length=200, label='Descripcion')
     amount = forms.IntegerField(label='Cantidad', required=True, min_value=0, initial=0)
@@ -514,6 +475,7 @@ class NewQuotationForm(forms.ModelForm):
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
     percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     products = forms.ModelChoiceField(queryset=Product.objects.all(), required=False, label="Refacciones", widget=MultiSet(amounts=True, editable_fields=['price']), empty_label=None)
     others = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
@@ -528,6 +490,7 @@ class NewQuotationForm(forms.ModelForm):
             'base_price',
             'percentages',
             'pricelist',
+            'customer',
             'products',
             'others',
             'service',
@@ -544,6 +507,7 @@ class EditQuotationForm(forms.ModelForm):
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
     percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     products = forms.ModelChoiceField(queryset=Product.objects.all(), required=False, label="Refacciones", widget=MultiSet(amounts=True, editable_fields=['price']), empty_label=None)
     others = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
@@ -559,6 +523,7 @@ class EditQuotationForm(forms.ModelForm):
             'base_price',
             'percentages',
             'pricelist',
+            'customer',
             'products',
             'others',
             'service',
@@ -613,8 +578,48 @@ class DeletePriceListForm(forms.ModelForm):
         model = PriceList
         fields = ["id"]
 
+class NewInvoiceForm(forms.ModelForm):
+    number = forms.CharField(max_length=200, label='Numero')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    due = forms.DateField(widget=DateInput(), label='Vence')
+    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
+    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
+    paid = forms.BooleanField(label="Pagado?")
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+
+class EditInvoiceForm(forms.ModelForm):
+    id = HiddenField()
+    number = forms.CharField(max_length=200, label='Numero')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    due = forms.DateField(widget=DateInput(), label='Vence')
+    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
+    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
+    paid = forms.BooleanField(label="Pagado?")
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+
+class DeleteInvoiceForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Invoice
+        fields = ["id"]
+
 class NewPaymentForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')
 
     class Meta:
@@ -623,7 +628,6 @@ class NewPaymentForm(forms.ModelForm):
 
 
 class EditPaymentForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
     id = HiddenField()
     action = HiddenField(initial='edit')
 
@@ -638,6 +642,72 @@ class DeletePaymentForm(forms.ModelForm):
 
     class Meta:
         model = Payment
+        fields = ["id"]
+
+class NewSellForm(forms.ModelForm):
+    number = forms.CharField(max_length=200, label='Numero')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    due = forms.DateField(widget=DateInput(), label='Vence')
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
+    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
+    paid = forms.BooleanField(label="Pagado?")
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Sell
+        fields = '__all__'
+
+
+class EditSellForm(forms.ModelForm):
+    id = HiddenField()
+    number = forms.CharField(max_length=200, label='Numero')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    due = forms.DateField(widget=DateInput(), label='Vence')
+    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
+    price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
+    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
+    paid = forms.BooleanField(label="Pagado?")
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Sell
+        fields = '__all__'
+
+
+class DeleteSellForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Sell
+        fields = ["id"]
+
+class NewCollectionForm(forms.ModelForm):
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Collection
+        fields = '__all__'
+
+
+class EditCollectionForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='edit')
+
+    class Meta:
+        model = Collection
+        fields = '__all__'
+
+
+class DeleteCollectionForm(forms.ModelForm):
+    id = HiddenField()
+    action = HiddenField(initial='delete')
+
+    class Meta:
+        model = Collection
         fields = ["id"]
 
 class NewWorkForm(forms.ModelForm):
@@ -770,3 +840,6 @@ class DateRangeFilterForm(forms.Form):
 class DateTimeRangeFilterForm(forms.Form):
     date__gte = forms.DateTimeField(widget=DateTimeInput(), initial=datetime(year=(datetime.now() - timedelta(28)).year, month=(datetime.now() - timedelta(28)).month, day=(datetime.now() - timedelta(28)).day).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Desde')
     date__lt = forms.DateTimeField(widget=DateTimeInput(), initial=datetime(year=datetime.now().year, month=datetime.now().month, day=datetime.now().day, hour=23, minute=59).strftime(format="%Y-%m-%dT%H:%M:%S"), label='Hasta')
+
+class InvoiceProviderFilterForm(forms.Form):
+    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), label="Proveedor")

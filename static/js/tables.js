@@ -179,7 +179,10 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     for (key in data){
         var value = data[key]
         if (key == "date"){
-            var d = new Date(data[key]);
+            if (value.length == 10){
+                value += " 00:00"
+            }
+            var d = new Date(value);
             if (editform.find('input[name="'+ key +'"]').attr('type') == "datetime-local"){
                 value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)+"T"+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2);
             }
@@ -192,7 +195,7 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
         editform.find('input[name="'+ key +'"]').val(value);
         var field = editform.find('input[name="'+ key +'"]')
         if (field.attr("type") == "checkbox"){
-            if (value == "Si" || value == "True"){
+            if (value == "Si" || value == "True" || value === true){
                 field.prop('checked', true);
             }else {
                 field.prop('checked', false);
