@@ -14,8 +14,8 @@ $('input.multiset').each(function () {
     $(this).closest('form').find('#ProductMultiSet-table tbody tr').each( function () {
         $(this).attr("data-base_price", $(this).attr("data-price"));
     });
-    var editable = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable')
-    $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup', editable)
+    // var editable = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable')
+    // $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup', editable)
 });
 
 $('select#id_pricelist').attr('disabled', 'disabled');
@@ -101,7 +101,7 @@ $(document).on('change', 'select#id_base_price', function(){
         $(this).closest('form').find('select#id_customer').val("");
         $(this).closest('form').find('select#id_customer').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
-        $(this).closest('form').find('#ProductMultiSet-table').removeAttr('data-editable')
+        // $(this).closest('form').find('#ProductMultiSet-table').removeAttr('data-editable')
         $(this).closest('form').find('#ProductMultiSet-table tbody tr').each(function () {
             $(this).hide();
         });
@@ -110,8 +110,8 @@ $(document).on('change', 'select#id_base_price', function(){
         $(this).closest('form').find('select#id_customer').removeAttr('disabled');
         $(this).closest('form').find('select#id_pricelist').val('');
         $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
-        var editableBackup = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup')
-        $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable', editableBackup)
+        // var editableBackup = $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable-backup')
+        // $(this).closest('form').find('#ProductMultiSet-table').attr('data-editable', editableBackup)
         var percentagesDef = JSON.parse($(this).closest('form').find('input#id_percentages').val())
         $(this).closest('form').find('#ProductMultiSet-table tbody tr').each(function () {
             $(this).show()
@@ -134,8 +134,10 @@ $(document).on('change', 'select#id_base_price', function(){
 $(document).on('change', 'select#id_pricelist', function(){
     var form = $(this).closest('form')
     if (form.find('select#id_pricelist').val()){
+        var pricelistId = form.find('select#id_pricelist').val();
         form.find('#ProductMultiSet-table tbody tr').each(function () {
             $(this).show();
+            $(this).attr("data-price", pricelistrelated[pricelistId][$(this).data("id")]);
         });
         form.find('select#id_base_price').attr('disabled', 'disabled');
         var search = form.find('#ProductMultiSet-search-available').val()
@@ -229,12 +231,12 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
         form.find('select#id_base_price').attr('disabled', 'disabled');
         form.find('select#id_customer').val('');
         form.find('select#id_customer').attr('disabled', 'disabled');
-        form.find('#ProductMultiSet-table').removeAttr('data-editable')
+        // form.find('#ProductMultiSet-table').removeAttr('data-editable')
         renderFilter(form)
     }
     else {
-        var editableBackup = form.find('#ProductMultiSet-table').attr('data-editable-backup')
-        form.find('#ProductMultiSet-table').attr('data-editable', editableBackup)
+        // var editableBackup = form.find('#ProductMultiSet-table').attr('data-editable-backup')
+        // form.find('#ProductMultiSet-table').attr('data-editable', editableBackup)
         form.find('select#id_pricelist').attr('disabled', 'disabled');
         if (form.find('#ProductMultiSet-added tbody').children().length != 0){
             form.find('select#id_base_price option[value="pricelist"]').attr('disabled', 'disabled');

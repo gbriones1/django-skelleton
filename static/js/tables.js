@@ -65,6 +65,14 @@ function build_table(table, data, actions, selectable) {
                             subt.append(subb)
                             tr.append($('<td>').append(subt))
                         }
+                        else if ($(headers[i]).data('format') == 'ImageField') {
+                            if (value){
+                                tr.append($('<td>').append($('<img src="'+value+'" height="30%">')));
+                            }
+                            else{
+                                tr.append($('<td>'));
+                            }
+                        }
                         else{
                             tr.append($('<td>').text(value));
                         }

@@ -114,6 +114,7 @@ class ProductSerializer(serializers.ModelSerializer):
     provider = serializers.SlugRelatedField(slug_field='name', queryset=Provider.objects.all(), allow_null=True)
     brand = serializers.SlugRelatedField(slug_field='name', queryset=Brand.objects.all(), allow_null=True)
     appliance = serializers.SlugRelatedField(slug_field='name', queryset=Appliance.objects.all(), allow_null=True)
+    picture = serializers.ImageField(required=False, allow_null=True)
     real_price = serializers.ReadOnlyField()
     percentage_1 = serializers.ReadOnlyField()
     percentage_2 = serializers.ReadOnlyField()
@@ -122,6 +123,10 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+    def validate_picture(self, value):
+        import pdb; pdb.set_trace()
+        return value
 
 class ShortProductSerializer(serializers.ModelSerializer):
     provider = serializers.SlugRelatedField(slug_field='name', queryset=Provider.objects.all(), allow_null=True)

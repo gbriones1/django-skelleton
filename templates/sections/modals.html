@@ -1,7 +1,7 @@
 <!-- % load extratags %} -->
 <div class="modal fade" id="{{ content.name }}" role="dialog">
     <div class="modal-dialog modal-lg">
-        <form class="form-horizontal" action="{{ content.form_action }}" autocomplete="off" method="{{ content.form_method }}" id="">
+        <form class="form-horizontal" action="{{ content.form_action }}" autocomplete="off" method="{{ content.form_method }}" id="" enctype="{{ content.form_enctype }}">
             <!-- % csrf_token %} -->
             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
             <div class="modal-content">

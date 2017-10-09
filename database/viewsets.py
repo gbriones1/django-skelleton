@@ -18,7 +18,6 @@ class APIWrapper(viewsets.ModelViewSet):
         return super(APIWrapper, self).destroy(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        # import pdb; pdb.set_trace()
         # serializer = self.get_serializer(data=request.data)
         # serializer.is_valid(raise_exception=True)
         # self.perform_create(serializer)
@@ -100,10 +99,15 @@ class ProductViewSet(APIWrapper):
     serializer_class = ProductSerializer
 
     def create(self, request, *args, **kwargs):
-        Provider.objects.get_or_create(name=request.data['provider'])
-        Brand.objects.get_or_create(name=request.data['brand'])
-        if request.data['appliance']:
-            Appliance.objects.get_or_create(name=request.data['appliance'])
+        if not request.POST:
+            request = request._stream
+            for field in request.FILES.keys():
+                request.POST[field] = request.FILES[field]
+            request.data = request.POST
+        Provider.objects.get_or_create(name=request.POST['provider'])
+        Brand.objects.get_or_create(name=request.POST['brand'])
+        if request.POST['appliance']:
+            Appliance.objects.get_or_create(name=request.POST['appliance'])
         return super(ProductViewSet, self).create(request, *args, **kwargs)
 
 class PercentageViewSet(viewsets.ModelViewSet):
@@ -542,7 +546,7 @@ object_map = {
             'mail': MailOrderForm,
         },
         'add_fields': [
-            # ('date', 'Movement Date', 'DateTimeField'),
+            ('id', 'Id', 'CharField'),
             ('products', 'Product Set', 'ManyToManyField'),
             ('provider_name', 'Provider', 'CharField'),
             ('claimant_name', 'Claimant', 'CharField'),

@@ -18,6 +18,7 @@ class NewProductForm(forms.ModelForm):
     appliance = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
+    picture = forms.ImageField()
     action = HiddenField(initial='new')
 
     class Meta:
@@ -31,6 +32,7 @@ class NewProductForm(forms.ModelForm):
             "appliance",
             "price",
             "discount",
+            "picture",
             ]
 
 class EditProductForm(forms.ModelForm):

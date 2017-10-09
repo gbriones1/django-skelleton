@@ -74,6 +74,7 @@ class HTMLTable(HTMLObject):
             th = ET.Element('th')
             th.text = column[1]
             th.set("data-name", column[0])
+            th.set("data-format", column[2])
             tr.append(th)
             tr_foot.append(th)
         if actions:
@@ -160,15 +161,23 @@ class Modal(Section):
             body = [MultiDeleteInput, MultiDeleteAction, "Seguro que desea eliminar los elementos seleccionados?"]
         elif action.name == 'delete':
             body.append("Seguro que desea eliminar el elemento actual?")
-        return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method)
+        enctype = 'application/x-www-form-urlencoded'
+        filefields = ["ImageField"]
+        if len(body) == 1 and body[0].__class__.__base__.__name__ == 'ModelForm':
+            for field in body[0].fields.values():
+                if field.__class__.__name__ in filefields:
+                    enctype = "multipart/form-data"
+                    break
+        return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method, form_enctype=enctype)
 
-    def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method=''):
+    def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method='', form_enctype='application/x-www-form-urlencoded'):
         super(Modal, self).__init__("modal")
         self.name = name
         self.title = title
         self.buttons = buttons
         self.form_action = form_action
         self.form_method = form_method
+        self.form_enctype = form_enctype
         self.body = []
         for item in body:
             self.body.append(ModalBodyItem(item))

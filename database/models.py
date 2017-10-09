@@ -4,10 +4,12 @@ import json
 
 from datetime import datetime
 
+from PIL import Image
+
 from django.db import models
 from django.utils import timezone
 
-VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin', 'DateField']
+VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin', 'DateField', 'FileField']
 
 def get_fields(cls, remove_fields=[], add_fields=[]):
     fields = []
@@ -234,6 +236,7 @@ class Product(models.Model):
     appliance = models.ForeignKey(Appliance, null=True, blank=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
+    picture = models.ImageField(upload_to='products/', null=True)
 
     @property
     def real_price(self):
@@ -288,6 +291,20 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['code']
+
+    def save(self, *args, **kwargs):
+        import pdb; pdb.set_trace()
+        super(Product, self).save(*args, **kwargs)
+        if self.picture:
+            picture = Image.open(self.picture.file)
+            picture.thumbnail((500,500), Image.ANTIALIAS)
+            picture.save(self.picture.file.name)
+
+
+    def delete(self, *args, **kwargs):
+        import pdb; pdb.set_trace()
+        super(Product, self).delete(*args, **kwargs)
+
 
 class Organization(models.Model):
     name = models.CharField(max_length=200)
@@ -489,7 +506,6 @@ class Quotation_Others(models.Model):
 
 class Work(models.Model):
     date = models.DateField()
-    folio = models.CharField(max_length=10, null=True)
     start_time = models.TimeField(null=True)
     end_time = models.TimeField(null=True)
     unit_section = models.CharField(max_length=30, null=True)
