@@ -845,3 +845,12 @@ class DateTimeRangeFilterForm(forms.Form):
 
 class InvoiceProviderFilterForm(forms.Form):
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), label="Proveedor")
+
+class UploadPictureForm(forms.ModelForm):
+    id = HiddenField()
+    picture = forms.ImageField()
+    action = HiddenField(initial='picture')
+
+    class Meta:
+        model = Product
+        fields = ['picture']

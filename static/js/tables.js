@@ -198,7 +198,12 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
                 value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
             }
         } else if (typeof(data[key]) == "object"){
-            value = JSON.stringify(data[key]);
+            if (data[key]){
+                value = JSON.stringify(data[key]);
+            }
+            else{
+                value = ""
+            }
         }
         editform.find('input[name="'+ key +'"]').val(value);
         var field = editform.find('input[name="'+ key +'"]')

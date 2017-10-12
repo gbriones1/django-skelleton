@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import os
 
 from datetime import datetime
 
@@ -293,16 +294,24 @@ class Product(models.Model):
         ordering = ['code']
 
     def save(self, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        super(Product, self).save(*args, **kwargs)
         if self.picture:
+            obj_copy = Product.objects.get(id=self.id)
+            if obj_copy.picture and obj_copy.picture != self.picture:
+                os.remove(obj_copy.picture.file.name)
+            super(Product, self).save(*args, **kwargs)
             picture = Image.open(self.picture.file)
             picture.thumbnail((500,500), Image.ANTIALIAS)
             picture.save(self.picture.file.name)
+        else:
+            obj_copy = Product.objects.get(id=self.id)
+            if obj_copy.picture:
+                os.remove(obj_copy.picture.file.name)
+            super(Product, self).save(*args, **kwargs)
 
 
     def delete(self, *args, **kwargs):
-        import pdb; pdb.set_trace()
+        if self.picture:
+            os.remove(self.picture.file.name)
         super(Product, self).delete(*args, **kwargs)
 
 

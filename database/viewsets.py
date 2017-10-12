@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+from rest_framework import status
+from rest_framework.response import Response
 
 from database.forms import *
 from database.models import *
@@ -42,6 +44,13 @@ class APIWrapper(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         return super(APIWrapper, self).partial_update(request, *args, **kwargs)
+
+    def custom(self, request, *args, **kwargs):
+        status = 200
+        response = ""
+        if response:
+            status = 499
+        return Response([response], status=status)
 
     def get_queryset(self):
         # import pdb; pdb.set_trace()
@@ -109,6 +118,29 @@ class ProductViewSet(APIWrapper):
         if request.POST['appliance']:
             Appliance.objects.get_or_create(name=request.POST['appliance'])
         return super(ProductViewSet, self).create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        if not request.POST:
+            request = request._stream
+            for field in request.FILES.keys():
+                request.POST[field] = request.FILES[field]
+            request.data = request.POST
+        Provider.objects.get_or_create(name=request.POST['provider'])
+        Brand.objects.get_or_create(name=request.POST['brand'])
+        if request.POST['appliance']:
+            Appliance.objects.get_or_create(name=request.POST['appliance'])
+        return super(ProductViewSet, self).update(request, *args, **kwargs)
+
+    def picture(self, request, *args, **kwargs):
+        if not request.POST:
+            request = request._stream
+            for field in request.FILES.keys():
+                request.POST[field] = request.FILES[field]
+            request.data = request.POST
+        product = Product.objects.get(id=request.data.get("id"))
+        product.picture = request.data.get('picture')
+        product.save()
+        return Response([""], status=200)
 
 class PercentageViewSet(viewsets.ModelViewSet):
     queryset = Percentage.objects.order_by('max_price_limit')
@@ -321,11 +353,14 @@ object_map = {
             'new': NewProductForm,
             'edit': EditProductForm,
             'delete': DeleteProductForm,
+            'picture': UploadPictureForm,
         },
         'add_fields': [
             ('real_price', 'Precio Real', 'CharField'),
         ],
-        'remove_fields': ['price', 'discount']
+        'remove_fields': ['price', 'discount'],
+        'custom_reg_actions': [graphics.Action('picture', 'modal', text='Cargar foto', icon='camera', style='info', method="POST")],
+        'js': ['product']
     },
     'provider': {
         'name': 'Provedores',

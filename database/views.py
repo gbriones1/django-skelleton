@@ -3,8 +3,6 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template import RequestContext
 from django.core.cache import cache
-from rest_framework import status
-from rest_framework.response import Response
 
 import time
 import json
