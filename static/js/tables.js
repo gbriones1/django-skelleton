@@ -148,29 +148,45 @@ $('table.use-rest').each(function () {
     var useCache = table.attr("use-cache");
     $('.loading').show()
     if (useCache){
+        console.log("Table is set to use cache")
         if (name + "-update" in messages){
+            console.log("New tsp of "+name+"-update was found in messages: "+messages[name + "-update"])
             var oldupdate = sessionStorage.getItem(name + "-update")
+            console.log("Comparing to old tsp: "+oldupdate)
             if (oldupdate && (oldupdate < messages[name + "-update"])) {
+                console.log("New tsp is older, removing cached table "+name+" from store")
                 sessionStorage.removeItem(name)
+            }
+            else{
+                console.log("Old tsp seems to be the latest update")
             }
             sessionStorage.setItem(name + "-update", messages[name + "-update"]);
         }
         else{
-            sessionStorage.setItem(name + "-update", new Date().getTime()+"");
+            var d = new Date().getTime()+""
+            console.log("Tsp was not found in store, generating a new one: "+d)
+            sessionStorage.setItem(name + "-update", d);
         }
     }
     if (!sessionStorage.getItem(name) || !useCache){
+        if (!useCache) {
+            console.log("Table don't use cache. Fetching")
+        }
+        else if (!sessionStorage.getItem(name)) {
+            console.log("Cached table was not found in store. Fetching")
+        }
         $.get( window.location.origin + table.data().rest, function( data ) {
             if (useCache){
+                console.log("Storing table in cache")
                 sessionStorage.setItem(name, JSON.stringify(data));
             }
             build_table(table, data)
             $('.loading').hide()
         });
-        console.log("fetched");
+        console.log("Fetched table data");
     }
     else{
-        console.log("cached");
+        console.log("Using cached data");
         build_table(table, JSON.parse(sessionStorage.getItem(name)))
         $('.loading').hide()
     }
