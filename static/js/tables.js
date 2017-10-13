@@ -164,7 +164,7 @@ $('table.use-rest').each(function () {
         }
         else{
             var d = new Date().getTime()+""
-            console.log("Tsp was not found in store, generating a new one: "+d)
+            console.log("Tsp was not received, generating a new one: "+d)
             sessionStorage.setItem(name + "-update", d);
         }
     }

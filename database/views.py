@@ -104,10 +104,13 @@ def main(request, name, obj_id):
                     content = object_map[name]['action_forms'][action.name]()
                 modal = graphics.Modal.from_action(action, [content])
                 contents.append(modal)
-            global_messages.append(Message(
+            mesg = Message(
                 action=cache_name+'-table-update',
                 parameter=cache.get_or_set(cache_name+'-table-update', int(time.time()*1000))
-            ))
+            )
+            print(mesg)
+            global_messages.append(mesg)
+            print(global_messages)
             scripts.extend(object_map[name].get('js', []))
         else:
             scripts = ["sheets"]
