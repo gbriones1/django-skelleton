@@ -580,6 +580,14 @@ class DeletePriceListForm(forms.ModelForm):
         model = PriceList
         fields = ["id"]
 
+class PaymentForm(forms.ModelForm):
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    amount = forms.DecimalField(max_digits=9, decimal_places=2, label='Cantidad', required=True, min_value=0, initial=0)
+
+    class Meta:
+        model = Payment
+        fields = ('date', 'amount')
+
 class NewInvoiceForm(forms.ModelForm):
     number = forms.CharField(max_length=200, label='Numero')
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
@@ -588,12 +596,19 @@ class NewInvoiceForm(forms.ModelForm):
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
     credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
+    # paid = forms.BooleanField(label="Pagado?")
     action = HiddenField(initial='new')
 
     class Meta:
         model = Invoice
-        fields = '__all__'
+        fields = (
+            "number",
+            "date",
+            "due",
+            "provider",
+            "price",
+            "discount"
+        )
 
 
 class EditInvoiceForm(forms.ModelForm):
@@ -605,12 +620,20 @@ class EditInvoiceForm(forms.ModelForm):
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
     credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
+    payment_set = forms.ModelChoiceField(queryset=Payment.objects.none(), required=True, label="Pagos", widget=FormSet(form=PaymentForm()), empty_label=None)
+    # paid = forms.BooleanField(label="Pagado?")
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Invoice
-        fields = '__all__'
+        fields = (
+            "number",
+            "date",
+            "due",
+            "provider",
+            "price",
+            "discount"
+        )
 
 
 class DeleteInvoiceForm(forms.ModelForm):
@@ -646,6 +669,14 @@ class DeletePaymentForm(forms.ModelForm):
         model = Payment
         fields = ["id"]
 
+class CollectionForm(forms.ModelForm):
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    amount = forms.DecimalField(max_digits=9, decimal_places=2, label='Cantidad', required=True, min_value=0, initial=0)
+
+    class Meta:
+        model = Payment
+        fields = ('date', 'amount')
+
 class NewSellForm(forms.ModelForm):
     number = forms.CharField(max_length=200, label='Numero')
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
@@ -654,12 +685,19 @@ class NewSellForm(forms.ModelForm):
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
     credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
+    # paid = forms.BooleanField(label="Pagado?")
     action = HiddenField(initial='new')
 
     class Meta:
         model = Sell
-        fields = '__all__'
+        fields = (
+            "number",
+            "date",
+            "due",
+            "customer",
+            "price",
+            "discount"
+        )
 
 
 class EditSellForm(forms.ModelForm):
@@ -671,12 +709,20 @@ class EditSellForm(forms.ModelForm):
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
     credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
-    paid = forms.BooleanField(label="Pagado?")
+    collection_set = forms.ModelChoiceField(queryset=Collection.objects.none(), required=True, label="Cobros", widget=FormSet(form=CollectionForm()), empty_label=None)
+    # paid = forms.BooleanField(label="Pagado?")
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Sell
-        fields = '__all__'
+        fields = (
+            "number",
+            "date",
+            "due",
+            "customer",
+            "price",
+            "discount"
+        )
 
 
 class DeleteSellForm(forms.ModelForm):

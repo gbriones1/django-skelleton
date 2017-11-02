@@ -20,7 +20,7 @@ function build_table(table, data, actions, selectable) {
                 if (!(table.data().selectable && i == 0)){
                     if ($(headers[i]).hasClass('table-action')){
                         var action = $(headers[i]).data().json
-                        tr.append($('<td align="center"><p data-pacement="top" data-toggle="tooltip" title="'+$(headers[i]).text()+'"><button class="btn btn-'+action.style+'" data-target="#'+action.name+'" data-toggle="modal"><i class="fa fa-'+action.icon+'"></i></button></p></td>'))
+                        tr.append($('<td align="center"><p data-pacement="top" data-toggle="tooltip" title="'+$(headers[i]).text()+'"><button class="btn btn-'+action.style+'" data-target="#'+action.name+'" data-toggle="'+action.action+'"><i class="fa fa-'+action.icon+'"></i></button></p></td>'))
                     }
                     else{
                         var value = data[index][$(headers[i]).attr('data-name')]
@@ -260,4 +260,9 @@ $(document).on('click', 'button[data-target="#multi-delete"]', function () {
     var deleteform = $("#multi-delete form");
     deleteform[0].reset();
     deleteform.find('input[name="ids"]').val(JSON.stringify(data));
+});
+
+$(document).on('click', 'button[data-toggle="navigate"]', function () {
+    var data = $(this).closest('tr').data()
+    window.location.href = window.location.pathname + data["id"]
 });

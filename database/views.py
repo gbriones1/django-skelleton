@@ -102,8 +102,9 @@ def main(request, name, obj_id):
                 content = None
                 if action.name in object_map[name]['action_forms'].keys():
                     content = object_map[name]['action_forms'][action.name]()
-                modal = graphics.Modal.from_action(action, [content])
-                contents.append(modal)
+                if action.action == 'modal':
+                    modal = graphics.Modal.from_action(action, [content])
+                    contents.append(modal)
             global_messages.append(Message(
                 action=cache_name+'-table-update',
                 parameter=cache.get_or_set(cache_name+'-table-update', int(time.time()*1000))

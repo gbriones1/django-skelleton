@@ -2,6 +2,7 @@ import json
 
 from database.models import *
 from rest_framework import serializers
+from rest_framework.utils import model_meta
 
 class CheckboxField(serializers.BooleanField):
 
@@ -673,26 +674,161 @@ class QuotationSerializer(serializers.ModelSerializer):
             value = PriceList.objects.get(id=self.initial_data["pricelist"]).customer
         return value
 
-class InvoiceSerializer(serializers.ModelSerializer):
-    provider_name = serializers.ReadOnlyField(source='provider.name')
-    paid = CheckboxField()
-
-    class Meta:
-        model = Invoice
-        fields = '__all__'
-
 class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
 
+class InvoiceSerializer(serializers.ModelSerializer):
+    provider_name = serializers.ReadOnlyField(source='provider.name')
+    paid = CheckboxField()
+    payment_set = PaymentSerializer(many=True)
+
+    class Meta:
+        model = Invoice
+        fields = '__all__'
+
+    def update(self, instance, validated_data):
+        info = model_meta.get_field_info(instance)
+        to_add = {}
+        for attr, value in validated_data.items():
+            if attr in info.relations and info.relations[attr].to_many:
+                if attr in info.reverse_relations:
+                    set_method = getattr(self, "set_"+attr, None)
+                    if set_method:
+                        to_add[attr] = set_method(instance, attr, value)
+                    else:
+                        print("set_"+attr+"(self, instance, attr, value) method was not found. Skip silently")
+                else:
+                    field = getattr(instance, attr)
+                    field.set(value)
+            else:
+                setattr(instance, attr, value)
+        instance.save()
+        for attr, fields in to_add.items():
+            for field in fields:
+                field.save()
+        instance.save()
+        return instance
+
+    def set_payment_set(self, instance, attr, value):
+        to_add = []
+        for p in value:
+            if p["status"] == 'new':
+                data = p.copy()
+                data.pop("status")
+                data[getattr(instance, attr).field.name] = instance
+                field = getattr(instance, attr).model(**data)
+                to_add.append(field)
+            elif p["status"] == 'update':
+                field = getattr(instance, attr).get(id=p["id"])
+                data = p.copy()
+                data.pop("status")
+                data.pop("id")
+                for k, v in data.items():
+                    setattr(field, k, v)
+                field.save()
+            elif p["status"] == 'delete':
+                field = getattr(instance, attr).get(id=p["id"])
+                field.delete()
+        return to_add
+
+    def validate_payment_set(self, value):
+        value = json.loads(self.initial_data.get('payment_set', '[]') or '[]')
+        for c in value:
+            c['status'] = 'new'
+        invoice_id = self.initial_data.get("id")
+        if invoice_id:
+            invoice = Invoice.objects.get(id=invoice_id)
+            for payment in invoice.payment_set.all():
+                for c in value:
+                    if c.get('id') == payment.id:
+                        c['status'] = 'update'
+                        break
+                else:
+                    value.append({
+                        'id': payment.id,
+                        'status': 'delete',
+                    })
+        return value
+
+class CollectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Collection
+        fields = '__all__'
+
 class SellSerializer(serializers.ModelSerializer):
     customer_name = serializers.ReadOnlyField(source='customer.name')
     paid = CheckboxField()
+    collection_set = CollectionSerializer(many=True)
 
     class Meta:
         model = Sell
         fields = '__all__'
+
+    def update(self, instance, validated_data):
+        info = model_meta.get_field_info(instance)
+        to_add = {}
+        for attr, value in validated_data.items():
+            if attr in info.relations and info.relations[attr].to_many:
+                if attr in info.reverse_relations:
+                    set_method = getattr(self, "set_"+attr, None)
+                    if set_method:
+                        to_add[attr] = set_method(instance, attr, value)
+                    else:
+                        print("set_"+attr+"(self, instance, attr, value) method was not found. Skip silently")
+                else:
+                    field = getattr(instance, attr)
+                    field.set(value)
+            else:
+                setattr(instance, attr, value)
+        instance.save()
+        for attr, fields in to_add.items():
+            for field in fields:
+                field.save()
+        instance.save()
+        return instance
+
+    def set_collection_set(self, instance, attr, value):
+        to_add = []
+        for p in value:
+            if p["status"] == 'new':
+                data = p.copy()
+                data.pop("status")
+                data[getattr(instance, attr).field.name] = instance
+                field = getattr(instance, attr).model(**data)
+                to_add.append(field)
+            elif p["status"] == 'update':
+                field = getattr(instance, attr).get(id=p["id"])
+                data = p.copy()
+                data.pop("status")
+                data.pop("id")
+                for k, v in data.items():
+                    setattr(field, k, v)
+                field.save()
+            elif p["status"] == 'delete':
+                field = getattr(instance, attr).get(id=p["id"])
+                field.delete()
+        return to_add
+
+    def validate_collection_set(self, value):
+        value = json.loads(self.initial_data.get('collection_set', '[]') or '[]')
+        for c in value:
+            c['status'] = 'new'
+        sell_id = self.initial_data.get("id")
+        if sell_id:
+            sell = Sell.objects.get(id=sell_id)
+            for collection in sell.collection_set.all():
+                for c in value:
+                    if c.get('id') == collection.id:
+                        c['status'] = 'update'
+                        break
+                else:
+                    value.append({
+                        'id': collection.id,
+                        'status': 'delete',
+                    })
+        return value
 
 class CollectionSerializer(serializers.ModelSerializer):
     class Meta:

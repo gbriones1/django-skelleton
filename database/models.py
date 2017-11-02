@@ -133,6 +133,17 @@ class Invoice(models.Model):
     class Meta:
         unique_together = ('number', 'date')
 
+    def save(self, *args, **kwargs):
+        super(Invoice, self).save(*args, **kwargs)
+        acc = 0
+        for payment in self.payment_set.all():
+            acc += float(payment.amount)
+        if round(acc, 2) >= float(self.price):
+            self.paid = True
+        else:
+            self.paid = False
+        super(Invoice, self).save(*args, **kwargs)
+
     def recalculate_price(self):
         price = 0.0
         for input_reg in self.input_set.all():
@@ -203,6 +214,17 @@ class Sell(models.Model):
 
     class Meta:
         unique_together = ('number', 'date')
+
+    def save(self, *args, **kwargs):
+        super(Sell, self).save(*args, **kwargs)
+        acc = 0
+        for collection in self.collection_set.all():
+            acc += float(collection.amount)
+        if round(acc, 2) >= float(self.price):
+            self.paid = True
+        else:
+            self.paid = False
+        super(Sell, self).save(*args, **kwargs)
 
 class Collection(models.Model):
     date = models.DateField()

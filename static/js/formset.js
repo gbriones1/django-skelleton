@@ -53,7 +53,10 @@ $(document).on('click', '.'+formSetModelName+'FormSet-edit', function() {
     for (key in data){
         var value = data[key]
         if (key == "date"){
-            var d = new Date(data[key]);
+            if (value.length == 10){
+                value += " 00:00"
+            }
+            var d = new Date(value);
             if (form.find('input[name="'+ key +'"]').attr('type') == "datetime-local"){
                 value = d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)+"T"+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+":"+("0"+d.getSeconds()).slice(-2);
             }

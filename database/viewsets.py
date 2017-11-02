@@ -622,6 +622,7 @@ object_map = {
             graphics.Action('mail', 'modal', text='Email', icon='envelope', style='info', method="POST"),
             graphics.Action('work', 'modal', text='Trabajo', icon='wrench', style='info', method="POST"),
             graphics.Action('output', 'modal', text='Salida', icon='sign-out', style='info', method="POST"),
+            graphics.Action('view', 'navigate', text='Ver', icon='eye', style='info', method="GET"),
             ],
         'js': ['formset', 'multiset', 'quotation'],
     },
@@ -641,6 +642,7 @@ object_map = {
         ],
         'remove_fields': ['provider'],
         'filter_form': DateRangeFilterForm(),
+        'js': ['formset'],
     },
     'payment': {
         'name': 'Pagos',
@@ -671,6 +673,7 @@ object_map = {
         ],
         'remove_fields': ['customer'],
         'filter_form': DateRangeFilterForm(),
+        'js': ['formset'],
     },
     'collection': {
         'name': 'Cobros',
