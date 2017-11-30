@@ -136,7 +136,7 @@ def reports(request, name):
         YEAR = configurations.YEAR
         VERSION = configurations.VERSION
         contents = [
-            graphics.Table("reports-table", "Reportes", [("name", "Nombre")], rows=[
+            graphics.Table("reports-table", "Reportes", [("name", "Nombre", "CharField")], rows=[
                 {"name":"Finanzas de almacen", "report":"storage_finance"},
                 {"name":"Deudas de facturas", "report":"invoice_debts"},
                 {"name":"Unidades mas conflictivas"},
