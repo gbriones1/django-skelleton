@@ -17,7 +17,6 @@ from database.forms import *
 
 from mysite import configurations, graphics
 from mysite.extensions import Notification, Message
-from mysite.email_client import send_email
 
 @login_required
 def main(request, name, obj_id):

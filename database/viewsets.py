@@ -7,6 +7,7 @@ from database.models import *
 from database.serializers import *
 
 from mysite import graphics
+from mysite.email_client import send_email
 
 class APIWrapper(viewsets.ModelViewSet):
 
@@ -290,8 +291,8 @@ class OrderViewSet(APIWrapper):
             if pc.for_orders and pc.contact.email:
                 dest.append(pc.contact.email)
         if dest:
-            # if send_email(";".join(dest), 'Pedido de productos para Muelles Obrero', message):
-            if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+order.provider.name, message):
+            if send_email(";".join(dest), 'Pedido de productos para Muelles Obrero', message):
+                # if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+order.provider.name, message):
                 order.status = Order.STATUS_ASKED
                 order.save()
             else:
