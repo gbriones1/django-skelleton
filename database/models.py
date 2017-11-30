@@ -316,8 +316,10 @@ class Product(models.Model):
         ordering = ['code']
 
     def save(self, *args, **kwargs):
-        if self.picture:
+        obj_copy = self
+        if self.id:
             obj_copy = Product.objects.get(id=self.id)
+        if self.picture:
             if obj_copy.picture and obj_copy.picture != self.picture:
                 os.remove(obj_copy.picture.file.name)
             super(Product, self).save(*args, **kwargs)
@@ -325,7 +327,6 @@ class Product(models.Model):
             picture.thumbnail((500,500), Image.ANTIALIAS)
             picture.save(self.picture.file.name)
         else:
-            obj_copy = Product.objects.get(id=self.id)
             if obj_copy.picture:
                 os.remove(obj_copy.picture.file.name)
             super(Product, self).save(*args, **kwargs)
