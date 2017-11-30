@@ -283,7 +283,7 @@ class OrderViewSet(APIWrapper):
 
     @staticmethod
     def send_email(order, message):
-        message = message+"\n\n"
+        message = message+"\n\nPedido numero: {}\n".format(order.id)
         for p in order.order_product:
             message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
         dest = []
