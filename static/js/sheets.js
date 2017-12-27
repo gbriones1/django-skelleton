@@ -28,6 +28,15 @@ $('.sheet').each(function () {
                     contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
                 }
             }
+            else if (field.endsWith("others_set")) {
+                for (p in data[field]){
+                    name = data[field][p].description;
+                    price = parseFloat(data[field][p].price);
+                    amount = parseInt(data[field][p].amount);
+                    total += price*amount
+                    contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                }
+            }
             else {
                 price = parseFloat(data[field]);
                 if (price){

@@ -139,8 +139,8 @@ def render_sheet(request, name, obj_id):
     rest_url = object_map[name]['api_path']
     if request.GET:
         rest_url += "?"+urllib.urlencode(request.GET)
-    desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name]['sheet_desc']])
-    cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name]['sheet_cont']])
+    desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_desc', object_map[name].get('table_fields', []))])
+    cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_cont', [])])
     sheet = graphics.DescriptionSheet(
         name+"-sheet",
         object_map[name].get('sheet_name', object_map[name]['name']),
