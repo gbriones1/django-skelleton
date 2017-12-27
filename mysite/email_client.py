@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from database.models import Configuration
 
-def send_email(destination, subject, text, files=[], parts=[], attachments=[]):
+def send_email(destination, subject, text, files=[], parts=[], attachments=[], mime_type='plain'):
     success = False
     conf = Configuration.objects.all()
     if not conf:
@@ -28,7 +28,7 @@ def send_email(destination, subject, text, files=[], parts=[], attachments=[]):
     message['From'] = FROM
     message['To'] = ', '.join(TO)
 
-    message.attach(MIMEText(text.encode("utf-8"), 'plain', 'utf-8'))
+    message.attach(MIMEText(text.encode("utf-8"), mime_type, 'utf-8'))
 
     for part in parts:
         message.attach(MIMEText(part["content"].encode("utf-8"), part["type"], 'utf-8'))

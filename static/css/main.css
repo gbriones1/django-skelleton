@@ -171,3 +171,16 @@ button > p {
 input.form-control {
 	min-width: 85px;
 }
+
+.sheet-header {
+	text-align: center;
+}
+
+@media (min-width: 992px){
+    .sheet-head {
+        font-size: x-large;
+    }
+	#sheet-logo {
+		height: 200px;
+	}
+}

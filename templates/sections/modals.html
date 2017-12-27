@@ -11,7 +11,7 @@
                 </div>
                 <div class="modal-body">
                     {% for item in content.body %}
-                        {% if item.type == "ModelForm" %}
+                        {% if item.type == "ModelForm" or item.type == "Form" %}
                             {% for field in item.obj %}
                                 {% if field.is_hidden %}
                                     {{ field }}

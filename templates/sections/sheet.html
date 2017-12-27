@@ -6,66 +6,37 @@
 </div>
 <div class="row">
     <div class="sheet" use_rest="{{ content.use_rest }}" data-obj_id="{{ content.obj_id }}" style="padding: 0 30px;">
-        <div class="row sheet-head" style="font-size: x-large;">
-            <div class="col-xs-8"><img src="/static/img/mo.jpeg" height="200">
-                <div>
+        <div class="row sheet-head">
+            <div class="col-xs-4"><img src="/static/img/mo.jpeg" id="sheet-logo" height="100"></div>
+            <div class="col-xs-5">
+                <div class="sheet-header">
                     Muelles Obrero S. de R.L. de C.V.<br>
-                    MOB101108GT6
+                    <strong>MOB101108GT6</strong><br>
+                    San Patricio 1676, Vicente Guerrero<br>
+                    C.P. 44330 Guadalajara, Jal.<br>
                 </div>
             </div>
-            <div class="col-xs-4"><table class="table table-striped">
+            <div class="col-xs-3"><table class="table table-striped">
                 <tr><th>Folio</th></tr>
-                <tr><td>XXXXX</td></tr>
+                <tr><td class="folio"></td></tr>
                 <tr><th>Fecha</th></tr>
-                <tr><td>12341212341234</td></tr>
+                <tr><td class='date'></td></tr>
             </table></div>
         </div>
-        <div class="row sheet-desc">
-            <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                <tr><th>Name</th></tr>
-                <tr><td>Value</td></tr>
-            </table>
-            </div>
-            <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                <tr><th>Name</th></tr>
-                <tr><td>Value</td></tr>
-            </table>
-            </div>
-            <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                <tr><th>Name</th></tr>
-                <tr><td>Value</td></tr>
-            </table>
-            </div>
-            <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                <tr><th>Name</th></tr>
-                <tr><td>Value</td></tr>
-            </table>
-            </div>
-            <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                <tr><th>Name</th></tr>
-                <tr><td>Value</td></tr>
-            </table>
-            </div>
-        </div>
-        <div class="row sheet-cont" style="margin-top: 20px">
+        <div class="row sheet-desc" data-fields="{{ content.desc_fields }}"></div>
+        <div class="row sheet-cont" style="margin-top: 20px" data-fields="{{ content.cont_fields }}">
             <table class="table table-striped">
-                <tr><th class="col-xs-6">Product</th><th class="col-xs-2">Price</th><th class="col-xs-2">Amount</th><th class="col-xs-2">Total</th></tr>
-                <tr><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td></tr>
-                <tr><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td></tr>
-                <tr><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td></tr>
-                <tr><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td><td>XXXXX</td></tr>
+                <thead>
+                    <tr><th class="col-xs-6">Producto</th><th class="col-xs-2">Precio Unitario</th><th class="col-xs-2">Cantidad</th><th class="col-xs-2">Total</th></tr>
+                </thead>
+                <tbody>
+                </tbody>
             </table>
         </div>
         <div class="row sheet-foot">
             <div class="col-xs-8"></div>
-            <div class="col-xs-2">SubTotal</div>
-            <div class="col-xs-2">XXXXX</div>
-            <div class="col-xs-8"></div>
-            <div class="col-xs-2">IVA</div>
-            <div class="col-xs-2">XXXXX</div>
-            <div class="col-xs-8"></div>
             <div class="col-xs-2">Total</div>
-            <div class="col-xs-2">XXXXX</div>
+            <div class="col-xs-2 total"></div>
         </div>
     </div>
 </div>

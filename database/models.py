@@ -10,20 +10,6 @@ from PIL import Image
 from django.db import models
 from django.utils import timezone
 
-VALID_FIELDS = ['Field', 'CharField', 'DateTimeCheckMixin', 'DateField', 'FileField']
-
-def get_fields(cls, remove_fields=[], add_fields=[]):
-    fields = []
-    for field in cls._meta.fields:
-        if field.name not in remove_fields:
-            if field.__class__.__base__.__name__ in VALID_FIELDS and field.__class__.__name__ != 'AutoField':
-                fields.append((field.name, field.formfield().label, field.__class__.__name__))
-            elif field.__class__.__name__ == 'ForeignKey':
-                fields.append((field.name, field.target_field.model.__name__, field.__class__.__name__))
-    return fields+add_fields
-
-models.Model.get_fields = classmethod(get_fields)
-
 class Appliance(models.Model):
     name = models.CharField(max_length=100)
 
@@ -50,71 +36,25 @@ class Brand(models.Model):
     class Meta:
         ordering = ['name']
 
-class Contact(models.Model):
-    name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
-
-    def __unicode__(self):
-        return self.name + " - " + self.department
-
 class Provider(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    contacts = models.ManyToManyField(Contact, through='Provider_Contact')
-
-    @property
-    def provider_contact(self):
-        return Provider_Contact.objects.filter(provider=self)
-
-    @provider_contact.setter
-    def provider_contact(self, contacts):
-        self.contacts_desc = contacts
-
-    def __unicode__(self):
-        return self.name
-
-    def save(self, *args, **kwargs):
-        super(Provider, self).save(*args, **kwargs)
-        if hasattr(self, 'contacts_desc'):
-            for c in self.contacts_desc:
-                if c['status'] == 'new':
-                    contact = Contact(name=c['name'], department=c['department'], email=c['email'], phone=c['phone'])
-                    contact.save()
-                    provider_contact = Provider_Contact(provider=self, contact=contact, for_orders=bool(c["for_orders"]))
-                    provider_contact.save()
-                elif c['status'] == 'update':
-                    provider_contact = self.provider_contact.get(id=c['id'])
-                    provider_contact.contact.name = c['name']
-                    provider_contact.contact.department = c['department']
-                    provider_contact.contact.email = c['email']
-                    provider_contact.contact.phone = c['phone']
-                    provider_contact.contact.save()
-                    provider_contact.for_orders = c['for_orders']
-                    provider_contact.save()
-                elif c['status'] == 'delete':
-                    provider_contact = self.provider_contact.get(id=c['id'])
-                    contact = provider_contact.contact
-                    provider_contact.delete()
-                    contact.delete()
-
-    def delete(self, *args, **kwargs):
-        for pc in self.provider_contact:
-            contact = pc.contact
-            pc.delete()
-            contact.delete()
-        super(Provider, self).delete(*args, **kwargs)
 
     def products_related(self):
         products = Product.objects.filter(provider=self)
         return len(products)
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
         ordering = ['name']
 
 class Provider_Contact(models.Model):
     provider = models.ForeignKey(Provider)
-    contact = models.ForeignKey(Contact)
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     for_orders = models.BooleanField(default=False)
 
 class Invoice(models.Model):
@@ -133,8 +73,7 @@ class Invoice(models.Model):
     class Meta:
         unique_together = ('number', 'date')
 
-    def save(self, *args, **kwargs):
-        super(Invoice, self).save(*args, **kwargs)
+    def recalculate_payments(self, *args, **kwargs):
         acc = 0
         for payment in self.payment_set.all():
             acc += float(payment.amount)
@@ -142,12 +81,12 @@ class Invoice(models.Model):
             self.paid = True
         else:
             self.paid = False
-        super(Invoice, self).save(*args, **kwargs)
+        self.save()
 
     def recalculate_price(self):
         price = 0.0
         for input_reg in self.input_set.all():
-            for mp in input_reg.movement_product:
+            for mp in input_reg.movement_product_set.all():
                 price += float(mp.price) * mp.amount
         self.price = price
         self.save()
@@ -159,45 +98,21 @@ class Payment(models.Model):
 
 class Customer(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    contacts = models.ManyToManyField(Contact)
 
     def __unicode__(self):
         return self.name
 
-    @property
-    def customer_contact(self):
-        return Contact.objects.filter(customer=self)
-
-    @customer_contact.setter
-    def customer_contact(self, contacts):
-        self.contacts_desc = contacts
-
-    def save(self, *args, **kwargs):
-        if hasattr(self, 'contacts_desc'):
-            for c in self.contacts_desc:
-                if c['status'] == 'new':
-                    contact = Contact(name=c['name'], department=c['department'], email=c['email'], phone=c['phone'])
-                    contact.save()
-                    self.contacts.add(contact)
-                elif c['status'] == 'update':
-                    contact = self.contacts.get(id=c['id'])
-                    contact.name = c['name']
-                    contact.department = c['department']
-                    contact.email = c['email']
-                    contact.phone = c['phone']
-                    contact.save()
-                elif c['status'] == 'delete':
-                    contact = self.contacts.get(id=c['id'])
-                    contact.delete()
-        super(Customer, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        for cc in self.contacts:
-            cc.delete()
-        super(Customer, self).delete(*args, **kwargs)
-
     class Meta:
         ordering = ['name']
+
+class Customer_Contact(models.Model):
+    customer = models.ForeignKey(Customer)
+    name = models.CharField(max_length=100)
+    department = models.CharField(max_length=100, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    for_quotation = models.BooleanField(default=False)
+    for_invoice = models.BooleanField(default=False)
 
 class Sell(models.Model):
     number = models.CharField(max_length=30)
@@ -215,8 +130,7 @@ class Sell(models.Model):
     class Meta:
         unique_together = ('number', 'date')
 
-    def save(self, *args, **kwargs):
-        super(Sell, self).save(*args, **kwargs)
+    def recalculate_collections(self, *args, **kwargs):
         acc = 0
         for collection in self.collection_set.all():
             acc += float(collection.amount)
@@ -224,7 +138,7 @@ class Sell(models.Model):
             self.paid = True
         else:
             self.paid = False
-        super(Sell, self).save(*args, **kwargs)
+        self.save()
 
 class Collection(models.Model):
     date = models.DateField()
@@ -419,35 +333,6 @@ class PriceList(models.Model):
     def __unicode__(self):
         return self.customer.name
 
-    @property
-    def pricelist_product(self):
-        return PriceList_Product.objects.filter(pricelist=self)
-
-    @pricelist_product.setter
-    def pricelist_product(self, products):
-        self.products_desc = products
-
-    def save(self, *args, **kwargs):
-        super(PriceList, self).save(*args, **kwargs)
-        if hasattr(self, 'products_desc'):
-            for pp in self.products_desc:
-                product = Product.objects.get(id=pp['product'])
-                if pp['status'] == 'new':
-                    pricelist_product = PriceList_Product(pricelist=self, product=product, price=float(pp["price"]))
-                    pricelist_product.save()
-                elif pp['status'] == 'update':
-                    pricelist_product = self.pricelist_product.get(id=pp['id'])
-                    pricelist_product.price = float(pp['price'])
-                    pricelist_product.save()
-                elif pp['status'] == 'delete':
-                    pricelist_product = self.pricelist_product.get(id=pp['id'])
-                    pricelist_product.delete()
-
-    def delete(self, *args, **kwargs):
-        for pp in self.pricelist_product:
-            pp.delete()
-        super(PriceList, self).delete(*args, **kwargs)
-
 class PriceList_Product(models.Model):
     pricelist = models.ForeignKey(PriceList)
     product = models.ForeignKey(Product)
@@ -469,60 +354,6 @@ class Quotation(models.Model):
     authorized = models.BooleanField(default=False)
     service = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
-
-    @property
-    def quotation_product(self):
-        return Quotation_Product.objects.filter(quotation=self)
-
-    @quotation_product.setter
-    def quotation_product(self, products):
-        self.products_desc = products
-
-    @property
-    def quotation_other(self):
-        return Quotation_Others.objects.filter(quotation=self)
-
-    @quotation_other.setter
-    def quotation_other(self, others):
-        self.others_desc = others
-
-    def save(self, *args, **kwargs):
-        super(Quotation, self).save(*args, **kwargs)
-        if hasattr(self, 'products_desc'):
-            for qp in self.products_desc:
-                product = Product.objects.get(id=qp['product'])
-                if qp['status'] == 'new':
-                    quotation_product = Quotation_Product(quotation=self, product=product, amount=int(qp["amount"]), price=float(qp["price"]))
-                    quotation_product.save()
-                elif qp['status'] == 'update':
-                    quotation_product = self.quotation_product.get(id=qp['id'])
-                    quotation_product.price = float(qp['price'])
-                    quotation_product.amount = int(qp['amount'])
-                    quotation_product.save()
-                elif qp['status'] == 'delete':
-                    quotation_product = self.quotation_product.get(id=qp['id'])
-                    quotation_product.delete()
-        if hasattr(self, 'others_desc'):
-            for qo in self.others_desc:
-                if qo['status'] == 'new':
-                    quotation_other = Quotation_Others(quotation=self, description=qo["description"], amount=int(qo["amount"]), price=float(qo["price"]))
-                    quotation_other.save()
-                elif qo['status'] == 'update':
-                    quotation_other = self.quotation_other.get(id=qo['id'])
-                    quotation_other.description = qo['description']
-                    quotation_other.price = float(qo['price'])
-                    quotation_other.amount = int(qo['amount'])
-                    quotation_other.save()
-                elif qo['status'] == 'delete':
-                    quotation_other = self.quotation_other.get(id=qo['id'])
-                    quotation_other.delete()
-
-    def delete(self, *args, **kwargs):
-        for qp in self.quotation_product:
-            qp.delete()
-        for qo in self.quotation_other:
-            qo.delete()
-        super(Quotation, self).delete(*args, **kwargs)
 
 class Quotation_Product(models.Model):
     quotation = models.ForeignKey(Quotation)
@@ -554,40 +385,20 @@ class Employee_Work(models.Model):
 class Movement(models.Model):
     date = models.DateTimeField(default=datetime.now)
     organization_storage = models.ForeignKey(Organization_Storage)
-    products = models.ManyToManyField(Product, through='Movement_Product')
-
-    def save(self, *args, **kwargs):
-        super(Movement, self).save(*args, **kwargs)
-        if hasattr(self, 'products_desc'):
-            for mp in self.products_desc:
-                product = Product.objects.get(id=mp['product'])
-                if mp['status'] == 'new':
-                    movement_product = Movement_Product(movement=self, product=product, amount=int(mp["amount"]), price=float(mp['price']))
-                    movement_product.save()
-                elif mp['status'] == 'update':
-                    movement_product = self.movement_product.get(id=mp['id'])
-                    movement_product.amount = int(mp['amount'])
-                    movement_product.price = float(mp['price'])
-                    movement_product.save()
-                elif mp['status'] == 'delete':
-                    movement_product = self.movement_product.get(id=mp['id'])
-                    movement_product.delete()
-                for organization_storage_id in mp['restock'].keys():
-                    organization_storage = Organization_Storage.objects.get(id=organization_storage_id)
-                    storage_product = Storage_Product.objects.get(organization_storage=organization_storage, product=product)
-                    storage_product.amount += mp['restock'][organization_storage_id]
-                    storage_product.save()
 
     def delete(self, *args, **kwargs):
-        for mp in self.movement_product:
-            storage_product = Storage_Product.objects.get(organization_storage=self.organization_storage, product=mp.product)
-            diff = mp.amount
-            if self.__class__.__name__ == "Input":
-                diff *= -1
-            storage_product.amount += diff
-            storage_product.save()
+        for mp in self.movement_product_set.all():
             mp.delete()
-        super(Movement, self).delete(*args, **kwargs)
+        if self.get_type() == "Input" and self.invoice:
+            self.invoice.recalculate_price()
+        return super(Movement, self).delete(*args, **kwargs)
+
+    def get_type(self):
+        try:
+            self.input
+            return "Input"
+        except:
+            return "Output"
 
 class Movement_Product(models.Model):
     movement = models.ForeignKey(Movement, null=True)
@@ -595,30 +406,42 @@ class Movement_Product(models.Model):
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
+    def save(self, *args, **kwargs):
+        sp = Storage_Product.objects.filter(organization_storage=self.movement.organization_storage, product=self.product)
+        if sp:
+            sp = sp[0]
+        else:
+            sp = Storage_Product(organization_storage=self.movement.organization_storage, product=self.product, amount=0, must_have=0)
+        difference = self.amount
+        if self.id:
+            old = Movement_Product.objects.get(id=self.id)
+            difference -= old.amount
+        if self.movement.get_type() != "Input":
+            difference *= -1
+        sp.amount += difference
+        sp.save()
+        return super(Movement_Product, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        sp = Storage_Product.objects.filter(organization_storage=self.movement.organization_storage, product=self.product)
+        if sp:
+            sp = sp[0]
+        else:
+            sp = Storage_Product(organization_storage=self.movement.organization_storage, product=self.product, amount=0, must_have=0)
+        difference = self.amount
+        if self.movement.get_type() == "Input":
+            difference *= -1
+        sp.amount += difference
+        sp.save()
+        return super(Movement_Product, self).delete(*args, **kwargs)
+
 class Input(Movement):
     invoice = models.ForeignKey(Invoice, null=True)
-
-    @property
-    def movement_product(self):
-        return Movement_Product.objects.filter(movement=self)
-
-    @movement_product.setter
-    def movement_product(self, products):
-        self.products_desc = products
-
 
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True)
     destination = models.ForeignKey(Customer, null=True)
     replacer = models.ForeignKey(Organization, null=True, blank=True)
-
-    @property
-    def movement_product(self):
-        return Movement_Product.objects.filter(movement=self)
-
-    @movement_product.setter
-    def movement_product(self, products):
-        self.products_desc = products
 
 class Lending(models.Model):
     date = models.DateTimeField(default=datetime.now)

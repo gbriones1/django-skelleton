@@ -23,43 +23,67 @@ function build_table(table, data, actions, selectable) {
                         tr.append($('<td align="center"><p data-pacement="top" data-toggle="tooltip" title="'+$(headers[i]).text()+'"><button class="btn btn-'+action.style+'" data-target="#'+action.name+'" data-toggle="'+action.action+'"><i class="fa fa-'+action.icon+'"></i></button></p></td>'))
                     }
                     else{
-                        var value = data[index][$(headers[i]).attr('data-name')]
+                        var fieldName = $(headers[i]).attr('data-name');
+                        var value = data[index][fieldName]
                         if (value && typeof(value) == "object" && value.length > 0){
-                            // value = JSON.stringify(value);
                             var subt = $('<table>')
                             var subh = $('<thead>')
                             var subb = $('<tbody>')
-                            var subhr = $('<tr>')
-                            for (field_index in Object.keys(value[0])){
-                                subhr.append($("<th>").text(Object.keys(value[0])[field_index]))
-                            }
-                            subh.append(subhr)
-                            for (reg_index in value){
-                                var subbr = $('<tr>')
-                                for (subdata in value[reg_index]){
-                                    if (typeof(value[reg_index][subdata]) == "object"){
-                                        var subt2 = $('<table>')
-                                        // var subh2 = $('<thead>')
-                                        var subb2 = $('<tbody>')
-                                        // var subhr2 = $('<tr>')
-                                        // for (field_index in Object.keys(value[reg_index][subdata])){
-                                        //     subhr2.append($("<th>").text(Object.keys(value[reg_index][subdata])[field_index]))
-                                        // }
-                                        // subh2.append(subhr2)
-                                        var subbr2 = $('<tr>')
-                                        for (reg_index2 in value[reg_index][subdata]){
-                                            subbr2.append($("<td>").text(value[reg_index][subdata][reg_index2]))
-                                        }
-                                        subb2.append(subbr2)
-                                        // subt2.append(subh2)
-                                        subt2.append(subb2)
-                                        subbr.append($('<td>').append(subt2))
-                                    }
-                                    else {
-                                        subbr.append($("<td>").text(value[reg_index][subdata]))
-                                    }
+                            var subsetFields = table.data().additional["subset-fields"][fieldName]
+                            if (subsetFields){
+                                var subhr = $('<tr>')
+                                for (field_index in subsetFields){
+                                    var th = $("<th>").text(subsetFields[field_index].label);
+                                    th.data(subsetFields[field_index])
+                                    subhr.append(th)
                                 }
-                                subb.append(subbr)
+                                subh.append(subhr)
+                                for (reg_index in value){
+                                    var subbr = $('<tr>')
+                                    subhr.children().each(function () {
+                                        if (typeof(value[reg_index][$(this).data().name]) == "object"){
+                                            var subt2 = $('<table>')
+                                            var subb2 = $('<tbody>')
+                                            var subbr2 = $('<tr>')
+                                            for (reg_index2 in value[reg_index][$(this).data().name]){
+                                                subbr2.append($("<td>").text(value[reg_index][$(this).data().name][reg_index2]))
+                                            }
+                                            subb2.append(subbr2)
+                                            subt2.append(subb2)
+                                            subbr.append($('<td>').append(subt2))
+                                        }
+                                        else {
+                                            subbr.append($("<td>").text(value[reg_index][$(this).data().name]));
+                                        }
+                                    })
+                                    subb.append(subbr)
+                                }
+                            } else {
+                                var subhr = $('<tr>')
+                                for (field_index in Object.keys(value[0])){
+                                    subhr.append($("<th>").text(Object.keys(value[0])[field_index]))
+                                }
+                                subh.append(subhr)
+                                for (reg_index in value){
+                                    var subbr = $('<tr>')
+                                    for (subdata in value[reg_index]){
+                                        if (typeof(value[reg_index][subdata]) == "object"){
+                                            var subt2 = $('<table>')
+                                            var subb2 = $('<tbody>')
+                                            var subbr2 = $('<tr>')
+                                            for (reg_index2 in value[reg_index][subdata]){
+                                                subbr2.append($("<td>").text(value[reg_index][subdata][reg_index2]))
+                                            }
+                                            subb2.append(subbr2)
+                                            subt2.append(subb2)
+                                            subbr.append($('<td>').append(subt2))
+                                        }
+                                        else {
+                                            subbr.append($("<td>").text(value[reg_index][subdata]))
+                                        }
+                                    }
+                                    subb.append(subbr)
+                                }
                             }
                             subt.append(subh)
                             subt.append(subb)

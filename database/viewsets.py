@@ -1,3 +1,5 @@
+from django.shortcuts import render
+
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework.response import Response
@@ -8,6 +10,26 @@ from database.serializers import *
 
 from mysite import graphics
 from mysite.email_client import send_email
+
+import urllib
+
+object_map = {}
+
+def render_sheet(request, name, obj_id):
+    scripts = ["sheets"]
+    rest_url = object_map[name]['api_path']
+    if request.GET:
+        rest_url += "?"+urllib.urlencode(request.GET)
+    sheet = graphics.DescriptionSheet(
+        name+"-sheet",
+        object_map[name].get('sheet_name', object_map[name]['name']),
+        obj_id,
+        desc_fields=object_map[name]['sheet_desc'],
+        cont_fields=object_map[name]['sheet_cont'],
+        use_rest=rest_url,
+    )
+    contents = [sheet]
+    return render(request, 'pages/database.html', locals())
 
 class APIWrapper(viewsets.ModelViewSet):
 
@@ -54,35 +76,7 @@ class APIWrapper(viewsets.ModelViewSet):
         return Response([response], status=status)
 
     def get_queryset(self):
-        # import pdb; pdb.set_trace()
         return self.queryset.filter(**self.request.query_params.dict())
-        # model_fields = list(map(lambda x: x.name, self.queryset.model._meta.fields))
-        # model_filters = {}
-        # function_filters = {}
-        # for x,y in self.request.query_params.dict().items():
-        #     if x in model_fields:
-        #         model_filters[x] = y
-        #     else:
-        #         function_filters[x] = y
-        # results = self.queryset.filter(**model_filters)
-        # for function_filter in function_filters.keys():
-        #     method = function_filter.split("__")
-        #     field = method[0]
-        #     op = 'eq' if len(method) == 1 else method[1]
-        #     if results and hasattr(results[0], field):
-        #         if op == 'eq':
-        #             results = filter(lambda x:getattr(x, field) == function_filters[function_filter], results)
-        #         elif op == 'gt':
-        #             results = filter(lambda x:getattr(x, field) > function_filters[function_filter], results)
-        #         elif op == 'gte':
-        #             results = filter(lambda x:getattr(x, field) >= function_filters[function_filter], results)
-        #         elif op == 'lt':
-        #             results = filter(lambda x:getattr(x, field) < function_filters[function_filter], results)
-        #         elif op == 'lte':
-        #             results = filter(lambda x:getattr(x, field) <= function_filters[function_filter], results)
-        #         elif op == 'not':
-        #             results = filter(lambda x:getattr(x, field) != function_filters[function_filter], results)
-        # return results
 
 class ProviderViewSet(viewsets.ModelViewSet):
     queryset = Provider.objects.order_by('name')
@@ -169,45 +163,13 @@ class InputViewSet(APIWrapper):
     queryset = Input.objects.order_by('-date')
     serializer_class = InputSerializer
 
-    def create(self, request, *args, **kwargs):
-        if request.POST.get('invoice_number'):
-            price = float(request.POST.get('invoice_price', 0.0))
-            products = json.loads(request.POST.get('products', "[]"))
-            if not price:
-                price = 0.0
-                for p in products:
-                    product = Product.objects.get(id=p["id"])
-                    price += (float(p["price"]) - (float(p["price"])*float(p["discount"])/100))*int(p["amount"])
-            invoice = Invoice.objects.filter(number=request.POST['invoice_number'], date=request.POST['invoice_date'])
-            if invoice:
-                invoice = invoice[0]
-                invoice.price = float(invoice.price) + price
-            else:
-                provider = None
-                if products:
-                    provider = Product.object.get(id=products[0]["id"]).provider
-                invoice = Invoice(number=request.POST['invoice_number'], date=request.POST['invoice_date'], price=price, provider=provider)
-            invoice.save()
-        return super(InputViewSet, self).create(request, *args, **kwargs)
-
-    def update(self, request, *args, **kwargs):
-        old_invoice = Input.objects.get(id=request.POST["id"]).invoice
-        response = super(InputViewSet, self).update(request, *args, **kwargs)
-        new_invoice = None
-        if request.POST.get('invoice'):
-            new_invoice = Invoice.objects.get(id=request.data["invoice"])
-            new_invoice.recalculate_price()
-        if old_invoice != new_invoice:
-            old_invoice.recalculate_price()
-        return response
-
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
     serializer_class = OutputSerializer
 
     def order(self, request, *args, **kwargs):
         provider_map = {}
-        for product_info in json.loads(request.POST.get('products', '[]')):
+        for product_info in json.loads(request.POST.get('order_product_set', '[]')):
             p = Product.objects.get(id=product_info["id"])
             p.amount = product_info["amount"]
             if p.provider.id in provider_map:
@@ -287,12 +249,12 @@ class OrderViewSet(APIWrapper):
         for p in order.order_product:
             message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
         dest = []
-        for pc in order.provider.provider_contact:
-            if pc.for_orders and pc.contact.email:
-                dest.append(pc.contact.email)
+        for pc in order.provider.provider_contact_set.all():
+            if pc.for_orders and pc.email:
+                dest.append(pc.email)
         if dest:
-            if send_email(";".join(dest), 'Pedido de productos para Muelles Obrero', message):
-                # if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+order.provider.name, message):
+            # if send_email(";".join(dest), 'Pedido de productos para Muelles Obrero', message):
+            if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Pedido a '+order.provider.name, message):
                 order.status = Order.STATUS_ASKED
                 order.save()
             else:
@@ -306,7 +268,17 @@ class QuotationViewSet(APIWrapper):
     serializer_class = QuotationSerializer
 
     def mail(self, request, *args, **kwargs):
-        response = Response([], status=200)
+        status = 500
+        response = ''
+        # rendered = render_sheet(request, 'quotation', 2)
+        # import pdfkit
+        # pdf = pdfkit.from_string(rendered.content, False)
+        # if send_email('gbriones.gdl@gmail.com;mind.braker@hotmail.com', 'Cotizacion '+str(2), rendered.content, mime_type='html'):
+        #     status=200
+        #     response = "Envio Exitoso"
+        # else:
+        #     response = "Fallo envio de email a {}".format('gbriones.gdl@gmail.com')
+        response = Response([response], status=status)
         return response
 
     def work(self, request, *args, **kwargs):
@@ -353,13 +325,10 @@ object_map = {
         'action_forms': {
             'new': NewProductForm,
             'edit': EditProductForm,
-            'delete': DeleteProductForm,
+            'delete': DeleteForm,
             'picture': UploadPictureForm,
         },
-        'add_fields': [
-            ('real_price', 'Precio Real', 'CharField'),
-        ],
-        'remove_fields': ['price', 'discount'],
+        'table_fields': ['code', 'provider_name', 'brand_name', 'name', 'description', 'appliance_name', 'real_price', 'picture'],
         'custom_reg_actions': [graphics.Action('picture', 'modal', text='Cargar foto', icon='camera', style='info', method="POST")],
         'js': ['product']
     },
@@ -371,12 +340,10 @@ object_map = {
         'action_forms': {
             'new': NewProviderForm,
             'edit': EditProviderForm,
-            'delete': DeleteProviderForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('product_count', 'Productos', 'IntegerField'),
-            ('contacts', 'Contactos', 'ManyToManyField'),
-        ],
+        'table_fields': ['name', 'product_count', 'provider_contact_set'],
+        'subset-fields': {'provider_contact_set': ["name", "department", "phone", "email", "for_orders"]},
         'js': ['formset'],
     },
     'customer': {
@@ -387,11 +354,10 @@ object_map = {
         'action_forms': {
             'new': NewCustomerForm,
             'edit': EditCustomerForm,
-            'delete': DeleteCustomerForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('contacts', 'Contactos', 'ManyToManyField'),
-        ],
+        'table_fields': ['name', 'customer_contact_set'],
+        'subset-fields': {'customer_contact_set': ["name", "department", "phone", "email"]},
         'js': ['formset'],
     },
     'employee': {
@@ -402,8 +368,9 @@ object_map = {
         'action_forms': {
             'new': NewEmployeeForm,
             'edit': EditEmployeeForm,
-            'delete': DeleteEmployeeForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['name'],
     },
     'brand': {
         'name': 'Marcas',
@@ -413,8 +380,9 @@ object_map = {
         'action_forms': {
             'new': NewBrandForm,
             'edit': EditBrandForm,
-            'delete': DeleteBrandForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['name', 'product_amount'],
     },
     'appliance': {
         'name': 'Applicaciones',
@@ -424,8 +392,9 @@ object_map = {
         'action_forms': {
             'new': NewApplianceForm,
             'edit': EditApplianceForm,
-            'delete': DeleteApplianceForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['name', 'product_amount'],
     },
     'percentage': {
         'name': 'Porcentajes',
@@ -435,8 +404,9 @@ object_map = {
         'action_forms': {
             'new': NewPercentageForm,
             'edit': EditPercentageForm,
-            'delete': DeletePercentageForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['max_price_limit', 'sale_percentage_1', 'sale_percentage_2', 'sale_percentage_3', 'service_percentage_1', 'service_percentage_2', 'service_percentage_3'],
     },
     'organization': {
         'name': 'Organizaciones',
@@ -446,8 +416,9 @@ object_map = {
         'action_forms': {
             'new': NewOrganizationForm,
             'edit': EditOrganizationForm,
-            'delete': DeleteOrganizationForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['name'],
     },
     'organization_storage': {
         'name': 'Almacenes',
@@ -457,8 +428,9 @@ object_map = {
         'action_forms': {
             'new': NewOrganizationStorageForm,
             'edit': EditOrganizationStorageForm,
-            'delete': DeleteOrganizationStorageForm,
-        }
+            'delete': DeleteForm,
+        },
+        'table_fields': ['organization_name', 'storage_type_name'],
     },
     'pricelist': {
         'name': 'Listas de precios',
@@ -468,12 +440,10 @@ object_map = {
         'action_forms': {
             'new': NewPriceListForm,
             'edit': EditPriceListForm,
-            'delete': DeletePriceListForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('customer_name', 'Customer', 'CharField'),
-        ],
-        'remove_fields': ['customer'],
+        'table_fields': ['customer_name',],
+        'subset-fields': {'pricelist_product_set': ["product", "price"]},
         'js': ['multiset', 'pricelist'],
     },
     'storage_product': {
@@ -485,17 +455,7 @@ object_map = {
         'action_forms': {
             'edit': ChangeStorageProductForm,
         },
-        'add_fields': [
-            ('product_code', 'Product Code', 'CharField'),
-            ('product_name', 'Product Name', 'CharField'),
-            ('product_description', 'Product Descripcion', 'CharField'),
-            ('product_brand', 'Product Brand', 'CharField'),
-            ('organization_name', 'Organization Name', 'CharField'),
-            ('storage_name', 'Storage Name', 'CharField'),
-            ('amount', 'Amount', 'IntegerField'),
-            ('must_have', 'Must Have', 'IntegerField'),
-        ],
-        'remove_fields': ['product', 'organization_storage', 'amount', 'must_have'],
+        'table_fields': ['product_code', 'product_name', 'product_description', 'product_brand', 'organization_name', 'storage_name', 'amount', 'must_have'],
         'remove_checkbox': True,
         'remove_table_actions': True,
         'remove_reg_actions': True,
@@ -510,16 +470,10 @@ object_map = {
         'action_forms': {
             'new': NewInputForm,
             'edit': EditInputForm,
-            'delete': DeleteInputForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('invoice_number', 'Invoice', 'ForeignKey'),
-            ('invoice_price', 'Invoice Price', 'CharField'),
-            ('products', 'Product Set', 'ManyToManyField'),
-            ('organization', 'Organization Name', 'CharField'),
-            ('storage', 'Storage Name', 'CharField'),
-        ],
-        'remove_fields': ['organization_storage', 'invoice'],
+        'table_fields': ['date', 'invoice_number', 'invoice_price', 'movement_product_set', 'organization_name', 'storage_name'],
+        'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['multiset', 'input'],
         'filter_form': DateTimeRangeFilterForm()
     },
@@ -532,18 +486,11 @@ object_map = {
         'action_forms': {
             'new': NewOutputForm,
             'edit': EditOutputForm,
-            'delete': DeleteOutputForm,
+            'delete': DeleteForm,
             'order': OrderOutputForm,
         },
-        'add_fields': [
-            ('products', 'Product Set', 'ManyToManyField'),
-            ('employee_name', 'Employee', 'ForeignKey'),
-            ('destination_name', 'Destination', 'ForeignKey'),
-            ('replacer_name', 'Replacer', 'ForeignKey'),
-            ('organization', 'Organization Name', 'CharField'),
-            ('storage', 'Storage Name', 'CharField'),
-        ],
-        'remove_fields': ['organization_storage', 'employee', 'destination', 'replacer'],
+        'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
+        'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['multiset', 'output'],
         'custom_reg_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
         'filter_form': DateTimeRangeFilterForm()
@@ -557,14 +504,9 @@ object_map = {
         'action_forms': {
             'new': NewLendingForm,
             'edit': EditLendingForm,
-            'delete': DeleteLendingForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('products', 'Product Set', 'ManyToManyField'),
-            ('organization', 'Organization Name', 'CharField'),
-            ('storage', 'Storage Name', 'CharField'),
-        ],
-        'remove_fields': ['organization_storage'],
+        'table_fields': ['date', 'products', 'organization_name', 'storage_name'],
         'js': ['multiset'],
         'filter_form': DateRangeFilterForm()
     },
@@ -577,20 +519,12 @@ object_map = {
         'action_forms': {
             'new': NewOrderForm,
             'edit': EditOrderForm,
-            'delete': DeleteOrderForm,
+            'delete': DeleteForm,
             'input': InputOrderForm,
             'mail': MailOrderForm,
         },
-        'add_fields': [
-            ('id', 'Id', 'CharField'),
-            ('products', 'Product Set', 'ManyToManyField'),
-            ('provider_name', 'Provider', 'CharField'),
-            ('claimant_name', 'Claimant', 'CharField'),
-            ('organization', 'Organization Name', 'CharField'),
-            ('storage', 'Storage Name', 'CharField'),
-            ('status', 'Status', 'CharField'),
-        ],
-        'remove_fields': ['organization_storage', 'provider', 'claimant', 'status'],
+        'table_fields': ['id', 'date', 'order_product_set', 'provider_name', 'claimant_name', 'organization_name', 'storage_name', 'status'],
+        'subset-fields': {'order_product_set': ["product", "amount"]},
         'js': ['multiset', 'order'],
         'custom_reg_actions': [
             graphics.Action('input', 'modal', text='Entrada', icon='sign-in', style='info', method="POST"),
@@ -600,6 +534,7 @@ object_map = {
     },
     'quotation': {
         'name': 'Cotizaciones',
+        'sheet_name': 'Cotizacion',
         'api_path': '/database/api/quotation',
         'use_cache': False,
         'model': Quotation,
@@ -607,17 +542,14 @@ object_map = {
         'action_forms': {
             'new': NewQuotationForm,
             'edit': EditQuotationForm,
-            'delete': DeleteQuotationForm,
-            'mail': QuotationMailForm,
-            'work': QuotationWorkForm,
+            'delete': DeleteForm,
+            # 'mail': QuotationMailForm,
+            # 'work': QuotationWorkForm,
             'output': QuotationOutputForm,
         },
-        'add_fields': [
-            ('id', 'Id', 'CharField'),
-            ('total', 'Total', 'CharField'),
-            ('customer_name', 'Customer', 'CharField'),
-        ],
-        'remove_fields': ['pricelist', 'customer'],
+        'table_fields': ['id', 'date', 'unit', 'plates', 'authorized', 'service', 'discount', 'total', 'customer_name'],
+        'sheet_desc': ['customer_name', 'unit', 'plates'],
+        'sheet_cont': ['quotation_product_set', 'service', 'discount'],
         'filter_form': DateTimeRangeFilterForm(),
         'custom_reg_actions': [
             graphics.Action('mail', 'modal', text='Email', icon='envelope', style='info', method="POST"),
@@ -636,12 +568,10 @@ object_map = {
         'action_forms': {
             'new': NewInvoiceForm,
             'edit': EditInvoiceForm,
-            'delete': DeleteInvoiceForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('provider_name', 'Provider', 'CharField'),
-        ],
-        'remove_fields': ['provider'],
+        'table_fields': ['date', 'number', 'provider_name', 'payment_set', 'price', 'due', 'paid'],
+        'subset-fields': {'payment_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
         'js': ['formset'],
     },
@@ -654,7 +584,7 @@ object_map = {
         'action_forms': {
             'new': NewPaymentForm,
             'edit': EditPaymentForm,
-            'delete': DeletePaymentForm,
+            'delete': DeleteForm,
         },
         'filter_form': DateRangeFilterForm()
     },
@@ -667,12 +597,10 @@ object_map = {
         'action_forms': {
             'new': NewSellForm,
             'edit': EditSellForm,
-            'delete': DeleteSellForm,
+            'delete': DeleteForm,
         },
-        'add_fields': [
-            ('customer_name', 'Customer', 'CharField'),
-        ],
-        'remove_fields': ['customer'],
+        'table_fields': ['date', 'number', 'customer_name', 'collection_set', 'price', 'due', 'paid'],
+        'subset-fields': {'collection_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
         'js': ['formset'],
     },
@@ -685,7 +613,7 @@ object_map = {
         'action_forms': {
             'new': NewCollectionForm,
             'edit': EditCollectionForm,
-            'delete': DeleteCollectionForm,
+            'delete': DeleteForm,
         },
         'filter_form': DateRangeFilterForm()
     },
@@ -698,7 +626,7 @@ object_map = {
         'action_forms': {
             'new': NewWorkForm,
             'edit': EditWorkForm,
-            'delete': DeleteWorkForm,
+            'delete': DeleteForm,
         },
         'filter_form': DateRangeFilterForm()
     },

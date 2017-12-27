@@ -1,14 +1,12 @@
 from django.contrib.auth import REDIRECT_FIELD_NAME, logout, login, authenticate
 from django.contrib.auth.models import User, Group
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from django.http import HttpResponseRedirect
 
 from authentication.forms import *
 
 import json
-import pdb
 
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -32,7 +30,7 @@ def signin(request):
         else:
             print("The username and password were incorrect.")
     stylesheets = ['login']
-    return render_to_response('pages/login.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'pages/login.html', locals())
 
 def signout(request):
     logout(request)
@@ -62,7 +60,7 @@ def users(request):
     ]
     users = User.objects.all()
     scripts = ["tables"]
-    return render_to_response('pages/accounts.html', locals(), context_instance=RequestContext(request))
+    return render(request, 'pages/accounts.html', locals())
 
 def update_pass(request):
     next = request.POST.get('next', '/')

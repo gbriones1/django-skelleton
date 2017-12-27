@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from public import views
 
 # Wire up our API using automatic URL routing.

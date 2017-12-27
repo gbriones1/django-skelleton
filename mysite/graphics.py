@@ -52,7 +52,7 @@ class HTMLButton(HTMLObject):
 
 class HTMLTable(HTMLObject):
 
-    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, filters=True, use_rest=None, use_cache=True):
+    def __init__(self, name, columns, rows=[], actions=[], checkbox=True, filters=True, use_rest=None, use_cache=True, add_data={}):
         super(HTMLTable, self).__init__('table', name)
         self.root.set("class", "table table-bordred table-striped table-hover")
         header = ET.Element('thead')
@@ -61,6 +61,8 @@ class HTMLTable(HTMLObject):
         tr = ET.Element('tr')
         tr_foot = ET.Element('tr')
         tr.set("class", "headers")
+        if add_data:
+            self.root.set("data-additional", json.dumps(add_data))
         if checkbox:
             self.root.set("data-selectable", "true")
             th = ET.Element('th')
@@ -72,9 +74,9 @@ class HTMLTable(HTMLObject):
             tr_foot.append(ET.Element('th'))
         for column in columns:
             th = ET.Element('th')
-            th.text = column[1]
-            th.set("data-name", column[0])
-            th.set("data-format", column[2])
+            th.text = column['label']
+            th.set("data-name", column['name'])
+            th.set("data-format", column['type'])
             tr.append(th)
             tr_foot.append(th)
         if actions:
@@ -107,7 +109,7 @@ class HTMLTable(HTMLObject):
                     tr.append(td)
                 for column in columns:
                     td = ET.Element('td')
-                    td.text = str(row[column[0]])
+                    td.text = column['label']
                     tr.append(td)
                 for field in row.keys():
                     tr.set("data-"+field, str(row[field]))
@@ -134,9 +136,9 @@ class Section(object):
 
 class Table(Section):
 
-    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None, use_cache=True):
+    def __init__(self, name, title, columns, rows=[], actions=[], checkbox=True, filters=True, buttons=[], use_rest=None, use_cache=True, add_data={}):
         super(Table, self).__init__("table")
-        self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest, use_cache)
+        self.table = HTMLTable(name, columns, rows, actions, checkbox, filters, use_rest, use_cache, add_data)
         self.html = self.table.stringify
         self.title = title
         self.buttons = buttons
@@ -145,12 +147,13 @@ class Table(Section):
 
 class DescriptionSheet(Section):
 
-    def __init__(self, name, title, obj_id, fields, use_rest=None):
+    def __init__(self, name, title, obj_id, desc_fields=[], cont_fields=[], use_rest=None):
         super(DescriptionSheet, self).__init__("sheet")
         self.name = name
         self.title = title
         self.obj_id = obj_id
-        self.fields = fields
+        self.desc_fields = json.dumps(desc_fields)
+        self.cont_fields = json.dumps(cont_fields)
         self.use_rest = use_rest
 
 class Modal(Section):

@@ -2,8 +2,7 @@ function refreshFormSetInputs(form) {
     var valueSet = []
     form.find('input.formset').each(function () {
         var inputSet = $(this);
-        var modelName = inputSet.data('model');
-        form.find('#'+modelName+'FormSet-table tbody tr').each(function () {
+        inputSet.closest('.formSet-container').find('#formSet-table tbody tr').each(function () {
             var itemData = $(this).data();
             valueSet.push(itemData);
         });
@@ -11,14 +10,15 @@ function refreshFormSetInputs(form) {
     });
 }
 
-function initialFormSetData(form, modelName, data) {
+function initialFormSetData(input, data) {
     var headers = []
-    form.find('#'+modelName+'FormSet-table thead th').each(function () {
+    var div = input.closest(".formSet-container")
+    div.find('#formSet-table thead th').each(function () {
         if ($(this).data("field")){
             headers.push($(this).data("field"));
         }
     });
-    var body = form.find('#'+modelName+'FormSet-table tbody')
+    var body = div.find('#formSet-table tbody')
     body.empty()
     for (index in data){
         var row = $('<tr>')
@@ -28,18 +28,20 @@ function initialFormSetData(form, modelName, data) {
             row.append("<td>"+text+"</td>");
         }
         row.attr("data-id", data[index].id);
-        row.append('<td><button type="buttton" class="btn btn-sm btn-success '+modelName+'FormSet-edit"><i class="fa fa-pencil"></i></button></td>');
-        if (form.find('#'+modelName+'FormSet-table').attr('data-allow_create')){
-            row.append('<td><button type="buttton" class="btn btn-sm btn-danger '+modelName+'FormSet-delete"><i class="fa fa-trash"></i></button></td>');
+        row.append('<td><button type="buttton" class="btn btn-sm btn-success formSet-edit"><i class="fa fa-pencil"></i></button></td>');
+        if (div.find('#formSet-table').attr('data-allow_create')){
+            row.append('<td><button type="buttton" class="btn btn-sm btn-danger formSet-delete"><i class="fa fa-trash"></i></button></td>');
         }
         body.append(row)
     }
-    refreshFormSetInputs(form);
+    // refreshFormSetInputs(form);
 }
 
-$(document).on('click', '.'+formSetModelName+'FormSet-edit', function() {
+$(document).on('click', '.formSet-edit', function() {
+    var formSetModelName = $(this).closest('.formSet-container').find('input.formset').data("model");
+    var modal = $('#'+formSetModelName+'-modal');
+    var form = modal.find("form");
     var data = $(this).closest('tr').data()
-    var form = $('#'+formSetModelName+'FormSet-form form')
     form.attr("data-id", data.id);
     form.data("id", data.id);
     form.attr("data-modal", $(this).closest('.modal').attr("id"));
@@ -83,44 +85,52 @@ $(document).on('click', '.'+formSetModelName+'FormSet-edit', function() {
         })
         form.find('select[name="'+ key +'"]').val(selected);
     }
-    $('#'+formSetModelName+'FormSet-form').modal('show');
+    modal.modal('show');
     return false;
 });
 
-$(document).on('click', '.'+formSetModelName+'FormSet-delete', function() {
+$(document).on('click', '.formSet-delete', function() {
     var thisForm = $(this).closest('form');
     $(this).closest('tr').remove();
     refreshFormSetInputs(thisForm);
     return false;
 });
 
-$(document).on('click', '.'+formSetModelName+'FormSet-create', function() {
-    var form = $('#'+formSetModelName+'FormSet-form form');
+$(document).on('click', '.formSet-create', function() {
+    var formSetModelName = $(this).closest('.formSet-container').find('input.formset').data("model");
+    var modal = $('#'+formSetModelName+'-modal');
+    var form = modal.find("form");
     form.trigger("reset");
     form.find('input[type="hidden"]').each(function() {
         $(this).val("");
     });
     form.attr("data-modal", $(this).closest('.modal').attr("id"));
     form.data("modal", $(this).closest('.modal').attr("id"));
-    $('#'+formSetModelName+'FormSet-form').modal('show');
+    modal.modal('show');
     return false;
 });
 
 $(document).on('click', 'button[data-target="#edit"]', function () {
     var form = $("#edit form");
-    var value = form.find('input#'+formSetInputSetId).val()
-    if (value){
-        initialFormSetData(form, formSetModelName, JSON.parse(value))
-    }
-    return false;
+    form.find('input.formset').each(function() {
+        var value = $(this).val() || "[]"
+        if (value){
+            value = JSON.parse(value)
+        }
+        initialFormSetData($(this), value)
+    })
 });
 
-var htmlForm = ""
-for (field in formsetFields){
-    htmlForm += '<div class="form-group"><label for="'+formsetFields[field][0]+'" class="col-sm-2 control-label">'+formsetFields[field][1]+'</label><div class="col-sm-10">'+formsetFields[field][2]+'</div></div>'
-}
 
-$('body').append('<div id="'+formSetModelName+'FormSet-form" class="modal fade" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">'+formSetModelName+'</h4></div><div class="modal-body"><form class="form-horizontal">'+htmlForm+'</form></div><div class="modal-footer"><button type="button" data-dismiss="modal" class="btn">Close</button><button type="button" class="btn btn-primary" id="'+formSetModelName+'FormSet-ok">Ok</button></div></div></div></div>')
+$('input.formset').each(function () {
+    var formSetModelName = $(this).data("model")
+    var formsetFields = $(this).data("fields")
+    var htmlForm = ""
+    for (field in formsetFields){
+        htmlForm += '<div class="form-group"><label for="'+formsetFields[field][0]+'" class="col-sm-2 control-label">'+formsetFields[field][1]+'</label><div class="col-sm-10">'+formsetFields[field][2]+'</div></div>'
+    }
+    $('body').append('<div id="'+formSetModelName+'-modal" class="modal fade formSet-form" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">'+formSetModelName+'</h4></div><div class="modal-body"><form class="form-horizontal">'+htmlForm+'</form></div><div class="modal-footer"><button type="button" data-dismiss="modal" class="btn">Close</button><button type="button" class="btn btn-primary formSet-ok">Ok</button></div></div></div></div>')
+})
 
 $('div.form-group input').each(function(){
     if ($(this).attr("type")!="checkbox" && $(this).attr("type")!="radio"){
@@ -131,7 +141,7 @@ $('div.form-group select').each(function(){
 	$(this).addClass("form-control")
 });
 
-$('#'+formSetModelName+'FormSet-form form div.form-group input[type="checkbox"]').change(function(){
+$('.formSet-form form div.form-group input[type="checkbox"]').change(function(){
     if ($(this).is(':checked')){
         $(this).val("Si")
     }
@@ -140,26 +150,28 @@ $('#'+formSetModelName+'FormSet-form form div.form-group input[type="checkbox"]'
     }
 });
 
-$(document).on('click', 'button#'+formSetModelName+"FormSet-ok", function(){
-    var serialized = $('#'+formSetModelName+'FormSet-form form').serializeArray();
+$(document).on('click', 'button.formSet-ok', function(){
+    var modal = $(this).closest('.modal')
+    var modalForm = modal.find('form')
+    var serialized = modalForm.serializeArray();
     var data = {}
     for (field in serialized){
         data[serialized[field].name] = serialized[field].value
     }
-    var modalId = $('#'+formSetModelName+'FormSet-form form').data("modal");
+    var modalId = modalForm.data("modal");
     var form = $("#"+modalId+" form");
     var headers = []
-    form.find('#'+formSetModelName+'FormSet-table thead th').each(function () {
+    form.find('#formSet-table thead th').each(function () {
         if ($(this).data("field")){
             headers.push($(this).data("field"));
         }
     });
-    var oldData = $('#'+formSetModelName+'FormSet-form form').data("old");
+    var oldData = modalForm.data("old");
     if (oldData){
         oldData = JSON.parse(oldData)
     }
     if (oldData){
-        form.find('#'+formSetModelName+'FormSet-table tbody tr').each(function(){
+        form.find('#formSet-table tbody tr').each(function(){
             var row = $(this);
             if (JSON.stringify(oldData) == JSON.stringify(row.data())){
                 for (field in headers) {
@@ -179,17 +191,22 @@ $(document).on('click', 'button#'+formSetModelName+"FormSet-ok", function(){
             row.data(headers[field], text);
             row.append("<td>"+text+"</td>");
         }
-        row.append('<td><button type="buttton" class="btn btn-sm btn-success '+formSetModelName+'FormSet-edit"><i class="fa fa-pencil"></i></button></td>');
-        if (form.find('#'+formSetModelName+'FormSet-table').attr('data-allow_create')){
-            row.append('<td><button type="buttton" class="btn btn-sm btn-danger '+formSetModelName+'FormSet-delete"><i class="fa fa-trash"></i></button></td>');
+        row.append('<td><button type="buttton" class="btn btn-sm btn-success formSet-edit"><i class="fa fa-pencil"></i></button></td>');
+        if (form.find('#formSet-table').attr('data-allow_create')){
+            row.append('<td><button type="buttton" class="btn btn-sm btn-danger formSet-delete"><i class="fa fa-trash"></i></button></td>');
         }
-        form.find('#'+formSetModelName+'FormSet-table').append(row);
+        form.find('#formSet-table').append(row);
     }
-    $('#'+formSetModelName+'FormSet-form form').removeAttr("data-modal");
-    $('#'+formSetModelName+'FormSet-form form').data("modal", "");
-    $('#'+formSetModelName+'FormSet-form form').removeAttr("data-old");
-    $('#'+formSetModelName+'FormSet-form form').data("old", "");
-    $('#'+formSetModelName+'FormSet-form').modal('hide');
+    modalForm.removeAttr("data-modal");
+    modalForm.data("modal", "");
+    modalForm.removeAttr("data-old");
+    modalForm.data("old", "");
+    modal.modal('hide');
+    // refreshFormSetInputs(form);
+    // return false;
+});
+
+$('input.formset').closest('form').submit(function () {
+    var form = $(this).closest("form");
     refreshFormSetInputs(form);
-    return false;
 });

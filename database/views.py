@@ -1,4 +1,4 @@
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.template import RequestContext
@@ -86,15 +86,25 @@ def main(request, name, obj_id):
                 for key in request.GET.keys():
                     filter_form.fields[key].initial = request.GET[key]
             checkbox = False if object_map[name].get('remove_checkbox') else True
+            columns = object_map[name]['viewset'].serializer_class.select_fields(object_map[name].get('table_fields'))
+            add_data = {}
+            subset_fields = object_map[name].get('subset-fields', [])
+            if subset_fields:
+                custom_fields = {}
+                for column in columns:
+                    if column['type'] == 'ListSerializer':
+                        custom_fields[column["name"]] = column["serializer"].select_fields(subset_fields.get(column["name"]))
+                add_data["subset-fields"] = custom_fields
             table = graphics.Table(
                 cache_name+"-table",
                 object_map[name]['name'],
-                object_map[name]['model'].get_fields(remove_fields=remove_fields, add_fields=add_fields),
+                columns,
                 actions=actions,
                 buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
                 use_rest=rest_url,
                 use_cache=use_cache,
                 checkbox=checkbox,
+                add_data=add_data
             )
             contents = [table]
             for action in actions+buttons:
@@ -110,21 +120,36 @@ def main(request, name, obj_id):
             ))
             scripts.extend(object_map[name].get('js', []))
         else:
-            scripts = ["sheets"]
-            sheet = graphics.DescriptionSheet(
-                cache_name+"-sheet",
-                object_map[name]['name'],
-                obj_id,
-                object_map[name]['model'].get_fields(remove_fields=remove_fields, add_fields=add_fields),
-                use_rest=rest_url,
-            )
-            contents = [sheet]
+            rendered = render_sheet(request, name, obj_id)
+            return rendered
     else:
         raise Http404("Page does not exist")
     # start_time = time.time()
     # response = render(request, 'pages/database.html', locals())
     # elapsed_time = time.time() - start_time
     # print(elapsed_time)
+    return render(request, 'pages/database.html', locals())
+
+def render_sheet(request, name, obj_id):
+    APPNAME = configurations.APPNAME
+    YEAR = configurations.YEAR
+    VERSION = configurations.VERSION
+    PAGE_TITLE = configurations.PAGE_TITLE
+    scripts = ["sheets"]
+    rest_url = object_map[name]['api_path']
+    if request.GET:
+        rest_url += "?"+urllib.urlencode(request.GET)
+    desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name]['sheet_desc']])
+    cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name]['sheet_cont']])
+    sheet = graphics.DescriptionSheet(
+        name+"-sheet",
+        object_map[name].get('sheet_name', object_map[name]['name']),
+        obj_id,
+        desc_fields=desc_fields,
+        cont_fields=cont_fields,
+        use_rest=rest_url,
+    )
+    contents = [sheet]
     return render(request, 'pages/database.html', locals())
 
 
@@ -196,4 +221,4 @@ def index(request):
 def product(request):
     # products = ProductViewSet.as_view({'get': 'list'})(request).data
     products = ProductSerializer(Product.objects.all(), many=True).data
-    return render_to_response('pages/dashboard.html', locals())
+    return render(request, 'pages/dashboard.html', locals())

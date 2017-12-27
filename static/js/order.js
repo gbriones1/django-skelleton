@@ -1,7 +1,13 @@
 $(document).on('click', 'button[data-target="#input"]', function () {
     var data = $(this).closest('tr').data()
     var inputform = $("#input form");
-    initialMultiSetData(inputform, "Product", data.products);
+    for (opIndx in data.order_product_set){
+        var opData = inputform.find("input#id_movement_product_set").closest(".multiSet-container").find('#multiSet-table tbody tr[data-id='+data.order_product_set[opIndx].product.id+']').data();
+        data.order_product_set[opIndx].price = opData.price
+        data.order_product_set[opIndx].discount = opData.discount
+        delete data.order_product_set[opIndx].id
+    }
+    initialMultiSetData(inputform.find("input#id_movement_product_set"), data.order_product_set);
     refreshMutliSetInputs(inputform);
     // initialFormSetData(inputform, "Product", data.products);
     // refreshFormSetInputs(inputform);

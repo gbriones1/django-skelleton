@@ -1,5 +1,5 @@
 $('input.multiset').each(function () {
-    $(this).closest('form').find('#ProductMultiSet-table tbody tr').each( function () {
+    $(this).closest('form').find('#multiSet-table tbody tr').each( function () {
         $(this).attr("data-base_price", $(this).attr("data-price"));
     })
 });
@@ -7,7 +7,7 @@ $('input.multiset').each(function () {
 $(document).on('change', 'select#id_base_price', function(){
     var percentageName = $(this).val()
     var percentagesDef = JSON.parse($(this).closest('form').find('input#id_percentages').val())
-    $(this).closest('form').find('#ProductMultiSet-table tbody tr').each(function () {
+    $(this).closest('form').find('#multiSet-table tbody tr').each(function () {
         var basePrice = parseFloat($(this).attr("data-base_price"));
         var percentage = 0
         if (percentageName){

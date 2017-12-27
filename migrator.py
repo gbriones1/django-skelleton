@@ -33,9 +33,8 @@ try:
         print(provider)
         pk = int(provider[0])
         providers[pk] = {'name':provider[1], 'email':provider[2]}
-        contact, created = Contact.objects.get_or_create(name='Pedidos '+provider[1], department='Ventas', email=provider[2])
-        provider, created = Provider.objects.get_or_create(name=provider[1])
-        pc = Provider_Contact(contact=contact, provider=provider, for_orders=True)
+        p, created = Provider.objects.get_or_create(name=provider[1])
+        pc = Provider_Contact(name='Pedidos '+provider[1], department='Ventas', email=provider[2], provider=p, for_orders=True)
         pc.save()
     c.execute('SELECT * FROM database_brand;')
     for brand in c.fetchall():
