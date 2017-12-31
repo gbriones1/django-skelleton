@@ -6,14 +6,27 @@ $.getJSON("/database/special-api/instorage", function (json) {
 });
 
 $(document).on('click', 'button[data-target="#order"]', function () {
-    var data = $(this).closest('tr').data()
+    var data = [];
+    var movement_product_set = {}
     var orderform = $("#order form");
-    for (opIndx in data.movement_product_set){
-        delete data.movement_product_set[opIndx].id
+    $('table[id^="output-date"] tbody tr').each(function functionName() {
+        if($(this).find(".checkthis").is(':checked')){
+            var curr_set = $(this).data("movement_product_set")
+            for (idx in curr_set){
+                if (movement_product_set[curr_set[idx].product.id]){
+                    movement_product_set[curr_set[idx].product.id] += curr_set[idx].amount
+                }
+                else{
+                    movement_product_set[curr_set[idx].product.id] = curr_set[idx].amount
+                }
+            }
+        }
+    })
+    for (product in movement_product_set){
+        data.push({'product':{'id':product}, 'amount':movement_product_set[product]})
     }
-    initialMultiSetData(orderform.find('input#id_order_product_set'), data.movement_product_set);
+    initialMultiSetData(orderform.find('input#id_order_product_set'), data);
     refreshMutliSetInputs(orderform);
-    orderform.find('select[name="organization_storage"]').val(data.organization_storage);
 });
 
 function renderFilter(form) {
@@ -33,8 +46,7 @@ $(document).on('keyup change', '#multiSet-search-available', function() {
     renderFilter($(this).closest('form'))
 });
 
-$(document).on('change', 'select#id_organization_storage', function() {
-    var form = $(this).closest('form')
+function selectStorageProduct(form) {
     form.find('table#multiSet-table tr').each(function(){
         $(this).show()
     });
@@ -42,6 +54,14 @@ $(document).on('change', 'select#id_organization_storage', function() {
     var table = form.find('#multiSet-table')
     applySearch(search, table)
     renderFilter(form)
+}
+
+$(document).on('change', '#new select#id_organization_storage', function() {
+    selectStorageProduct($(this).closest('form'));
+});
+
+$(document).on('change', '#edit select#id_organization_storage', function() {
+    selectStorageProduct($(this).closest('form'));
 });
 
 $('#new.modal form').each(function () {

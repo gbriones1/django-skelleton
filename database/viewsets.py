@@ -14,8 +14,6 @@ from mysite import configurations
 from mysite import settings
 from mysite.email_client import send_email
 
-from xhtml2pdf import pisa
-
 import urllib
 import os
 import subprocess
@@ -527,7 +525,7 @@ object_map = {
         'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['multiset', 'output'],
-        'custom_reg_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
+        'custom_table_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
         'filter_form': DateTimeRangeFilterForm()
     },
     'lending': {
