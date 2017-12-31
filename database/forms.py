@@ -101,10 +101,11 @@ class CustomerContactForm(forms.ModelForm):
     department = forms.CharField(max_length=200, label='Departamento')
     email = forms.EmailField(max_length=255, label='Email', required=False)
     phone = forms.CharField(max_length=200, label='Telefono')
+    for_quotation = forms.BooleanField(label="Para cotizaciones")
 
     class Meta:
         model = Customer_Contact
-        fields = ('name', 'department', 'email', 'phone')
+        fields = ('name', 'department', 'email', 'phone', 'for_quotation')
 
 class NewCustomerForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
@@ -653,7 +654,7 @@ class OrderOutputForm(forms.ModelForm):
     id = HiddenField()
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    claimant = forms.CharField(max_length=200, label='Solicitante')
+    claimant = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Solicitante")
     order_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
     action = HiddenField(initial='order')
 
@@ -675,7 +676,6 @@ class InputOrderForm(forms.ModelForm):
     invoice_number = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Numero de factura", widget=Datalist())
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    # products = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Refacciones", widget=MultiSet(amounts=True, editable_fields=["price", "discount"]), empty_label=None)
     movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price'], extra_fields={"discount":{"tag":"input", "type":"number"}}), empty_label=None)
     action = HiddenField(initial='input')
 

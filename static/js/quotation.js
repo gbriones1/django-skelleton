@@ -18,6 +18,12 @@ $('input.multiset').each(function () {
 
 $('select#id_pricelist').attr('disabled', 'disabled');
 
+$(document).on('click', 'button[data-target="#mail"]', function () {
+    var data = $(this).closest('tr').data()
+    var form = $("#mail form");
+    form.find('input[name="id"]').val(data.id);
+});
+
 $(document).on('click', 'button[data-target="#output"]', function () {
     var data = $(this).closest('tr').data()
     var form = $("#output form");

@@ -23,7 +23,7 @@ def main(request):
                 config[0].sender_email = request.POST.get('sender_email')
                 config[0].receiver_email = request.POST.get('receiver_email')
                 config[0].save()
-            if send_email(request.POST.get('receiver_email'), 'Bienvenido', "Esta direccion de correo es la que se va a usar para recibir notificaciones de la base de datos de Muelles Obrero"):
+            if send_email([request.POST.get('receiver_email')], 'Bienvenido', "Esta direccion de correo es la que se va a usar para recibir notificaciones de la base de datos de Muelles Obrero"):
                 return HttpResponseRedirect(request.get_full_path())
             else:
                 notifications.append(Notification(message="Configuracion de email incorrecta. Use cuenta de gmail y password correctos", level="danger"))

@@ -147,7 +147,7 @@ class Table(Section):
 
 class DescriptionSheet(Section):
 
-    def __init__(self, name, title, obj_id, desc_fields=[], cont_fields=[], use_rest=None):
+    def __init__(self, name, title, obj_id, desc_fields=[], cont_fields=[], use_rest=None, instance=None):
         super(DescriptionSheet, self).__init__("sheet")
         self.name = name
         self.title = title
@@ -155,6 +155,26 @@ class DescriptionSheet(Section):
         self.desc_fields = json.dumps(desc_fields)
         self.cont_fields = json.dumps(cont_fields)
         self.use_rest = use_rest
+        self.desc = []
+        self.cont = []
+        self.total = 0.0
+        self.date = None
+        if instance:
+            self.date = getattr(instance, "date", None)
+            for field in desc_fields.keys():
+                self.desc.append({'label': desc_fields[field]['label'], 'value': getattr(instance, field)})
+            for field in cont_fields.keys():
+                if field.endswith("product_set"):
+                    for p in getattr(instance, field).all():
+                        self.total += float(p.price)*int(p.amount)
+                        self.cont.append({'label': p.product.code+" - "+p.product.name+" - "+p.product.description, 'price': float(p.price), "amount": int(p.amount), "total": float(p.price)*int(p.amount)})
+                elif field.endswith("others_set"):
+                    for p in getattr(instance, field).all():
+                        self.total += float(p.price)*int(p.amount)
+                        self.cont.append({'label': p.description, 'price': float(p.price), "amount": int(p.amount), "total": float(p.price)*int(p.amount)})
+                elif float(getattr(instance, field)):
+                    self.total += float(getattr(instance, field))
+                    self.cont.append({'label': cont_fields[field]['label'], 'price': float(getattr(instance, field)), "amount": 1, "total": float(getattr(instance, field))})
 
 class Modal(Section):
 

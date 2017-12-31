@@ -1,23 +1,18 @@
-import smtplib, getpass
+import smtplib
 from os.path import basename
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from database.models import Configuration
-
+import requests
+import os
 import sys
 
-def send_email(destinations, subject, text, files=[], parts=[], attachments=[], mime_type='plain'):
+def send_email(user_email, password, destination, subject, text, files=[], parts=[], attachments=[], mime_type='plain'):
     success = False
-    conf = Configuration.objects.all()
-    if not conf:
-        print "No configuration found"
-        return success
-    conf = conf[0]
-    gmail_user = conf.sender_email
-    gmail_pwd = conf.password
-    FROM = conf.sender_email
-    TO = destinations
+    gmail_user = user_email
+    gmail_pwd = password
+    FROM = user_email
+    TO = destination
     message = MIMEMultipart()
     message['Subject'] = subject
     message['From'] = FROM
@@ -29,7 +24,7 @@ def send_email(destinations, subject, text, files=[], parts=[], attachments=[], 
         message.attach(MIMEText(part["content"].encode("utf-8"), part["type"], 'utf-8'))
 
     for attachment in attachments:
-        attach_file=MIMEApplication(attachment["content"])
+        attach_file=MIMEApplication(attachment["content"].encode('utf-8'))
         attach_file.add_header('Content-Disposition', 'attachment', filename=attachment["filename"])
         message.attach(attach_file)
 
@@ -52,5 +47,20 @@ def send_email(destinations, subject, text, files=[], parts=[], attachments=[], 
         print 'Successfully sent the mail'
     except Exception as e:
         print "Failed to send mail"
-        print(e)
+        print e
     return success
+
+if __name__ == '__main__':
+    r = requests.get('http://ipecho.net/plain')
+    curr_ip = r.content
+    prev_ip = ''
+    if os.path.exists('/home/gbriones/public_ip'):
+        with open("/home/gbriones/public_ip", "r") as f:
+            prev_ip = f.read()
+    if prev_ip != curr_ip:
+        print("IP changed")
+        with open("/home/gbriones/public_ip", "w") as f:
+            f.write(r.content)
+        send_email(sys.argv[1], sys.argv[2], ["gbriones.gdl@gmail.com", "mind.braker@hotmail.com"], "Cambio de direccion", curr_ip)
+    else:
+        print("No IP change")

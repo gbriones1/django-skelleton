@@ -355,6 +355,9 @@ class Quotation(models.Model):
     service = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
 
+    def customer_name(self):
+        return self.customer.name
+
 class Quotation_Product(models.Model):
     quotation = models.ForeignKey(Quotation)
     product = models.ForeignKey(Product)
