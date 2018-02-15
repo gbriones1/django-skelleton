@@ -148,7 +148,7 @@ def render_sheet(request, name, obj_id):
         use_rest=rest_url,
     )
     contents = [sheet]
-    return render(request, 'pages/database.html', locals())
+    return render(request, 'pages/sheet.html', locals())
 
 
 @login_required

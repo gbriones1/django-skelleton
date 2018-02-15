@@ -19,20 +19,9 @@
     <body>
         <div class="container-fluid">
             <div class="row">
-                <!-- {% block sidebar %}
-                {% endblock %} -->
                 {% block site_wrapper %}
                 {% endblock %}
             </div>
-        </div>
-        {% block modals %}
-        {% endblock %}
-        {% include 'sections/notifications.html' %}
-        {% block popup %}
-        {% endblock %}
-        {% include 'sections/globalMessages.html' %}
-        <div class="loading">
-        	<div style="float: left;padding-left: 20px;"><strong><h1 style="margin-top: 10px;">LOADING </h1></strong></div><img style="height: 50px;width: 50px;" src="/static/img/loading.gif" width="100">
         </div>
         <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
         <script src="https://cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>

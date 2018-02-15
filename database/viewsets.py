@@ -21,22 +21,6 @@ import tempfile
 
 object_map = {}
 
-def render_sheet(request, name, obj_id):
-    scripts = ["sheets"]
-    rest_url = object_map[name]['api_path']
-    if request.GET:
-        rest_url += "?"+urllib.urlencode(request.GET)
-    sheet = graphics.DescriptionSheet(
-        name+"-sheet",
-        object_map[name].get('sheet_name', object_map[name]['name']),
-        obj_id,
-        desc_fields=object_map[name]['sheet_desc'],
-        cont_fields=object_map[name]['sheet_cont'],
-        use_rest=rest_url,
-    )
-    contents = [sheet]
-    return render(request, 'pages/database.html', locals())
-
 class APIWrapper(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
@@ -282,7 +266,6 @@ def render_sheet(request, name, obj_id, instance):
     )
     contents = [sheet]
     return render(request, 'pages/database.html', locals())
-    return path
 
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
