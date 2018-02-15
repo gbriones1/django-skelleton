@@ -61,6 +61,6 @@ if __name__ == '__main__':
         print("IP changed")
         with open("/home/gbriones/public_ip", "w") as f:
             f.write(r.content)
-        send_email(sys.argv[1], sys.argv[2], ["gbriones.gdl@gmail.com", "mind.braker@hotmail.com"], "Cambio de direccion", curr_ip)
+        send_email(sys.argv[1], sys.argv[2], ["gbriones.gdl@gmail.com", "muellesobreroalmacen@gmail.com", "muellesobrerofacturacion@gmail.com"], "Cambio de direccion", curr_ip)
     else:
         print("No IP change")

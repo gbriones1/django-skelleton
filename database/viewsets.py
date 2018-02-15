@@ -265,7 +265,7 @@ def render_sheet(request, name, obj_id, instance):
         instance=instance
     )
     contents = [sheet]
-    return render(request, 'pages/database.html', locals())
+    return render(request, 'pages/sheet.html', locals())
 
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
@@ -278,7 +278,7 @@ class QuotationViewSet(APIWrapper):
         contacts = quotation.customer.customer_contact_set.filter(for_quotation=True)
         if contacts:
             rendered = render_sheet(request, 'quotation', quotation.id, quotation)
-            html_string = rendered.content.replace('src="/static/', 'src="{}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href="/static/', 'href="{}/static/'.format(request.META["HTTP_ORIGIN"]))
+            html_string = rendered.content.replace('src=/static/', 'src={}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href=/static/', 'href={}/static/'.format(request.META["HTTP_ORIGIN"]))
             html_file = tempfile.mktemp()+".html"
             with open(html_file, "w") as f:
                 f.write(html_string)
