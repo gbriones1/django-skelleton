@@ -368,6 +368,7 @@ class NewQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
+    work_sheet = forms.IntegerField(label='Hoja de trabajo', required=False, min_value=0, initial=0)
     authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
@@ -383,6 +384,7 @@ class NewQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
+            'work_sheet',
             'authorized'
         )
 
@@ -400,6 +402,7 @@ class EditQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
+    work_sheet = forms.IntegerField(label='Hoja de trabajo', required=False, min_value=0, initial=0)
     authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
@@ -416,6 +419,7 @@ class EditQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
+            'work_sheet',
             'authorized'
         )
 

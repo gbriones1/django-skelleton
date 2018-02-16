@@ -12,7 +12,9 @@ $('.sheet').each(function () {
         headSection.find(".folio").text(data.id);
         headSection.find(".date").text(data.date);
         for (var field in descFields){
-            descSection.append('<div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;"><tr><th>'+descFields[field].label+'</th></tr><tr><td>'+data[field]+'</td></tr></table></div>');
+            if (data[field]){
+                descSection.append('<div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;"><tr><th>'+descFields[field].label+'</th></tr><tr><td>'+data[field]+'</td></tr></table></div>');
+            }
         }
         var total = 0.0
         for (field in contFields){

@@ -354,6 +354,7 @@ class Quotation(models.Model):
     authorized = models.BooleanField(default=False)
     service = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
+    work_sheet = models.IntegerField(null=True)
 
     def customer_name(self):
         return self.customer.name

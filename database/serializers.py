@@ -14,6 +14,8 @@ LABEL_TRANSLATIONS = {
     "customer_name": "Cliente",
     "service": "Servicio",
     "discount": "Descuento",
+    "authorized": "Autorizado",
+    "work_sheet": "Hoja de Trabajo"
 }
 
 class SerializerWrapper(serializers.ModelSerializer):
