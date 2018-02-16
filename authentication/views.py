@@ -51,12 +51,17 @@ def users(request):
             if userform.is_valid():
                 userform.save()
         elif action == "delete":
-            for user in User.objects.filter(id__in=json.loads(str(request.POST.get('user_id',"[]")))):
+            user = User.objects.filter(id=request.POST.get('id'))
+            user.delete()
+        elif action == "multi-delete":
+            for user in User.objects.filter(id__in=json.loads(str(request.POST.get('ids',"[]")))):
                 user.delete()
         return HttpResponseRedirect('/accounts/users/')
     modals = [
         graphics.Modal.from_action(graphics.Action.crud_button('new'), [NewUserForm()]),
-        graphics.Modal.from_action(graphics.Action.crud_button('edit'), [EditUserForm()])
+        graphics.Modal.from_action(graphics.Action.crud_button('edit'), [EditUserForm()]),
+        graphics.Modal.from_action(graphics.Action.crud_button('delete'), [DeleteForm()]),
+        graphics.Modal.from_action(graphics.Action.crud_button('multi-delete'), [DeleteForm()]),
     ]
     users = User.objects.all()
     scripts = ["tables"]
