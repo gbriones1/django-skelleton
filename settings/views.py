@@ -21,14 +21,20 @@ def main(request):
                 if new_pass:
                     config[0].password = new_pass
                 config[0].sender_email = request.POST.get('sender_email')
+                new_quotation_pass = request.POST.get('quotations_password')
+                if new_quotation_pass:
+                    config[0].quotations_password = new_quotation_pass
+                config[0].quotations_email = request.POST.get('quotations_email')
                 config[0].receiver_email = request.POST.get('receiver_email')
                 config[0].save()
-            if send_email([request.POST.get('receiver_email')], 'Bienvenido', "Esta direccion de correo es la que se va a usar para recibir notificaciones de la base de datos de Muelles Obrero"):
-                return HttpResponseRedirect(request.get_full_path())
-            else:
-                notifications.append(Notification(message="Configuracion de email incorrecta. Use cuenta de gmail y password correctos", level="danger"))
+            if not send_email(config[0].sender_email, config[0].password, [request.POST.get('receiver_email')], 'Configuracion Actualizada', "El correo {} sera usado para enviar pedidos".format(config[0].sender_email)):
+                notifications.append(Notification(message="Email para pedidos incorrecto. Use cuenta de gmail y password correctos", level="danger"))
+            if not send_email(config[0].quotations_email, config[0].quotations_password, [request.POST.get('receiver_email')], 'Configuracion Actualizada', "El correo {} sera usado para enviar cotizaciones".format(config[0].sender_email)):
+                notifications.append(Notification(message="Email para cotizaciones incorrecto. Use cuenta de gmail y password correctos", level="danger"))
         else:
             notifications.append(Notification(message=str(form.errors), level="danger"))
+        if not notifications:
+            return HttpResponseRedirect(request.get_full_path())
     form = ConfigurationForm()
     if config:
         form = ConfigurationForm(instance=config[0])

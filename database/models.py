@@ -526,6 +526,8 @@ class Order_Product(models.Model):
 class Configuration(models.Model):
     sender_email = models.EmailField(null=True)
     password = models.CharField(max_length=30, null=True)
+    quotations_email = models.EmailField(null=True)
+    quotations_password = models.CharField(max_length=30, null=True)
     receiver_email = models.EmailField(null=True)
     mailOnPriceChange = models.BooleanField(default=True)
     mailOnNegativeValues = models.BooleanField(default=True)

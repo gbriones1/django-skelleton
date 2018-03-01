@@ -243,12 +243,16 @@ class OrderViewSet(APIWrapper):
             if pc.for_orders and pc.email:
                 dest.append(pc.email)
         if dest:
-            # if send_email(dest, 'Pedido de productos para Muelles Obrero', message):
-            if send_email(['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Pedido a '+order.provider.name, message):
-                order.status = Order.STATUS_ASKED
-                order.save()
+            config = Configuration.objects.all()
+            if config:
+                # if send_email(config[0].sender_email, config[0].password, dest, 'Pedido de productos para Muelles Obrero', message):
+                if send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Pedido a '+order.provider.name, message):
+                    order.status = Order.STATUS_ASKED
+                    order.save()
+                else:
+                    return "Fallo envio de email a {}".format(dest)
             else:
-                return "Fallo envio de email a {}".format(dest)
+                return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
         else:
             return "No se encontraron destinatarios para el proveedor {}".format(order.provider.name)
         return None
@@ -277,21 +281,25 @@ class QuotationViewSet(APIWrapper):
         quotation = Quotation.objects.get(id=request.POST.get('id'))
         contacts = quotation.customer.customer_contact_set.filter(for_quotation=True)
         if contacts:
-            rendered = render_sheet(request, 'quotation', quotation.id, quotation)
-            html_string = rendered.content.replace('src=/static/', 'src={}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href=/static/', 'href={}/static/'.format(request.META["HTTP_ORIGIN"]))
-            html_file = tempfile.mktemp()+".html"
-            with open(html_file, "w") as f:
-                f.write(html_string)
-            os.chmod(html_file, 438)
-            proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = proc.communicate()
-            os.remove(html_file)
-            if send_email([contact.email for contact in contacts], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
-                # if send_email(["gbriones.gdl@gmail.com"], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
-                status = 200
-                response = "OK"
+            config = Configuration.objects.all()
+            if config:
+                rendered = render_sheet(request, 'quotation', quotation.id, quotation)
+                html_string = rendered.content.replace('src=/static/', 'src={}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href=/static/', 'href={}/static/'.format(request.META["HTTP_ORIGIN"]))
+                html_file = tempfile.mktemp()+".html"
+                with open(html_file, "w") as f:
+                    f.write(html_string)
+                os.chmod(html_file, 438)
+                proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = proc.communicate()
+                os.remove(html_file)
+                if send_email(config[0].quotations_email, config[0].quotations_password, [contact.email for contact in contacts], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
+                    # if send_email(config[0].quotations_email, config[0].quotations_password, ["gbriones.gdl@gmail.com"], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
+                    status = 200
+                    response = "OK"
+                else:
+                    response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
             else:
-                response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
+                return "No hay email para enviar cotizaciones. Ir a Configuracion para establecerlo"
         else:
             response =  "No se encontraron destinatarios para el cliente {}".format(quotation.customer.name)
         response = Response([response], status=status)
