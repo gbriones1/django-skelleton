@@ -32,8 +32,8 @@ try:
     for provider in c.fetchall():
         print(provider)
         pk = int(provider[0])
-        providers[pk] = {'name':provider[1], 'email':provider[2]}
         p, created = Provider.objects.get_or_create(name=provider[1])
+        providers[pk] = {'name':provider[1], 'email':provider[2], 'object':p}
         pc = Provider_Contact(name='Pedidos '+provider[1], department='Ventas', email=provider[2], provider=p, for_orders=True)
         pc.save()
     c.execute('SELECT * FROM database_brand;')
@@ -92,6 +92,32 @@ try:
         Storage_Product.objects.get_or_create(organization_storage=organization_storage["Consignacion"], product=p, amount=int(product[4]), must_have=int(product[8]))
         Storage_Product.objects.get_or_create(organization_storage=organization_storage["Propias"], product=p, amount=int(product[6]), must_have=int(product[9]))
         Storage_Product.objects.get_or_create(organization_storage=organization_storage["Obsoletas"], product=p, amount=int(product[7]))
+    c.execute('SELECT * FROM database_order;')
+    for order in c.fetchall():
+        print(order)
+        c.execute('SELECT * FROM database_order_product WHERE order_id = {}'.format(order[0]))
+        prods = c.fetchall()
+        if prods:
+            provider = None
+            claimant = None
+            if order[3]:
+                claimant, _ = Employee.objects.get_or_create(name=order[3])
+            if order[2]:
+                provider = providers[order[2]]["object"]
+            org_sto = organization_storage["Consignacion"]
+            if prods[0][5] == 'S':
+                org_sto = organization_storage["Propias"]
+            received_date = None
+            if prods[0][6]:
+                received_date = datetime.strptime(prods[0][6][:19], "%Y-%m-%d %H:%M:%S")
+            order_new = Order(date=datetime.strptime(order[1][:19], "%Y-%m-%d %H:%M:%S"), organization_storage=org_sto, provider=provider, claimant=claimant, status=prods[0][7], received_date=received_date)
+            order_new.save()
+            for prod in prods:
+                amount_received = int(prod[1])
+                if prod[7] != "R":
+                    amount_received = 0
+                op = Order_Product(order=order_new, product=products[prod[3]]["object"], amount=int(prod[1]), amount_received=amount_received)
+                op.save()
     c.execute('SELECT * FROM database_input;')
     for inp in c.fetchall():
         print(inp)
