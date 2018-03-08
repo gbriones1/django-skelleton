@@ -264,7 +264,7 @@ class ProductSerializer(SerializerWrapper):
     provider_name = serializers.ReadOnlyField(source='provider.name')
     brand = serializers.PrimaryKeyRelatedField(queryset=Brand.objects.all(), allow_null=True, required=False)
     brand_name = serializers.ReadOnlyField(source='brand.name')
-    appliance = serializers.PrimaryKeyRelatedField(queryset=Provider.objects.all(), allow_null=True, required=False)
+    appliance = serializers.PrimaryKeyRelatedField(queryset=Appliance.objects.all(), allow_null=True, required=False)
     appliance_name = serializers.ReadOnlyField(source='appliance.name')
     picture = serializers.ImageField(required=False, allow_null=True)
     real_price = serializers.ReadOnlyField()
