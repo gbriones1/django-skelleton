@@ -98,10 +98,14 @@ class ProductViewSet(APIWrapper):
             for field in request.FILES.keys():
                 request.POST[field] = request.FILES[field]
             request.data = request.POST
-        Provider.objects.get_or_create(name=request.POST['provider'])
-        Brand.objects.get_or_create(name=request.POST['brand'])
+        request.data._mutable = True
+        provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
+        request.data['provider'] = u"{}".format(provider.id)
+        brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
+        request.data['brand'] = u"{}".format(brand.id)
         if request.POST['appliance']:
-            Appliance.objects.get_or_create(name=request.POST['appliance'])
+            appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
+            request.data['appliance'] = u"{}".format(appliance.id)
         return super(ProductViewSet, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
@@ -110,10 +114,14 @@ class ProductViewSet(APIWrapper):
             for field in request.FILES.keys():
                 request.POST[field] = request.FILES[field]
             request.data = request.POST
-        Provider.objects.get_or_create(name=request.POST['provider'])
-        Brand.objects.get_or_create(name=request.POST['brand'])
+        request.data._mutable = True
+        provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
+        request.data['provider'] = u"{}".format(provider.id)
+        brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
+        request.data['brand'] = u"{}".format(brand.id)
         if request.POST['appliance']:
-            Appliance.objects.get_or_create(name=request.POST['appliance'])
+            appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
+            request.data['appliance'] = u"{}".format(appliance.id)
         return super(ProductViewSet, self).update(request, *args, **kwargs)
 
     def picture(self, request, *args, **kwargs):
