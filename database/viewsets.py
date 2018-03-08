@@ -213,7 +213,7 @@ class OrderViewSet(APIWrapper):
     def input(self, request, *args, **kwargs):
         response = InputViewSet.as_view({'post': 'create'})(request)
         if response.status_code/100 == 2:
-            response.redirect_to = '/database/input'
+            # response.redirect_to = '/database/input'
             products = json.loads(request._request.POST.get('products', '[]'))
             order = Order.objects.get(id=request._request.POST['order_id'])
             for op in order.order_product:
@@ -352,7 +352,7 @@ object_map = {
             'delete': DeleteForm,
             'picture': UploadPictureForm,
         },
-        'table_fields': ['code', 'provider_name', 'brand_name', 'name', 'description', 'appliance_name', 'real_price', 'picture'],
+        'table_fields': ['code', 'provider_name', 'brand_name', 'name', 'description', 'appliance_name', 'real_price', 'percentage_1', 'percentage_2', 'percentage_3', 'picture'],
         'custom_reg_actions': [graphics.Action('picture', 'modal', text='Cargar foto', icon='camera', style='info', method="POST")],
         'js': ['product']
     },

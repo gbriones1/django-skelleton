@@ -245,6 +245,9 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
                 value = ""
             }
         }
+        if (editform.find('input[name="'+ key +'"]').attr("list")){
+            value = data[key+"_name"];
+        }
         editform.find('input[name="'+ key +'"]').val(value);
         var field = editform.find('input[name="'+ key +'"]')
         if (field.attr("type") == "checkbox"){
