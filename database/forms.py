@@ -697,6 +697,18 @@ class MailOrderForm(forms.ModelForm):
         model = Output
         fields = ['message']
 
+class AddStorageProductForm(forms.ModelForm):
+    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
+    product = forms.ModelChoiceField(queryset=Product.objects.all(), required=True, label="Product")
+    amount = forms.IntegerField(label='Cantidad')
+    must_have = forms.IntegerField(label="Debe haber")
+    action = HiddenField(initial='new')
+
+    class Meta:
+        model = Storage_Product
+        fields = '__all__'
+
+
 class DateRangeFilterForm(forms.Form):
     date__gte = forms.DateField(widget=DateInput(), initial=date.today() - timedelta(28), label='Desde')
     date__lt = forms.DateField(widget=DateInput(), initial=date.today() + timedelta(1), label='Hasta')

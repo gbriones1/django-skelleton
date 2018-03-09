@@ -486,10 +486,12 @@ object_map = {
         'viewset': StorageProductViewSet,
         'action_forms': {
             'edit': ChangeStorageProductForm,
+            'new': AddStorageProductForm,
         },
         'table_fields': ['product_code', 'product_name', 'product_description', 'product_brand', 'organization_name', 'storage_name', 'amount', 'must_have'],
         'remove_checkbox': True,
         'remove_table_actions': True,
+        'custom_table_actions': [graphics.Action('new', 'modal', text='Agregar', icon='edit', style='info', method="POST")],
         'remove_reg_actions': True,
         'custom_reg_actions': [graphics.Action('edit', 'modal', text='Cambiar', icon='calculator', style='success', method="POST")],
     },
