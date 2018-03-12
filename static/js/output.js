@@ -102,3 +102,15 @@ $(document).on('click', '.multiSet-delete-all', function(){
 $('.modal form').submit(function () {
     $(this).find('select#id_organization_storage').removeAttr('disabled');
 });
+
+$(document).on('click', 'button[data-target="#email"]', function () {
+    var data = []
+    $('input.checkthis').each(function() {
+        if(this.checked){
+            data.push($(this).closest('tr').data('id'));
+        }
+    });
+    var emailform = $("#email form");
+    emailform[0].reset();
+    emailform.find('input[name="ids"]').val(JSON.stringify(data));
+});

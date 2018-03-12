@@ -673,6 +673,11 @@ class ProductInputForm(forms.ModelForm):
         model = Product
         fields = ["product", "price", "discount"]
 
+class EmailOutputForm(forms.Form):
+    email = forms.EmailField(max_length=255, label='Email', required=False)
+    message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="")
+    ids = HiddenField()
+    action = HiddenField(initial='email')
 
 class InputOrderForm(forms.ModelForm):
     order_id = HiddenField()

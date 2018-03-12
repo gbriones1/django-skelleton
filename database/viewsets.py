@@ -201,6 +201,31 @@ class OutputViewSet(APIWrapper):
         response.redirect_to = '/database/order'
         return response
 
+    def email(self, request, *args, **kwargs):
+        status = 200
+        response = OutputViewSet.send_email(Output.objects.filter(id__in=json.loads(request.POST['ids'])), request.POST.get('email'), request.POST.get('message'))
+        if response:
+            status = 499
+        return Response([response], status=status)
+
+    @staticmethod
+    def send_email(outputs, email, message):
+        for o in outputs:
+            message = message+"\n\nSalida numero: {}\tFecha: {}\tAlmacen: {}\n".format(o.id, o.date, o.organization_storage)
+            for p in o.movement_product_set.all():
+                message += "{} {} {}. \tCantidad: {}\tPrecio unitario: ${}\n".format(p.product.code, p.product.name, p.product.description, p.amount, p.price)
+        if email:
+            config = Configuration.objects.all()
+            if config:
+                # if not send_email(config[0].sender_email, config[0].password, email, 'Salidas de productos de Muelles Obrero', message):
+                if not send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Salidas de productos', message):
+                    return "Fallo envio de email a {}".format(email)
+            else:
+                return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
+        else:
+            return "No se establecio un destinatario"
+        return None
+
 class LendingViewSet(APIWrapper):
     queryset = Lending.objects.order_by('-date')
     serializer_class = LendingSerializer
@@ -522,11 +547,14 @@ object_map = {
             'edit': EditOutputForm,
             'delete': DeleteForm,
             'order': OrderOutputForm,
+            'email': EmailOutputForm,
         },
         'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['multiset', 'output'],
-        'custom_table_actions': [graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST")],
+        'custom_table_actions': [
+            graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST"),
+            graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST")],
         'filter_form': DateTimeRangeFilterForm()
     },
     'lending': {
