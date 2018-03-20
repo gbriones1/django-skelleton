@@ -485,6 +485,7 @@ class Order(models.Model):
     provider = models.ForeignKey(Provider)
     organization_storage = models.ForeignKey(Organization_Storage)
     claimant = models.ForeignKey(Employee, null=True)
+    replacer = models.ForeignKey(Organization, null=True, blank=True)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, null=True, default=STATUS_PENDING)
     received_date = models.DateTimeField(null=True)
 

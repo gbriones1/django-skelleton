@@ -486,6 +486,7 @@ class OrderSerializer(SerializerWrapper):
     provider_name = serializers.ReadOnlyField(source='provider.name')
     status = serializers.SerializerMethodField()
     claimant_name = serializers.ReadOnlyField(source='claimant.name')
+    replacer_name = serializers.ReadOnlyField(source='replacer.name')
 
     class Meta:
         model = Order

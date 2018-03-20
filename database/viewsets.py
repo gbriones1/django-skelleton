@@ -181,11 +181,14 @@ class OutputViewSet(APIWrapper):
         response = []
         claimant = Employee.objects.filter(id=request.POST.get("claimant") or None)
         claimant = claimant[0] if claimant else None
+        replacer = Organization.objects.filter(id=request.POST.get("replacer") or None)
+        replacer = replacer[0] if replacer else None
         organization_storage = Organization_Storage.objects.get(id=request.POST.get("organization_storage"))
         for email_info in provider_map.values():
             order = Order(
                 provider=email_info['provider'],
                 claimant=claimant,
+                replacer=replacer,
                 organization_storage=organization_storage,
                 status=Order.STATUS_PENDING
             )
@@ -585,7 +588,7 @@ object_map = {
             'input': InputOrderForm,
             'mail': MailOrderForm,
         },
-        'table_fields': ['id', 'date', 'order_product_set', 'provider_name', 'claimant_name', 'organization_name', 'storage_name', 'status'],
+        'table_fields': ['id', 'date', 'order_product_set', 'provider_name', 'claimant_name', 'replacer_name', 'organization_name', 'storage_name', 'status'],
         'subset-fields': {'order_product_set': ["product", "amount"]},
         'js': ['multiset', 'order'],
         'custom_reg_actions': [

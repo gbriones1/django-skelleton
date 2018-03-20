@@ -312,8 +312,9 @@ class NewOrderForm(forms.ModelForm):
     action = HiddenField(initial='new')
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
     order_product_set = forms.ModelChoiceField(queryset=Order_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
-    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
-    claimant = forms.ModelChoiceField(queryset=Employee.objects.all(), required=False, label="Solicitante")
+    provider = forms.ModelChoiceField(queryset=Provider.objects.order_by('name'), required=False, label="Proveedor")
+    claimant = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), required=False, label="Solicitante")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen", empty_label=None)
 
     class Meta:
@@ -323,6 +324,7 @@ class NewOrderForm(forms.ModelForm):
             'provider',
             'organization_storage',
             'claimant',
+            'replacer',
             'order_product_set',
         )
 
@@ -331,6 +333,7 @@ class EditOrderForm(forms.ModelForm):
     id = HiddenField()
     order_product_set = forms.ModelChoiceField(queryset=Order_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
     claimant = forms.ModelChoiceField(queryset=Employee.objects.all(), required=False, label="Solicitante")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen", empty_label=None)
     action = HiddenField(initial='edit')
 
@@ -340,6 +343,7 @@ class EditOrderForm(forms.ModelForm):
             'provider',
             'organization_storage',
             'claimant',
+            'replacer',
             'order_product_set',
         )
 
@@ -659,6 +663,7 @@ class OrderOutputForm(forms.ModelForm):
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
     claimant = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Solicitante")
+    replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     order_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
     action = HiddenField(initial='order')
 
