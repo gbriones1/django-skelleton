@@ -213,16 +213,22 @@ class OutputViewSet(APIWrapper):
 
     @staticmethod
     def send_email(outputs, email, message):
+        total = 0
         for o in outputs:
             message = message+"\n\nSalida numero: {}\tFecha: {}\tAlmacen: {}\n".format(o.id, o.date, o.organization_storage)
             for p in o.movement_product_set.all():
                 message += "{} {} {}. \tCantidad: {}\tPrecio unitario: ${}\n".format(p.product.code, p.product.name, p.product.description, p.amount, p.price)
+                total += int(p.amount)*float(p.price)
+        message += "Total: {}\n".format(total)
         if email:
             config = Configuration.objects.all()
             if config:
-                # if not send_email(config[0].sender_email, config[0].password, email, 'Salidas de productos de Muelles Obrero', message):
-                if not send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Salidas de productos', message):
-                    return "Fallo envio de email a {}".format(email)
+                if not settings.DEV_ENV:
+                    if not send_email(config[0].sender_email, config[0].password, email, 'Salidas de productos de Muelles Obrero', message):
+                        return "Fallo envio de email a {}".format(email)
+                else:
+                    if not send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Salidas de productos', message):
+                        return "Fallo envio de email a {}".format(email)
             else:
                 return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
         else:
@@ -281,12 +287,18 @@ class OrderViewSet(APIWrapper):
         if dest:
             config = Configuration.objects.all()
             if config:
-                # if send_email(config[0].sender_email, config[0].password, dest, 'Pedido de productos para Muelles Obrero', message):
-                if send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Pedido a '+order.provider.name, message):
-                    order.status = Order.STATUS_ASKED
-                    order.save()
+                if not settings.DEV_ENV:
+                    if send_email(config[0].sender_email, config[0].password, dest, 'Pedido de productos para Muelles Obrero', message):
+                        order.status = Order.STATUS_ASKED
+                        order.save()
+                    else:
+                        return "Fallo envio de email a {}".format(dest)
                 else:
-                    return "Fallo envio de email a {}".format(dest)
+                    if send_email(config[0].sender_email, config[0].password, ['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'], 'Pedido a '+order.provider.name, message):
+                        order.status = Order.STATUS_ASKED
+                        order.save()
+                    else:
+                        return "Fallo envio de email a {}".format(dest)
             else:
                 return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
         else:
@@ -328,12 +340,18 @@ class QuotationViewSet(APIWrapper):
                 proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = proc.communicate()
                 os.remove(html_file)
-                if send_email(config[0].quotations_email, config[0].quotations_password, [contact.email for contact in contacts], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
-                    # if send_email(config[0].quotations_email, config[0].quotations_password, ["gbriones.gdl@gmail.com"], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
-                    status = 200
-                    response = "OK"
+                if not settings.DEV_ENV:
+                    if send_email(config[0].quotations_email, config[0].quotations_password, [contact.email for contact in contacts], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
+                        status = 200
+                        response = "OK"
+                    else:
+                        response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
                 else:
-                    response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
+                    if send_email(config[0].quotations_email, config[0].quotations_password, ["gbriones.gdl@gmail.com"], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
+                        status = 200
+                        response = "OK"
+                    else:
+                        response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
             else:
                 return "No hay email para enviar cotizaciones. Ir a Configuracion para establecerlo"
         else:
