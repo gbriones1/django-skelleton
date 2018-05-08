@@ -35,6 +35,17 @@ $('div.form-group input').each(function(){
 $('div.form-group select').each(function(){
 	$(this).addClass("form-control")
 });
+var date__gte = urlParams["date__gte"];
+var date__lt = urlParams["date__lt"];
+if (date__lt){
+    console.log(date__lt);
+    $('.filter_form input#id_date__lt').val(date__lt);
+}
+if (date__gte){
+    $('.filter_form input#id_date__gte').val(date__gte);
+}
+
+
 $(document).on('click', "table #checkall", function () {
     if ($(this).is(':checked')) {
         $("table input[type=checkbox]").each(function () {
