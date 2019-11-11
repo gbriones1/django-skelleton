@@ -2,7 +2,14 @@ function refreshFormSetInputs(form) {
     var valueSet = []
     form.find('input.formset').each(function () {
         var inputSet = $(this);
-        inputSet.closest('.formSet-container').find('#formSet-table tbody tr').each(function () {
+        inputSet.closest('.formSet-container').find('#formSet-table tbody tr').each(function (key, value) {
+            var form = inputSet.closest('form');
+            $('<input>').attr({
+                type: 'hidden',
+                id: 'id_'+inputSet.attr('name')+'['+key+']',
+                name: inputSet.attr('name')+'['+key+']',
+                value: JSON.stringify(value.dataset)
+            }).appendTo('form');
             var itemData = $(this).data();
             valueSet.push(itemData);
         });

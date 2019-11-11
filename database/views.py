@@ -28,7 +28,7 @@ def main(request, name, obj_id):
     notifications = []
     global_messages = []
     if name in object_map.keys():
-        cache_name = name+"-"+urllib.urlencode(request.GET)
+        cache_name = name+"-"+urllib.parse.urlencode(request.GET)
         if request.method == 'POST':
             action = request.POST.get('action')
             vs = None
@@ -51,7 +51,7 @@ def main(request, name, obj_id):
                     notifications.append(Notification(message="No elements selected", level="danger"))
             elif action:
                 vs = object_map[name]['viewset'].as_view({'post': action})(request)
-            if vs and vs.status_code/100 != 2:
+            if vs and int(vs.status_code/100) != 2:
                 if hasattr(vs.data, 'iterkeys'):
                     for key in vs.data.keys():
                         notifications.append(Notification(message=str(key)+": "+str(vs.data[key]), level="danger"))
@@ -68,7 +68,7 @@ def main(request, name, obj_id):
                 return HttpResponseRedirect(redirect)
         rest_url = object_map[name]['api_path']
         if request.GET:
-            rest_url += "?"+urllib.urlencode(request.GET)
+            rest_url += "?"+urllib.parse.urlencode(request.GET)
         add_fields = object_map[name].get('add_fields', [])
         remove_fields = object_map[name].get('remove_fields', [])
         if not obj_id:
@@ -82,7 +82,7 @@ def main(request, name, obj_id):
             if filter_form:
                 if not request.GET:
                     filters = {x:y.initial for x,y in filter_form.fields.items()}
-                    return HttpResponseRedirect(request.get_full_path()+"?"+urllib.urlencode(filters))
+                    return HttpResponseRedirect(request.get_full_path()+"?"+urllib.parse.urlencode(filters))
                 for key in request.GET.keys():
                     filter_form.fields[key].initial = request.GET[key]
             checkbox = False if object_map[name].get('remove_checkbox') else True

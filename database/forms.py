@@ -225,6 +225,7 @@ class EditOrganizationForm(forms.ModelForm):
 
 class NewOrganizationStorageForm(forms.ModelForm):
     action = HiddenField(initial='new')
+    storage_type = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=True, label="Tipo", widget=Datalist())
 
     class Meta:
         model = Organization_Storage
@@ -234,6 +235,7 @@ class NewOrganizationStorageForm(forms.ModelForm):
 class EditOrganizationStorageForm(forms.ModelForm):
     id = HiddenField()
     action = HiddenField(initial='edit')
+    storage_type = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=True, label="Tipo", widget=Datalist())
 
     class Meta:
         model = Organization_Storage
@@ -365,7 +367,7 @@ class NewQuotationForm(forms.ModelForm):
     unit = forms.CharField(max_length=60, label='Unidad')
     plates = forms.CharField(max_length=10, label='Placas')
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    percentages = HiddenJSONField(PercentageSerializer)
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
@@ -399,7 +401,7 @@ class EditQuotationForm(forms.ModelForm):
     unit = forms.CharField(max_length=60, label='Unidad')
     plates = forms.CharField(max_length=10, label='Placas')
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    percentages = HiddenJSONField(PercentageSerializer)
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
@@ -430,7 +432,7 @@ class EditQuotationForm(forms.ModelForm):
 class NewPriceListForm(forms.ModelForm):
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")#, widget=Datalist())
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    percentages = HiddenJSONField(PercentageSerializer)
     pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
     action = HiddenField(initial='new')
 
@@ -443,7 +445,7 @@ class EditPriceListForm(forms.ModelForm):
     id = HiddenField()
     customer = HiddenField()
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenField(initial=json.dumps(PercentageSerializer(Percentage.objects.all(), many=True).data))
+    percentages = HiddenJSONField(PercentageSerializer)
     pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
     action = HiddenField(initial='edit')
 

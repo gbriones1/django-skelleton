@@ -12,13 +12,10 @@ from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from django.core import serializers
 
-reload(sys)
-sys.setdefaultencoding('utf8')
-
 MULTISET_CACHE = {}
 
 class Datalist(forms.widgets.Select):
-    def render(self, name, value, attrs=None, choices=()):
+    def render(self, name, value, attrs=None, choices=(), renderer=None):
         if value is None:
             value = ''
         datalist_attrs = attrs
@@ -58,7 +55,7 @@ class Datalist(forms.widgets.Select):
         option_value = force_text(option_value)
         # return format_html('<option value="{}"></option>',
         #                    force_text(option_label))
-        return '<option value="{}"></option>'.format(option_label.encode('utf-8'))
+        return '<option value="{}"></option>'.format(option_label.encode('utf-8').decode())
 
 class MultiSet(forms.widgets.Select):
 
@@ -72,7 +69,7 @@ class MultiSet(forms.widgets.Select):
         self.editable_fields = editable_fields
         self.extra_fields = extra_fields
 
-    def render(self, name, value, attrs=None, choices=()):
+    def render(self, name, value, attrs=None, choices=(), renderer=None):
         global MULTISET_CACHE
         model_name = self.choices.queryset.model.__name__
         # print("Rendering multiset form", model_name, self.search, self.amounts, self.include, self.editable_fields)
@@ -125,7 +122,7 @@ class MultiSet(forms.widgets.Select):
             cached_rows = []
             for choice in self.source_queryset:
                 tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
-                tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore")) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
+                tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore").decode()) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
                 tr_attr["data-id"] = choice.id
                 # for field in self.include:
                 #     if hasattr(choice, field):
@@ -167,7 +164,7 @@ class FormSet(forms.widgets.Select):
         self.include = include
         self.form = form
 
-    def render(self, name, value, attrs=None, choices=()):
+    def render(self, name, value, attrs=None, choices=(), renderer=None):
         model_name = self.choices.queryset.model.__name__
         if value is None:
             value = ''
@@ -223,3 +220,13 @@ class DateInput(forms.DateInput):
 
 class DateTimeInput(forms.DateTimeInput):
     input_type = 'datetime-local'
+
+class HiddenJSONField(HiddenField):
+
+    def __init__(self, serializer):
+        initial = ""
+        try:
+            initial = json.dumps(serializer(serializer.Meta.model.objects.all(), many=True).data)
+        except:
+            pass
+        super(HiddenField, self).__init__(initial=initial)

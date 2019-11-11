@@ -57,17 +57,15 @@ INSTALLED_APPS = (
     'public',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.staticfiles.storage.CachedStaticFilesStorage',
-)
+]
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -114,11 +112,14 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'django_test_2',
+            'NAME': 'modb',
             'USER': 'root',
-            'PASSWORD': 'pass',
+            'PASSWORD': '',
             'HOST': '127.0.0.1',
             'PORT': '3306',
+            'TEST': {
+                'NAME': 'modb_test'
+            }
         }
     }
 # [END db_setup]
@@ -134,7 +135,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)

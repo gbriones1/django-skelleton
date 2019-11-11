@@ -13,7 +13,7 @@ from django.utils import timezone
 class Appliance(models.Model):
     name = models.CharField(max_length=100)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def products_related(self):
@@ -26,7 +26,7 @@ class Appliance(models.Model):
 class Brand(models.Model):
     name = models.CharField(max_length=100)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     def products_related(self):
@@ -43,31 +43,31 @@ class Provider(models.Model):
         products = Product.objects.filter(provider=self)
         return len(products)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
 
 class Provider_Contact(models.Model):
-    provider = models.ForeignKey(Provider)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True, default="")
+    email = models.EmailField(blank=True, null=True, default="")
+    phone = models.CharField(max_length=15, blank=True, null=True, default="")
     for_orders = models.BooleanField(default=False)
 
 class Invoice(models.Model):
     number = models.CharField(max_length=30)
     date = models.DateField()
     due = models.DateField(null=True)
-    provider = models.ForeignKey(Provider, null=True)
-    price = models.DecimalField(max_digits=9, decimal_places=2)
+    provider = models.ForeignKey(Provider, null=True, on_delete=models.CASCADE)
+    price = models.DecimalField(max_digits=9, decimal_places=2, default=0)
     credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     paid = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.number
 
     class Meta:
@@ -94,23 +94,23 @@ class Invoice(models.Model):
 class Payment(models.Model):
     date = models.DateField()
     amount = models.DecimalField(max_digits=9, decimal_places=2)
-    invoice = models.ForeignKey(Invoice)
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
 
 class Customer(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
 
 class Customer_Contact(models.Model):
-    customer = models.ForeignKey(Customer)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    department = models.CharField(max_length=100, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=15, blank=True, null=True)
+    department = models.CharField(max_length=100, blank=True, null=True, default="")
+    email = models.EmailField(blank=True, null=True, default="")
+    phone = models.CharField(max_length=15, blank=True, null=True, default="")
     for_quotation = models.BooleanField(default=False)
     for_invoice = models.BooleanField(default=False)
 
@@ -118,13 +118,13 @@ class Sell(models.Model):
     number = models.CharField(max_length=30)
     date = models.DateField()
     due = models.DateField(null=True)
-    customer = models.ForeignKey(Customer, null=True)
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=9, decimal_places=2)
     credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     paid = models.BooleanField(default=False)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.number
 
     class Meta:
@@ -143,13 +143,13 @@ class Sell(models.Model):
 class Collection(models.Model):
     date = models.DateField()
     amount = models.DecimalField(max_digits=9, decimal_places=2)
-    sell = models.ForeignKey(Sell)
+    sell = models.ForeignKey(Sell, on_delete=models.CASCADE)
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -161,16 +161,16 @@ class Tool(models.Model):
     description = models.CharField(max_length=255, null=True, blank=True)
     condition = models.CharField(max_length=255, null=True, blank=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.code+" - "+self.name+" - "+self.description
 
 class Product(models.Model):
     code = models.CharField(max_length=30, unique=True)
-    brand = models.ForeignKey(Brand, null=True, blank=True)
-    provider = models.ForeignKey(Provider, null=True, blank=True)
+    brand = models.ForeignKey(Brand, null=True, blank=True, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, null=True, blank=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=255, null=True, blank=True)
-    appliance = models.ForeignKey(Appliance, null=True, blank=True)
+    appliance = models.ForeignKey(Appliance, null=True, blank=True, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=9, decimal_places=2)
     discount = models.DecimalField(max_digits=9, decimal_places=2)
     picture = models.ImageField(upload_to='products/', null=True)
@@ -219,12 +219,13 @@ class Product(models.Model):
         return self.price-(self.price*(self.discount/100))
 
     def __str__(self):
+        desc= ""
+        if self.description:
+            desc = " - "+self.description.encode('ascii', 'ignore').decode()
+        appl = ""
         if self.appliance:
-            return self.code+" - "+self.name.encode('ascii', 'ignore')+" - "+self.description.encode('ascii', 'ignore')+" - "+self.appliance.name
-        return self.code+" - "+self.name.encode('ascii', 'ignore')+" - "+self.description.encode('ascii', 'ignore')
-
-    def __unicode__(self):
-        return self.code+" - "+self.name+" - "+self.description
+            appl = " - "+self.appliance.name
+        return "{} - {}{}{}".format(self.code, self.name.encode('ascii', 'ignore').decode(), desc, appl)
 
     class Meta:
         ordering = ['code']
@@ -255,7 +256,7 @@ class Product(models.Model):
 class Organization(models.Model):
     name = models.CharField(max_length=200)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -264,25 +265,25 @@ class Organization(models.Model):
 class StorageType(models.Model):
     name = models.CharField(max_length=200)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
         ordering = ['name']
 
 class Organization_Storage(models.Model):
-    organization = models.ForeignKey(Organization)
-    storage_type = models.ForeignKey(StorageType)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
+    storage_type = models.ForeignKey(StorageType, on_delete=models.CASCADE)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.organization.name + " - " + self.storage_type.name
 
     class Meta:
         ordering = ['organization']
 
 class Storage_Product(models.Model):
-    organization_storage = models.ForeignKey(Organization_Storage)
-    product = models.ForeignKey(Product)
+    organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     must_have = models.IntegerField(null=True)
 
@@ -311,8 +312,8 @@ class Storage_Product(models.Model):
         return self.organization_storage.organization.name
 
 class Storage_Tool(models.Model):
-    organization_storage = models.ForeignKey(Organization_Storage)
-    tool = models.ForeignKey(Tool)
+    organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
     amount = models.IntegerField()
 
 class Percentage(models.Model):
@@ -324,31 +325,28 @@ class Percentage(models.Model):
     service_percentage_2 = models.DecimalField(max_digits=9, decimal_places=2)
     service_percentage_3 = models.DecimalField(max_digits=9, decimal_places=2)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.max_price_limit)
 
 class PriceList(models.Model):
-    customer = models.OneToOneField(Customer)
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.customer.name
 
 class PriceList_Product(models.Model):
-    pricelist = models.ForeignKey(PriceList)
-    product = models.ForeignKey(Product)
+    pricelist = models.ForeignKey(PriceList, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     alt_code = models.CharField(max_length=30, null=True)
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
     def __str__(self):
-        return self.product.code+" - "+self.product.name.encode('ascii', 'ignore')+" - "+self.product.description.encode('ascii', 'ignore')
-
-    def __unicode__(self):
-        return self.product.code+" - "+self.product.name+" - "+self.product.description
+        return self.product.code+" - "+self.product.name.encode('ascii', 'ignore').decode()+" - "+self.product.description.encode('ascii', 'ignore').decode()
 
 class Quotation(models.Model):
-    date = models.DateTimeField(default=datetime.now)
-    pricelist = models.ForeignKey(PriceList, null=True)
-    customer = models.ForeignKey(Customer, null=True)
+    date = models.DateTimeField(default=timezone.now)
+    pricelist = models.ForeignKey(PriceList, null=True, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
     authorized = models.BooleanField(default=False)
@@ -360,13 +358,13 @@ class Quotation(models.Model):
         return self.customer.name
 
 class Quotation_Product(models.Model):
-    quotation = models.ForeignKey(Quotation)
-    product = models.ForeignKey(Product)
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
 class Quotation_Others(models.Model):
-    quotation = models.ForeignKey(Quotation)
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
     description = models.CharField(max_length=60)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
@@ -376,19 +374,25 @@ class Work(models.Model):
     start_time = models.TimeField(null=True)
     end_time = models.TimeField(null=True)
     unit_section = models.CharField(max_length=30, null=True)
-    quotation = models.ForeignKey(Quotation, null=True)
+    quotation = models.ForeignKey(Quotation, null=True, on_delete=models.CASCADE)
 
 class Employee_Work(models.Model):
-    work = models.ForeignKey(Work)
-    employee = models.ForeignKey(Employee)
+    work = models.ForeignKey(Work, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     earning = models.DecimalField(max_digits=9, decimal_places=2)
 
     class Meta:
         unique_together = ('work', 'employee',)
 
+
+class MovementProductManager(models.Manager):
+
+    def add(self, *args, **kwargs):
+        import pdb; pdb.set_trace()
+        super(MovementProductManager, self).add(*args, **kwargs)
 class Movement(models.Model):
-    date = models.DateTimeField(default=datetime.now)
-    organization_storage = models.ForeignKey(Organization_Storage)
+    date = models.DateTimeField(default=timezone.now)
+    organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
 
     def delete(self, *args, **kwargs):
         for mp in self.movement_product_set.all():
@@ -405,8 +409,8 @@ class Movement(models.Model):
             return "Output"
 
 class Movement_Product(models.Model):
-    movement = models.ForeignKey(Movement, null=True)
-    product = models.ForeignKey(Product)
+    movement = models.ForeignKey(Movement, null=True, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
@@ -420,7 +424,17 @@ class Movement_Product(models.Model):
         if self.id:
             old = Movement_Product.objects.get(id=self.id)
             difference -= old.amount
-        if self.movement.get_type() != "Input":
+        if isinstance(self.movement, Input):
+            self.product.price = self.price
+            if hasattr(self, 'discount'):
+                self.product.discount = self.discount
+            else:
+                self.discount = 1
+            self.product.save()
+            if self.movement.invoice:
+                self.movement.invoice.price += (self.amount*self.price)-(self.amount*self.price*self.discount/100)
+                self.movement.invoice.save()
+        else:
             difference *= -1
         sp.amount += difference
         sp.save()
@@ -433,38 +447,41 @@ class Movement_Product(models.Model):
         else:
             sp = Storage_Product(organization_storage=self.movement.organization_storage, product=self.product, amount=0, must_have=0)
         difference = self.amount
-        if self.movement.get_type() == "Input":
+        if isinstance(self.movement, Input):
             difference *= -1
         sp.amount += difference
         sp.save()
         return super(Movement_Product, self).delete(*args, **kwargs)
 
+    def __str__(self):
+        return str(self.product) + " - " + str(self.amount) + " - " + str(self.price)
+
 class Input(Movement):
-    invoice = models.ForeignKey(Invoice, null=True)
+    invoice = models.ForeignKey(Invoice, null=True, on_delete=models.CASCADE)
 
 class Output(Movement):
-    employee = models.ForeignKey(Employee, null=True)
-    destination = models.ForeignKey(Customer, null=True)
-    replacer = models.ForeignKey(Organization, null=True, blank=True)
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
+    destination = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
+    replacer = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.CASCADE)
 
 class Lending(models.Model):
-    date = models.DateTimeField(default=datetime.now)
-    organization_storage = models.ForeignKey(Organization_Storage)
-    employee = models.ForeignKey(Employee, null=True)
-    customer = models.ForeignKey(Customer, null=True)
+    date = models.DateTimeField(default=timezone.now)
+    organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
+    customer = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
     returned = models.BooleanField(default=False)
     returned_date = models.DateTimeField(null=True)
     products = models.ManyToManyField(Product, through='Lending_Product')
 
 class Lending_Product(models.Model):
-    lending = models.ForeignKey(Lending)
-    product = models.ForeignKey(Product)
+    lending = models.ForeignKey(Lending, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     returned_amount = models.IntegerField()
 
 class Lending_Tool(models.Model):
-    lending = models.ForeignKey(Lending)
-    tool = models.ForeignKey(Tool)
+    lending = models.ForeignKey(Lending, on_delete=models.CASCADE)
+    tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
     amount = models.IntegerField()
     returned_amount = models.IntegerField()
 
@@ -481,11 +498,11 @@ class Order(models.Model):
         (STATUS_RECEIVED, 'Recibido'),
         (STATUS_INCOMPLETE, 'Incompleto'),
     )
-    date = models.DateTimeField(default=datetime.now)
-    provider = models.ForeignKey(Provider)
-    organization_storage = models.ForeignKey(Organization_Storage)
-    claimant = models.ForeignKey(Employee, null=True)
-    replacer = models.ForeignKey(Organization, null=True, blank=True)
+    date = models.DateTimeField(default=timezone.now)
+    provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
+    organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
+    claimant = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
+    replacer = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.CASCADE)
     status = models.CharField(max_length=1, choices=STATUS_CHOICES, null=True, default=STATUS_PENDING)
     received_date = models.DateTimeField(null=True)
 
@@ -519,8 +536,8 @@ class Order(models.Model):
         super(Order, self).delete(*args, **kwargs)
 
 class Order_Product(models.Model):
-    order = models.ForeignKey(Order)
-    product = models.ForeignKey(Product)
+    order = models.ForeignKey(Order, null=True, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     amount_received = models.IntegerField(default=0)
 

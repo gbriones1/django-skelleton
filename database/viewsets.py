@@ -39,10 +39,10 @@ class APIWrapper(viewsets.ModelViewSet):
         # headers = self.get_success_headers(serializer.data)
         # self.serializer = serializer
         # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        # import pdb; pdb.set_trace()
         return super(APIWrapper, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
-        # import pdb; pdb.set_trace()
         # partial = kwargs.pop('partial', False)
         # instance = self.get_object()
         # serializer = self.get_serializer(instance, data=request.data, partial=partial)
@@ -68,7 +68,7 @@ class APIWrapper(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(**self.request.query_params.dict())
 
-class ProviderViewSet(viewsets.ModelViewSet):
+class ProviderViewSet(APIWrapper):
     queryset = Provider.objects.order_by('name')
     serializer_class = ProviderSerializer
 
@@ -92,37 +92,37 @@ class ProductViewSet(APIWrapper):
     queryset = Product.objects.order_by('code')
     serializer_class = ProductSerializer
 
-    def create(self, request, *args, **kwargs):
-        if not request.POST:
-            request = request._stream
-            for field in request.FILES.keys():
-                request.POST[field] = request.FILES[field]
-            request.data = request.POST
-        request.data._mutable = True
-        provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
-        request.data['provider'] = u"{}".format(provider.id)
-        brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
-        request.data['brand'] = u"{}".format(brand.id)
-        if request.POST['appliance']:
-            appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
-            request.data['appliance'] = u"{}".format(appliance.id)
-        return super(ProductViewSet, self).create(request, *args, **kwargs)
+    # def create(self, request, *args, **kwargs):
+    #     if not request.POST:
+    #         request = request._stream
+    #         for field in request.FILES.keys():
+    #             request.POST[field] = request.FILES[field]
+    #         request.data = request.POST
+    #     request.data._mutable = True
+    #     provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
+    #     request.data['provider'] = u"{}".format(provider.id)
+    #     brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
+    #     request.data['brand'] = u"{}".format(brand.id)
+    #     if request.POST['appliance']:
+    #         appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
+    #         request.data['appliance'] = u"{}".format(appliance.id)
+    #     return super(ProductViewSet, self).create(request, *args, **kwargs)
 
-    def update(self, request, *args, **kwargs):
-        if not request.POST:
-            request = request._stream
-            for field in request.FILES.keys():
-                request.POST[field] = request.FILES[field]
-            request.data = request.POST
-        request.data._mutable = True
-        provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
-        request.data['provider'] = u"{}".format(provider.id)
-        brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
-        request.data['brand'] = u"{}".format(brand.id)
-        if request.POST['appliance']:
-            appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
-            request.data['appliance'] = u"{}".format(appliance.id)
-        return super(ProductViewSet, self).update(request, *args, **kwargs)
+    # def update(self, request, *args, **kwargs):
+    #     if not request.POST:
+    #         request = request._stream
+    #         for field in request.FILES.keys():
+    #             request.POST[field] = request.FILES[field]
+    #         request.data = request.POST
+    #     request.data._mutable = True
+    #     provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
+    #     request.data['provider'] = u"{}".format(provider.id)
+    #     brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
+    #     request.data['brand'] = u"{}".format(brand.id)
+    #     if request.POST['appliance']:
+    #         appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
+    #         request.data['appliance'] = u"{}".format(appliance.id)
+    #     return super(ProductViewSet, self).update(request, *args, **kwargs)
 
     def picture(self, request, *args, **kwargs):
         if not request.POST:

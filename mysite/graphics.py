@@ -12,7 +12,7 @@ class HTMLObject(object):
 
     @property
     def stringify(self):
-        return ET.tostring(self.root, method='html')
+        return ET.tostring(self.root, method='html').decode()
 
 
 class HTMLButton(HTMLObject):

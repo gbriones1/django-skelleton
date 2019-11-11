@@ -7,7 +7,7 @@ function refreshMutliSetInputs(form) {
         var inputSet = $(this);
         var multiple = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-multiple')
         var editable = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-editable')
-        inputSet.closest('.multiSet-container').find('#multiSet-added tbody tr').each(function () {
+        inputSet.closest('.multiSet-container').find('#multiSet-added tbody tr').each(function (key, value) {
             var itemData = null;
             if (multiple || editable){
                 itemData = $(this).data();
@@ -23,6 +23,13 @@ function refreshMutliSetInputs(form) {
             else{
                 itemData = $(this).data('id');
             }
+            var form = inputSet.closest('form');
+            $('<input>').attr({
+                type: 'hidden',
+                id: 'id_'+inputSet.attr('name')+'['+key+']',
+                name: inputSet.attr('name')+'['+key+']',
+                value: JSON.stringify(itemData)
+            }).appendTo('form');
             valueSet.push(itemData);
         });
         inputSet.val(JSON.stringify(valueSet));

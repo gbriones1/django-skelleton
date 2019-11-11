@@ -34,7 +34,7 @@ from mysite import settings
 
 urlpatterns = [
     url(r'^accounts/', include('authentication.urls')),
-    url(r'^admin/', include(admin.site.urls)),
+    url(r'^admin/', admin.site.urls),
     url(r'^database/', include('database.urls')),
     url(r'^settings/', include('settings.urls')),
     url(r'^', include('public.urls')),

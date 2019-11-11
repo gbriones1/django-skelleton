@@ -2,7 +2,7 @@
 .DS_Store
 *.pyc
 .gaedata
-
+__pycache__
 *.py[cod]
 *$py.class
 
@@ -48,5 +48,8 @@ coverage.xml
 *,cover
 .hypothesis/
 
+.vscode
+
 backup/
 uploads/
+venv/

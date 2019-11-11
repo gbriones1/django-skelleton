@@ -58,7 +58,7 @@ def send_email(user_email, password, destinations, subject, text, files=[], part
             server.sendmail(FROM, TO, message.as_string())
             server.close()
             success = True
-            print 'Successfully sent the mail'
+            print('Successfully sent the mail')
         except socket_error as e:
             retries += 1
             if retries == 10:
