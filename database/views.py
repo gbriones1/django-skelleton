@@ -28,96 +28,100 @@ def main(request, name, obj_id):
     notifications = []
     global_messages = []
     if name in object_map.keys():
-        cache_name = name+"-"+urllib.parse.urlencode(request.GET)
-        if request.method == 'POST':
-            action = request.POST.get('action')
-            vs = None
-            if action == 'new':
-                vs = object_map[name]['viewset'].as_view({'post': 'create'})(request)
-            elif action == 'edit':
-                request.method = 'PUT'
-                vs = object_map[name]['viewset'].as_view({'put': 'update'})(request, pk=request.POST.get('id'))
-            elif action == 'delete':
-                request.method = 'DELETE'
-                vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-            elif action == 'multi-delete':
-                request.method = 'DELETE'
-                request.POST._mutable = True
-                ids = json.loads(request.POST.get('ids', '[]'))
-                for pk in ids:
-                    request.POST['id'] = pk
-                    vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
-                if not ids:
-                    notifications.append(Notification(message="No elements selected", level="danger"))
-            elif action:
-                vs = object_map[name]['viewset'].as_view({'post': action})(request)
-            if vs and int(vs.status_code/100) != 2:
-                if hasattr(vs.data, 'iterkeys'):
-                    for key in vs.data.keys():
-                        notifications.append(Notification(message=str(key)+": "+str(vs.data[key]), level="danger"))
-                elif type(vs.data) == type([]):
-                    for error in vs.data:
-                        notifications.append(Notification(message=str(error), level="danger"))
-                else:
-                    notifications.append(Notification(message=str(vs.data), level="danger"))
-            else:
-                cache.set(cache_name+'-table-update', int(time.time()*1000))
-                redirect = request.get_full_path()
-                if hasattr(vs, "redirect_to"):
-                    redirect = vs.redirect_to
-                return HttpResponseRedirect(redirect)
-        rest_url = object_map[name]['api_path']
-        if request.GET:
-            rest_url += "?"+urllib.parse.urlencode(request.GET)
-        add_fields = object_map[name].get('add_fields', [])
-        remove_fields = object_map[name].get('remove_fields', [])
+        table_title = object_map[name]["name"]
+        # cache_name = name+"-"+urllib.parse.urlencode(request.GET)
+        # if request.method == 'POST':
+        #     action = request.POST.get('action')
+        #     vs = None
+        #     if action == 'new':
+        #         vs = object_map[name]['viewset'].as_view({'post': 'create'})(request)
+        #     elif action == 'edit':
+        #         request.method = 'PUT'
+        #         vs = object_map[name]['viewset'].as_view({'put': 'update'})(request, pk=request.POST.get('id'))
+        #     elif action == 'delete':
+        #         request.method = 'DELETE'
+        #         vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+        #     elif action == 'multi-delete':
+        #         request.method = 'DELETE'
+        #         request.POST._mutable = True
+        #         ids = json.loads(request.POST.get('ids', '[]'))
+        #         for pk in ids:
+        #             request.POST['id'] = pk
+        #             vs = object_map[name]['viewset'].as_view({'delete': 'destroy'})(request, pk=request.POST.get('id'))
+        #         if not ids:
+        #             notifications.append(Notification(message="No elements selected", level="danger"))
+        #     elif action:
+        #         vs = object_map[name]['viewset'].as_view({'post': action})(request)
+        #     if vs and int(vs.status_code/100) != 2:
+        #         if hasattr(vs.data, 'iterkeys'):
+        #             for key in vs.data.keys():
+        #                 notifications.append(Notification(message=str(key)+": "+str(vs.data[key]), level="danger"))
+        #         elif type(vs.data) == type([]):
+        #             for error in vs.data:
+        #                 notifications.append(Notification(message=str(error), level="danger"))
+        #         else:
+        #             notifications.append(Notification(message=str(vs.data), level="danger"))
+        #     else:
+        #         cache.set(cache_name+'-table-update', int(time.time()*1000))
+        #         redirect = request.get_full_path()
+        #         if hasattr(vs, "redirect_to"):
+        #             redirect = vs.redirect_to
+        #         return HttpResponseRedirect(redirect)
+        # rest_url = object_map[name]['api_path']
+        # if request.GET:
+        #     rest_url += "?"+urllib.parse.urlencode(request.GET)
+        # add_fields = object_map[name].get('add_fields', [])
+        # remove_fields = object_map[name].get('remove_fields', [])
         if not obj_id:
-            scripts = ["tables"]
+            scripts = []
             actions = [] if object_map[name].get('remove_reg_actions') else graphics.Action.edit_and_delete()
             buttons = [] if object_map[name].get('remove_table_actions') else graphics.Action.new_and_multidelete()
             actions.extend(object_map[name].get('custom_reg_actions', []))
             buttons.extend(object_map[name].get('custom_table_actions', []))
             filter_form = object_map[name].get('filter_form', None)
-            use_cache = object_map[name].get('use_cache', True)
+            # use_cache = object_map[name].get('use_cache', True)
             if filter_form:
                 if not request.GET:
                     filters = {x:y.initial for x,y in filter_form.fields.items()}
                     return HttpResponseRedirect(request.get_full_path()+"?"+urllib.parse.urlencode(filters))
                 for key in request.GET.keys():
                     filter_form.fields[key].initial = request.GET[key]
-            checkbox = False if object_map[name].get('remove_checkbox') else True
-            columns = object_map[name]['viewset'].serializer_class.select_fields(object_map[name].get('table_fields'))
-            add_data = {}
-            subset_fields = object_map[name].get('subset-fields', [])
-            if subset_fields:
-                custom_fields = {}
-                for column in columns:
-                    if column['type'] == 'ListSerializer':
-                        custom_fields[column["name"]] = column["serializer"].select_fields(subset_fields.get(column["name"]))
-                add_data["subset-fields"] = custom_fields
-            table = graphics.Table(
-                cache_name+"-table",
-                object_map[name]['name'],
-                columns,
-                actions=actions,
-                buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
-                use_rest=rest_url,
-                use_cache=use_cache,
-                checkbox=checkbox,
-                add_data=add_data
-            )
-            contents = [table]
+            # checkbox = False if object_map[name].get('remove_checkbox') else True
+            # columns = object_map[name]['viewset'].serializer_class.select_fields(object_map[name].get('table_fields'))
+            # add_data = {}
+            # subset_fields = object_map[name].get('subset-fields', [])
+            # if subset_fields:
+            #     custom_fields = {}
+            #     for column in columns:
+            #         if column['type'] == 'ListSerializer':
+            #             custom_fields[column["name"]] = column["serializer"].select_fields(subset_fields.get(column["name"]))
+            #     add_data["subset-fields"] = custom_fields
+            # table = graphics.Table(
+            #     cache_name+"-table",
+            #     object_map[name]['name'],
+            #     columns,
+            #     actions=actions,
+            #     buttons=[graphics.HTMLButton.from_action(action) for action in buttons],
+            #     use_rest=rest_url,
+            #     use_cache=use_cache,
+            #     checkbox=checkbox,
+            #     add_data=add_data
+            # )
+            # contents = [table]
+            inline_script = "var prefetch = "+json.dumps(object_map[name].get('prefetch', []))+";\n"
+            inline_script += "var actions = "+json.dumps([a.__dict__ for a in actions])+";\n"
+            contents = []
             for action in actions+buttons:
                 content = None
                 if action.name in object_map[name]['action_forms'].keys():
                     content = object_map[name]['action_forms'][action.name]()
                 if action.action == 'modal':
-                    modal = graphics.Modal.from_action(action, [content])
+                    modal = graphics.Modal.from_action(action, [content], api_url=object_map[name]['api_path'])
                     contents.append(modal)
-            global_messages.append(Message(
-                action=cache_name+'-table-update',
-                parameter=cache.get_or_set(cache_name+'-table-update', int(time.time()*1000))
-            ))
+            # global_messages.append(Message(
+            #     action=cache_name+'-table-update',
+            #     parameter=cache.get_or_set(cache_name+'-table-update', int(time.time()*1000))
+            # ))
             scripts.extend(object_map[name].get('js', []))
         else:
             rendered = render_sheet(request, name, obj_id)
@@ -128,7 +132,7 @@ def main(request, name, obj_id):
     # response = render(request, 'pages/database.html', locals())
     # elapsed_time = time.time() - start_time
     # print(elapsed_time)
-    return render(request, 'pages/database.html', locals())
+    return render(request, 'pages/dashboard.html', locals())
 
 def render_sheet(request, name, obj_id):
     APPNAME = configurations.APPNAME

@@ -1,46 +1,46 @@
-<!-- % load extratags %} -->
 <div class="modal fade" id="{{ content.name }}" role="dialog">
-    <div class="modal-dialog modal-lg">
-        <form class="form-horizontal" action="{{ content.form_action }}" autocomplete="off" method="{{ content.form_method }}" id="" enctype="{{ content.form_enctype }}">
-            <!-- % csrf_token %} -->
-            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title">{{ content.title }}</h4>
-                </div>
-                <div class="modal-body">
-                    {% for item in content.body %}
-                        {% if item.type == "ModelForm" or item.type == "Form" %}
-                            {% for field in item.obj %}
-                                {% if field.is_hidden %}
-                                    {{ field }}
-                                {% else %}
-                                    <div class="form-group {% if field.errors %}has-error{% endif %}">
-                                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
-                                        <div class="col-sm-10">
-                                            {{ field }}
-                                            {% for error in field.errors %}
-                                            <span class="help-block">{{ error }}</span>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        {% elif item.name == 'HTMLObject' %}
-                            {{ item.obj.stringify|safe }}
-                        {% elif item.type == 'basestring' %}
-                            {{ item.obj }}
-                        {% endif %}
-                    {% endfor %}
-                    <!-- {{ content.html|safe }} -->
-                </div>
-                <div class="modal-footer">
-                    {% for button in content.buttons %}
-                        {{ button.stringify|safe }}
-                    {% endfor %}
-                </div>
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ content.title }}</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
-        </form>
+            <div class="modal-body">
+                <form action="{{ content.form_action }}" method="{{ content.form_method }}" enctype="{{ content.form_enctype }}">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                {% for item in content.body %}
+                    {% if item.type == "ModelForm" or item.type == "Form" %}
+                        {% for field in item.obj %}
+                            {% if field.is_hidden %}
+                                {{ field }}
+                            {% else %}
+                                <div class="form-group row">
+                                    <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                                    <div class="col-sm-10">
+                                        {{ field }}
+                                        {% for error in field.errors %}
+                                        <span class="help-block">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% elif item.name == 'HTMLObject' %}
+                        {{ item.obj.stringify|safe }}
+                    {% else %}
+                        {{ item.obj }}
+                    {% endif %}
+                {% endfor %}
+                </form>
+            </div>
+            <div class="modal-footer">
+                {% for button in content.buttons %}
+                    {{ button.stringify|safe }}
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
+    

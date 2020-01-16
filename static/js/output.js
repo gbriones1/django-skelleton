@@ -1,33 +1,115 @@
-var storages = []
-$("#new form").find('select#id_organization_storage').attr('disabled', 'disabled');
-$.getJSON("/database/special-api/instorage", function (json) {
-    storages = json;
-    $("#new form").find('select#id_organization_storage').removeAttr('disabled');
+var outputs = [];
+var organizations = [];
+var orgSto = [];
+var products = [];
+var employees = [];
+var customers = [];
+var productNames = {};
+var productProviders = {};
+var storages = {};
+
+$.when(getObjectFiltered("output", function(data) {outputs = data}), getObject("product"), getObject("organization"), getObject("organization_storage"), getObject("employee"), getObject("customer"), getObject("storage_product")).done(function (){
+    organizations = JSON.parse(sessionStorage.getItem("organization") || "[]")
+    orgSto = JSON.parse(sessionStorage.getItem("organization_storage") || "[]")
+    products = JSON.parse(sessionStorage.getItem("product") || "[]")
+    employees = JSON.parse(sessionStorage.getItem("employee") || "[]")
+    customers = JSON.parse(sessionStorage.getItem("customer") || "[]")
+    stoPro = JSON.parse(sessionStorage.getItem("storage_product") || "[]")
+    $('#new.modal form').each(function () {
+        renderFilter($(this));
+    });
+    buildTable()
 });
 
-$(document).on('click', 'button[data-target="#order"]', function () {
-    var data = [];
-    var movement_product_set = {}
-    var orderform = $("#order form");
-    $('table[id^="output-date"] tbody tr').each(function functionName() {
-        if($(this).find(".checkthis").is(':checked')){
-            var curr_set = $(this).data("movement_product_set")
-            for (idx in curr_set){
-                if (movement_product_set[curr_set[idx].product.id]){
-                    movement_product_set[curr_set[idx].product.id] += curr_set[idx].amount
-                }
-                else{
-                    movement_product_set[curr_set[idx].product.id] = curr_set[idx].amount
-                }
-            }
-        }
+function buildTable (){
+    employeeNames = {}
+    employees.forEach(function (item, index) {
+        employeeNames[item.id] = item.name
+    });
+    customerNames = {}
+    customers.forEach(function (item, index) {
+        customerNames[item.id] = item.name
+    });
+    organizationNames = {}
+    organizations.forEach(function (item, index) {
+        organizationNames[item.id] = item.name
+    });
+    orgStoNames = {}
+    orgSto.forEach(function (item, index) {
+        storages[item.id] = {};
+        orgStoNames[item.id] = item.organization_name + " - " + item.storage_type_name
+    });
+    stoPro.forEach(function (item) {
+        storages[item.organization_storage][item.product] = item.amount
+    });
+    products.forEach(function (item, index) {
+        productNames[item.id] = item.code + " - " + item.name + " - " + item.description
+        productProviders[item.id] = item.provider
+    });
+    data = []
+    outputs.forEach(function (item){
+        item['employee_name'] = employeeNames[item.employee]
+        item['destination_name'] = customerNames[item.destination]
+        item['replacer_name'] = organizationNames[item.replacer]
+        item['storage_name'] = orgStoNames[item.organization_storage]
+        
+        data.push(item);
     })
-    for (product in movement_product_set){
-        data.push({'product':{'id':product}, 'amount':movement_product_set[product]})
-    }
-    initialMultiSetData(orderform.find('input#id_order_product_set'), data);
-    refreshMutliSetInputs(orderform);
-});
+    $('#table').bootstrapTable({
+        columns: [{
+            checkbox: true
+        }, {
+            field: 'date',
+            title: 'Fecha',
+            sortable: true,
+        }, {
+            field: 'employee_name',
+            title: 'Trabajador',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'destination_name',
+            title: 'Cliente',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'replacer_name',
+            title: 'Repone',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'storage_name',
+            title: 'Almacen',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'action',
+            title: 'Acciones',
+            formatter: actionFormatter,
+            width: actions.length*60,
+            align: 'center',
+            events: {
+                'click .edit': editEvent,
+                'click .delete': deleteEvent
+              }
+        }],
+        pagination: true,
+        filterControl: true,
+        height: 600,
+        data: data,
+        detailView: true,
+        detailFormatter: detailViewFormatter
+    })
+}
+
+function detailViewFormatter(index, row, element){
+    var table = '<table><tr><th>Refaccion</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
+    row.movement_product_set.forEach(function(item) {
+        table += '<tr><td>'+productNames[item.product]+'</td><td>$'+item.price+'</td><td>'+item.amount+'</td><td>$'+(item.price*item.amount).toFixed(2)+'</td></tr>'
+    })
+    table += '</tbody></table>'
+    return table
+}
 
 function renderFilter(form) {
     var selectedStorage = form.find('select#id_organization_storage').val();
@@ -42,11 +124,8 @@ function renderFilter(form) {
     });
 }
 
-$(document).on('keyup change', '#multiSet-search-available', function() {
-    renderFilter($(this).closest('form'))
-});
-
-function selectStorageProduct(form) {
+$(document).on('change', '#new select#id_organization_storage', function() {
+    var form = $(this).closest('form')
     form.find('table#multiSet-table tr').each(function(){
         $(this).show()
     });
@@ -54,63 +133,80 @@ function selectStorageProduct(form) {
     var table = form.find('#multiSet-table')
     applySearch(search, table)
     renderFilter(form)
-}
-
-$(document).on('change', '#new select#id_organization_storage', function() {
-    selectStorageProduct($(this).closest('form'));
 });
 
-$(document).on('change', '#edit select#id_organization_storage', function() {
-    selectStorageProduct($(this).closest('form'));
+$(document).on('keyup change', '#multiSet-search-available', function() {
+    renderFilter($(this).closest('form'))
 });
 
-$('#new.modal form').each(function () {
-    renderFilter($(this));
-});
-
-$(document).on('click', 'button[data-target="#edit"]', function () {
-    $("#edit form").find('select#id_organization_storage').attr('disabled', 'disabled');
-    renderFilter($("#edit form"));
-});
-
-$(document).on('click', '.multiSet-add', function(){
-    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
-    return false;
-});
-
-$(document).on('click', '.multiSet-add-all', function(){
-    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
-    return false;
-});
-
-$(document).on('click', '.multiSet-delete', function(){
-    $('input.multiset').each(function functionName() {
-        if ($(this).closest('form').find('#multiSet-added tbody').children().length == 0){
-            $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
-        }
-    })
-    return false;
-});
-
-$(document).on('click', '.multiSet-delete-all', function(){
-    $('input.multiset').each(function functionName() {
-        $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
-    })
-    return false;
-});
-
-$('.modal form').submit(function () {
-    $(this).find('select#id_organization_storage').removeAttr('disabled');
-});
-
-$(document).on('click', 'button[data-target="#email"]', function () {
-    var data = []
-    $('input.checkthis').each(function() {
-        if(this.checked){
-            data.push($(this).closest('tr').data('id'));
+$(document).on('click', 'button[data-target="#order"]', function () {
+    var data = [];
+    var movement_product_set = {}
+    var orderform = $("#order form");
+    $("#table").bootstrapTable('getSelections').forEach(function (item, index) {
+        var curr_set = item.movement_product_set
+        for (idx in curr_set){
+            if (movement_product_set[curr_set[idx].product]){
+                movement_product_set[curr_set[idx].product] += curr_set[idx].amount
+            }
+            else{
+                movement_product_set[curr_set[idx].product] = curr_set[idx].amount
+            }
         }
     });
-    var emailform = $("#email form");
-    emailform[0].reset();
-    emailform.find('input[name="ids"]').val(JSON.stringify(data));
+    for (product in movement_product_set){
+        data.push({'product':product, 'amount':movement_product_set[product]})
+    }
+    initialMultiSetData(orderform.find('input#id_order_product_set'), data);
+    refreshMutliSetInputs(orderform);
 });
+
+$(document).on('click', 'button.do-order', function () {
+    var orders = {};
+    var form = $(this).closest('.modal-content').find('form');
+    refreshMutliSetInputs(form);
+    var formData = new FormData(form.get(0));
+    var products = JSON.parse(formData.get('order_product_set'))
+    for (idx in products) {
+        if (orders[productProviders[products[idx].product]]){
+            orders[productProviders[products[idx].product]]["order_product_set[0]"].push(products[idx])
+        }
+        else {
+            orders[productProviders[products[idx].product]] = {
+                provider: productProviders[products[idx].product],
+                message: formData.get('message'),
+                organization_storage: formData.get('organization_storage'),
+                claimant: formData.get('claimant'),
+                replacer: formData.get('replacer'),
+                order_product_set: [products[idx]]
+            }
+        }
+    }
+    var calls = []
+    for (key in orders){
+        for (idx in orders[key].order_product_set){
+            orders[key]['order_product_set['+idx+']'] = JSON.stringify(orders[key].order_product_set[idx])
+        }
+        orders[key].order_product_set = JSON.stringify(orders[key].order_product_set);
+        calls.push(createOrder(orders[key]))
+    }
+    if (calls.length > 0){
+        $.when.apply(null, calls).then(function () {
+            window.location = '/database/order/'
+        });
+    }
+});
+
+function createOrder(data){
+    return $.ajax({
+        url: "/database/api/order/",
+        data: new URLSearchParams(data).toString(),
+        type: 'POST',
+        success: function (data) {
+            console.log('sucess');
+        },
+        error: function (data) {
+            alert(data.responseText)
+        }
+    });
+}

@@ -1,0 +1,67 @@
+{% extends "layouts/base.html" %}
+
+{% block page_title %}
+<title>{{ PAGE_TITLE }}</title>
+{% endblock %}
+
+{% block navbar %}
+{% include 'sections/navbar.html' %}
+{% endblock %}
+
+{% block header %}
+{% endblock %}
+
+{% block sidebar %}
+{% endblock %}
+
+{% block site_wrapper %}
+{% if filter_form %}
+    <div class="filter_form">
+        <form class="form-inline">
+            {% for field in filter_form %}
+                <div class="form-group {% if field.errors %}has-error{% endif %}">
+                    <label for="{{ field.id_for_label }}" class="col-sm-2 control-label"><h4>{{ field.label }}</h4></label>
+                    <div class="col-sm-8">
+                        {{ field }}
+                        {% for error in field.errors %}
+                        <span class="help-block">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </form>
+    </div>
+{% endif %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ table_title }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+            {% for button in buttons %}
+            <button type="button" class="btn btn-{{ button.style }}" data-toggle="modal" data-target="#{{ button.name }}"><i class="fa fa-{{ button.icon }}"></i></button>
+            {% endfor %}
+    </div>
+</div>
+<table id="table"></table>
+
+{% for content in contents %}
+    {% if content.section == 'modal' %}
+        {% include 'sections/modals.html' %}
+    {% endif %}
+{% endfor %}
+
+{% endblock %}
+
+{% block footer %}
+<!-- <footer class="navbar-inverse navbar-fixed-bottom">
+	<p class="navbar-brand">© {{ YEAR }} - {{ APPNAME }}® Version {{ VERSION }}</p>
+</footer> -->
+{% endblock %}
+
+{% block modals %}
+{% endblock %}
+
+{% block notifications %}
+{% endblock %}
+
+{% block popups %}
+{% endblock %}

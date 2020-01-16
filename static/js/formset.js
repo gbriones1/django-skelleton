@@ -30,8 +30,13 @@ function initialFormSetData(input, data) {
     for (index in data){
         var row = $('<tr>')
         for (field in headers){
-            var text = data[index][headers[field]] || "";
+            var text = data[index][headers[field]];
             row.attr("data-"+headers[field], text);
+            if (text == true){
+                text = '<i class="fa fa-check-circle"></i>'
+            } else if (text === false) {
+                text = ''
+            }
             row.append("<td>"+text+"</td>");
         }
         row.attr("data-id", data[index].id);
@@ -78,11 +83,7 @@ $(document).on('click', '.formSet-edit', function() {
         form.find('input[name="'+ key +'"]').val(value);
         var field = form.find('input[name="'+ key +'"]')
         if (field.attr("type") == "checkbox"){
-            if (value == "Si"){
-                field.prop('checked', true);
-            }else {
-                field.prop('checked', false);
-            }
+            field.prop('checked', value);
         }
         var selected = ''
         form.find('select[name="'+ key +'"] option').each(function (){
@@ -148,19 +149,16 @@ $('div.form-group select').each(function(){
 	$(this).addClass("form-control")
 });
 
-$('.formSet-form form div.form-group input[type="checkbox"]').change(function(){
-    if ($(this).is(':checked')){
-        $(this).val("Si")
-    }
-    else {
-        $(this).val("No")
-    }
-});
+// $('.formSet-form form div.form-group input[type="checkbox"]').change(function(){
+//     $(this).val($(this).is(':checked'))
+// });
 
 $(document).on('click', 'button.formSet-ok', function(){
     var modal = $(this).closest('.modal')
     var modalForm = modal.find('form')
-    var serialized = modalForm.serializeArray();
+    var serialized = modalForm.serializeArray({
+        checkboxesAsBools: true
+    });
     var data = {}
     for (field in serialized){
         data[serialized[field].name] = serialized[field].value
@@ -182,10 +180,17 @@ $(document).on('click', 'button.formSet-ok', function(){
             var row = $(this);
             if (JSON.stringify(oldData) == JSON.stringify(row.data())){
                 for (field in headers) {
-                    var text = data[headers[field]] || "";
+                    var text = data[headers[field]];
                     row.attr("data-"+headers[field], text);
                     row.data(headers[field], text);
-                    $(row.children()[field]).text(text);
+                    if (text == true){
+                        text = '<i class="fa fa-check-circle"></i>'
+                        $(row.children()[field]).html(text);
+                    } else if (text === false) {
+                        $(row.children()[field]).text("");
+                    } else if (typeof text !== 'undefined') {
+                        $(row.children()[field]).text(text);
+                    }
                 }
             }
         });
@@ -193,9 +198,16 @@ $(document).on('click', 'button.formSet-ok', function(){
     else {
         var row = $("<tr>");
         for (field in headers){
-            var text = data[headers[field]] || "";
+            var text = data[headers[field]];
             row.attr("data-"+headers[field], text);
             row.data(headers[field], text);
+            if (text == true){
+                text = '<i class="fa fa-check-circle"></i>'
+            } else if (text === false) {
+                text = ''
+            } else if (typeof text == 'undefined') {
+                text = ''
+            }
             row.append("<td>"+text+"</td>");
         }
         row.append('<td><button type="buttton" class="btn btn-sm btn-success formSet-edit"><i class="fa fa-pencil"></i></button></td>');
@@ -209,7 +221,7 @@ $(document).on('click', 'button.formSet-ok', function(){
     modalForm.removeAttr("data-old");
     modalForm.data("old", "");
     modal.modal('hide');
-    // refreshFormSetInputs(form);
+    refreshFormSetInputs(form);
     // return false;
 });
 

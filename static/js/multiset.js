@@ -68,8 +68,8 @@ function initialMultiSetData(input, data) {
     added.append(thead)
     var body = $('<tbody>');
     for (index in data){
-        var text = $(div.find('#multiSet-table tr[data-id="'+data[index][reference].id+'"]').children()[0]).text()
-        var row = '<tr data-id="'+data[index].id+'" data-'+reference+'="'+data[index][reference].id+'"><td>'+text+'</td>'
+        var text = $(div.find('#multiSet-table tr[data-id="'+data[index][reference]+'"]').children()[0]).text()
+        var row = '<tr data-id="'+data[index].id+'" data-'+reference+'="'+data[index][reference]+'"><td>'+text+'</td>'
         if (multiple){
             row += '<td><input type="number" class="form-control multiSet-amount" value="'+data[index].amount+'"></td>'
         }
@@ -87,7 +87,7 @@ function initialMultiSetData(input, data) {
         body.append(row)
     }
     added.append(body);
-    // refreshMutliSetInputs(form);
+    refreshMutliSetInputs(input.closest('form'));
 }
 
 $(document).on('keyup change', '#multiSet-search-available', function() {
@@ -146,13 +146,13 @@ $(document).on('click', '.multiSet-add', function(){
         row += '</tr>'
         added.append(row)
     }
-    // refreshMutliSetInputs($(this).closest('form'))
+    refreshMutliSetInputs($(this).closest('form'))
     return false;
 });
 
 $(document).on('click', '.multiSet-delete', function() {
     $(this).closest('tr').remove();
-    // refreshMutliSetInputs(thisForm);
+    refreshMutliSetInputs($(this).closest("form"));
     return false;
 });
 
@@ -186,14 +186,14 @@ $(document).on('click', '.multiSet-add-all', function(){
             }
         }
     })
-    // refreshMutliSetInputs($(this).closest('form'))
+    refreshMutliSetInputs($(this).closest('form'))
     return false;
 });
 
 $(document).on('click', '.multiSet-delete-all', function() {
     // var div = $(this).closest('div');
     $(this).closest('div').find('#multiSet-added tbody tr').remove();
-    // refreshMutliSetInputs(form);
+    refreshMutliSetInputs($(this).closest("form"));
     return false;
 });
 
@@ -210,5 +210,10 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
 
 $('input.multiset').closest('form').submit(function () {
     var form = $(this).closest("form");
+    refreshMutliSetInputs(form);
+});
+
+$(document).on('click', 'button.do-new', function () {
+    var form = $(this).closest('.modal-content').find('form')
     refreshMutliSetInputs(form);
 });

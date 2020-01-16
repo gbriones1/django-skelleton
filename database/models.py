@@ -151,7 +151,6 @@ class Employee(models.Model):
 
     def __str__(self):
         return self.name
-
     class Meta:
         ordering = ['name']
 
@@ -437,6 +436,8 @@ class Movement_Product(models.Model):
         else:
             difference *= -1
         sp.amount += difference
+        if sp.amount < 0:
+            sp.amount = 0
         sp.save()
         return super(Movement_Product, self).save(*args, **kwargs)
 

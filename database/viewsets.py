@@ -72,9 +72,17 @@ class ProviderViewSet(APIWrapper):
     queryset = Provider.objects.order_by('name')
     serializer_class = ProviderSerializer
 
+class ProviderContactViewSet(APIWrapper):
+    queryset = Provider_Contact.objects.order_by('provider')
+    serializer_class = ProviderContactSerializer
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.order_by('name')
     serializer_class = CustomerSerializer
+
+class CustomerContactViewSet(APIWrapper):
+    queryset = Customer_Contact.objects.order_by('customer')
+    serializer_class = CustomerContactSerializer
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.order_by('name')
@@ -91,38 +99,6 @@ class ApplianceViewSet(viewsets.ModelViewSet):
 class ProductViewSet(APIWrapper):
     queryset = Product.objects.order_by('code')
     serializer_class = ProductSerializer
-
-    # def create(self, request, *args, **kwargs):
-    #     if not request.POST:
-    #         request = request._stream
-    #         for field in request.FILES.keys():
-    #             request.POST[field] = request.FILES[field]
-    #         request.data = request.POST
-    #     request.data._mutable = True
-    #     provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
-    #     request.data['provider'] = u"{}".format(provider.id)
-    #     brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
-    #     request.data['brand'] = u"{}".format(brand.id)
-    #     if request.POST['appliance']:
-    #         appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
-    #         request.data['appliance'] = u"{}".format(appliance.id)
-    #     return super(ProductViewSet, self).create(request, *args, **kwargs)
-
-    # def update(self, request, *args, **kwargs):
-    #     if not request.POST:
-    #         request = request._stream
-    #         for field in request.FILES.keys():
-    #             request.POST[field] = request.FILES[field]
-    #         request.data = request.POST
-    #     request.data._mutable = True
-    #     provider, _ = Provider.objects.get_or_create(name=request.POST['provider'])
-    #     request.data['provider'] = u"{}".format(provider.id)
-    #     brand, _ = Brand.objects.get_or_create(name=request.POST['brand'])
-    #     request.data['brand'] = u"{}".format(brand.id)
-    #     if request.POST['appliance']:
-    #         appliance, _ = Appliance.objects.get_or_create(name=request.POST['appliance'])
-    #         request.data['appliance'] = u"{}".format(appliance.id)
-    #     return super(ProductViewSet, self).update(request, *args, **kwargs)
 
     def picture(self, request, *args, **kwargs):
         if not request.POST:
@@ -235,21 +211,37 @@ class OutputViewSet(APIWrapper):
             return "No se establecio un destinatario"
         return None
 
-class LendingViewSet(APIWrapper):
-    queryset = Lending.objects.order_by('-date')
-    serializer_class = LendingSerializer
+# class LendingViewSet(APIWrapper):
+#     queryset = Lending.objects.order_by('-date')
+#     serializer_class = LendingSerializer
 
 class OrderViewSet(APIWrapper):
     queryset = Order.objects.order_by('-date')
     serializer_class = OrderSerializer
 
     def create(self, request, *args, **kwargs):
-        result = super(OrderViewSet, self).create(request, *args, **kwargs)
-        status = 200
-        response = OrderViewSet.send_email(Order.objects.get(id=result.data['id']), request.POST.get('message'))
-        if response:
-            status = 499
-        response = Response([response], status=status)
+        response = super(OrderViewSet, self).create(request, *args, **kwargs)
+        mail_error = None
+        # mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
+        if mail_error:
+            response.status_code = 499
+            response.data = {"error": mail_error}
+        return response
+    
+    def update(self, request, *args, **kwargs):
+        if request.data.get('action') == 'mail':
+            response = Response({}, 201)
+            order = Order.objects.get(id=request.data['id'])
+            mail_error = None
+            # mail_error = OrderViewSet.send_email(order, request.data.get('message'))
+            if mail_error:
+                response.status_code = 499
+                response.data = {"error": mail_error}
+            else:
+                order.status = Order.STATUS_ASKED
+                order.save()
+            return response
+        response = super(OrderViewSet, self).update(request, *args, **kwargs)
         return response
 
     def input(self, request, *args, **kwargs):
@@ -397,7 +389,8 @@ class EmployeeWorkViewSet(APIWrapper):
 object_map = {
     'product': {
         'name': 'Refacciones',
-        'api_path': '/database/api/product',
+        'api_path': '/database/api/product/',
+        'prefetch': ['product', 'brand', 'appliance', 'provider'],
         'model': Product,
         'viewset': ProductViewSet,
         'action_forms': {
@@ -408,11 +401,12 @@ object_map = {
         },
         'table_fields': ['code', 'provider_name', 'brand_name', 'name', 'description', 'appliance_name', 'real_price', 'percentage_1', 'percentage_2', 'percentage_3', 'picture'],
         'custom_reg_actions': [graphics.Action('picture', 'modal', text='Cargar foto', icon='camera', style='info', method="POST")],
-        'js': ['product']
+        'js': ['dashboard', 'product']
     },
     'provider': {
         'name': 'Provedores',
-        'api_path': '/database/api/provider',
+        'api_path': '/database/api/provider/',
+        'prefetch': ['provider', 'provider_contact'],
         'model': Provider,
         'viewset': ProviderViewSet,
         'action_forms': {
@@ -422,11 +416,12 @@ object_map = {
         },
         'table_fields': ['name', 'product_count', 'provider_contact_set'],
         'subset-fields': {'provider_contact_set': ["name", "department", "phone", "email", "for_orders"]},
-        'js': ['formset'],
+        'js': ['formset', 'dashboard', 'provider'],
     },
     'customer': {
         'name': 'Clientes',
-        'api_path': '/database/api/customer',
+        'api_path': '/database/api/customer/',
+        'prefetch': ['customer', 'customer_contact'],
         'model': Customer,
         'viewset': CustomerViewSet,
         'action_forms': {
@@ -436,11 +431,12 @@ object_map = {
         },
         'table_fields': ['name', 'customer_contact_set'],
         'subset-fields': {'customer_contact_set': ["name", "department", "phone", "email"]},
-        'js': ['formset'],
+        'js': ['formset', 'dashboard', 'customer'],
     },
     'employee': {
         'name': 'Empleado',
-        'api_path': '/database/api/employee',
+        'api_path': '/database/api/employee/',
+        'prefetch': ['employee'],
         'model': Employee,
         'viewset': EmployeeViewSet,
         'action_forms': {
@@ -449,10 +445,12 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['name'],
+        'js': ['dashboard', 'employee'],
     },
     'brand': {
         'name': 'Marcas',
-        'api_path': '/database/api/brand',
+        'api_path': '/database/api/brand/',
+        'prefetch': ['brand'],
         'model': Brand,
         'viewset': BrandViewSet,
         'action_forms': {
@@ -461,10 +459,12 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['name', 'product_amount'],
+        'js':['dashboard', 'brand']
     },
     'appliance': {
         'name': 'Applicaciones',
-        'api_path': '/database/api/appliance',
+        'api_path': '/database/api/appliance/',
+        'prefetch': ['appliance'],
         'model': Appliance,
         'viewset': ApplianceViewSet,
         'action_forms': {
@@ -473,10 +473,11 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['name', 'product_amount'],
+        'js':['dashboard', 'appliance']
     },
     'percentage': {
         'name': 'Porcentajes',
-        'api_path': '/database/api/percentage',
+        'api_path': '/database/api/percentage/',
         'model': Percentage,
         'viewset': PercentageViewSet,
         'action_forms': {
@@ -488,7 +489,8 @@ object_map = {
     },
     'organization': {
         'name': 'Organizaciones',
-        'api_path': '/database/api/organization',
+        'api_path': '/database/api/organization/',
+        'prefetch': ['organization'],
         'model': Organization,
         'viewset': OrganizationViewSet,
         'action_forms': {
@@ -497,10 +499,12 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['name'],
+        'js': ['dashboard', 'organization']
     },
     'organization_storage': {
         'name': 'Almacenes',
-        'api_path': '/database/api/organization_storage',
+        'api_path': '/database/api/organization_storage/',
+        'prefetch': ['organization_storage'],
         'model': Organization_Storage,
         'viewset': OrganizationStorageViewSet,
         'action_forms': {
@@ -509,10 +513,11 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['organization_name', 'storage_type_name'],
+        'js': ['dashboard', 'organization_storage']
     },
     'pricelist': {
         'name': 'Listas de precios',
-        'api_path': '/database/api/pricelist',
+        'api_path': '/database/api/pricelist/',
         'model': PriceList,
         'viewset': PriceListViewSet,
         'action_forms': {
@@ -526,7 +531,8 @@ object_map = {
     },
     'storage_product': {
         'name': 'Productos en almacen',
-        'api_path': '/database/api/storage_product',
+        'api_path': '/database/api/storage_product/',
+        'prefetch': ['product', 'organization_storage', 'storage_product'],
         'use_cache': False,
         'model': Storage_Product,
         'viewset': StorageProductViewSet,
@@ -537,13 +543,15 @@ object_map = {
         'table_fields': ['product_code', 'product_name', 'product_description', 'product_brand', 'organization_name', 'storage_name', 'amount', 'must_have'],
         'remove_checkbox': True,
         'remove_table_actions': True,
-        'custom_table_actions': [graphics.Action('new', 'modal', text='Agregar', icon='edit', style='info', method="POST")],
+        'custom_table_actions': [graphics.Action('new', 'modal', text='Agregar', icon='plus-circle', style='primary', method="POST")],
         'remove_reg_actions': True,
-        'custom_reg_actions': [graphics.Action('edit', 'modal', text='Cambiar', icon='calculator', style='success', method="POST")],
+        'custom_reg_actions': [graphics.Action('edit', 'modal', text='Cambiar', icon='calculator', style='success', method="PUT")],
+        'js': ['dashboard', 'storage_product']
     },
     'input': {
         'name': 'Entradas',
-        'api_path': '/database/api/input',
+        'api_path': '/database/api/input/',
+        'prefetch': ['storage_product'],
         'use_cache': False,
         'model': Input,
         'viewset': InputViewSet,
@@ -554,12 +562,13 @@ object_map = {
         },
         'table_fields': ['date', 'invoice_number', 'invoice_price', 'movement_product_set', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
-        'js': ['multiset', 'input'],
+        'js': ['multiset', 'dashboard', 'input'],
         'filter_form': DateTimeRangeFilterForm()
     },
     'output': {
         'name': 'Salidas',
-        'api_path': '/database/api/output',
+        'api_path': '/database/api/output/',
+        'prefetch': ['storage_product'],
         'use_cache': False,
         'model': Output,
         'viewset': OutputViewSet,
@@ -572,30 +581,30 @@ object_map = {
         },
         'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
-        'js': ['multiset', 'output'],
+        'js': ['multiset', 'dashboard', 'output'],
         'custom_table_actions': [
             graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST"),
             graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST")],
         'filter_form': DateTimeRangeFilterForm()
     },
-    'lending': {
-        'name': 'Prestamos',
-        'api_path': '/database/api/lending',
-        'use_cache': False,
-        'model': Lending,
-        'viewset': LendingViewSet,
-        'action_forms': {
-            'new': NewLendingForm,
-            'edit': EditLendingForm,
-            'delete': DeleteForm,
-        },
-        'table_fields': ['date', 'products', 'organization_name', 'storage_name'],
-        'js': ['multiset'],
-        'filter_form': DateRangeFilterForm()
-    },
+    # 'lending': {
+    #     'name': 'Prestamos',
+    #     'api_path': '/database/api/lending/',
+    #     'use_cache': False,
+    #     'model': Lending,
+    #     'viewset': LendingViewSet,
+    #     'action_forms': {
+    #         'new': NewLendingForm,
+    #         'edit': EditLendingForm,
+    #         'delete': DeleteForm,
+    #     },
+    #     'table_fields': ['date', 'products', 'organization_name', 'storage_name'],
+    #     'js': ['multiset'],
+    #     'filter_form': DateRangeFilterForm()
+    # },
     'order': {
         'name': 'Pedidos',
-        'api_path': '/database/api/order',
+        'api_path': '/database/api/order/',
         'use_cache': False,
         'model': Order,
         'viewset': OrderViewSet,
@@ -608,7 +617,7 @@ object_map = {
         },
         'table_fields': ['id', 'date', 'order_product_set', 'provider_name', 'claimant_name', 'replacer_name', 'organization_name', 'storage_name', 'status'],
         'subset-fields': {'order_product_set': ["product", "amount"]},
-        'js': ['multiset', 'order'],
+        'js': ['multiset', 'dashboard', 'order'],
         'custom_reg_actions': [
             graphics.Action('input', 'modal', text='Entrada', icon='sign-in', style='info', method="POST"),
             graphics.Action('mail', 'modal', text='Reenviar', icon='envelope', style='info', method="POST"),
@@ -618,7 +627,7 @@ object_map = {
     'quotation': {
         'name': 'Cotizaciones',
         'sheet_name': 'Cotizacion',
-        'api_path': '/database/api/quotation',
+        'api_path': '/database/api/quotation/',
         'use_cache': False,
         'model': Quotation,
         'viewset': QuotationViewSet,
@@ -644,7 +653,7 @@ object_map = {
     },
     'invoice': {
         'name': 'Facturas de compras',
-        'api_path': '/database/api/invoice',
+        'api_path': '/database/api/invoice/',
         'use_cache': False,
         'model': Invoice,
         'viewset': InvoiceViewSet,
@@ -656,11 +665,11 @@ object_map = {
         'table_fields': ['date', 'number', 'provider_name', 'payment_set', 'price', 'due', 'paid'],
         'subset-fields': {'payment_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
-        'js': ['formset'],
+        'js': ['formset', 'dashboard', 'invoice'],
     },
     'payment': {
         'name': 'Pagos',
-        'api_path': '/database/api/payment',
+        'api_path': '/database/api/payment/',
         'use_cache': False,
         'model': Payment,
         'viewset': PaymentViewSet,
@@ -673,7 +682,7 @@ object_map = {
     },
     'sell': {
         'name': 'Facturas de ventas',
-        'api_path': '/database/api/sell',
+        'api_path': '/database/api/sell/',
         'use_cache': False,
         'model': Sell,
         'viewset': SellViewSet,
@@ -689,7 +698,7 @@ object_map = {
     },
     'collection': {
         'name': 'Cobros',
-        'api_path': '/database/api/collection',
+        'api_path': '/database/api/collection/',
         'use_cache': False,
         'model': Collection,
         'viewset': CollectionViewSet,
@@ -702,7 +711,7 @@ object_map = {
     },
     'work': {
         'name': 'Hojas de trabajo',
-        'api_path': '/database/api/work',
+        'api_path': '/database/api/work/',
         'use_cache': False,
         'model': Work,
         'viewset': WorkViewSet,
@@ -715,7 +724,7 @@ object_map = {
     },
     'employee_work': {
         'name': 'Comisiones',
-        'api_path': '/database/api/employee_work',
+        'api_path': '/database/api/employee_work/',
         'use_cache': False,
         'model': Employee_Work,
         'viewset': EmployeeWorkViewSet,

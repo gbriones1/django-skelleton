@@ -11,18 +11,18 @@ class ProductTestCase(TestCase):
         {
             "code": "0000",
             "name": "TEST",
-            "provider": "TEST",
-            "brand": "TEST",
-            "appliance": "",
+            "providerName": "TEST",
+            "brandName": "TEST",
+            "applianceName": "",
             "price": 50.50,
             "discount": 0.0,
         },
         {
             "code": "0001",
             "name": "TEST2",
-            "provider": "TEST2",
-            "brand": "TEST",
-            "appliance": "TEST2",
+            "providerName": "TEST2",
+            "brandName": "TEST",
+            "applianceName": "TEST2",
             "price": 100,
             "discount": 30
         }
@@ -148,70 +148,11 @@ class OutputTestCase(TestCase):
         self.organization = s.instance
         s = OrganizationStorageSerializer(data={
             "organization":self.organization.id,
-            "storage_type":"Stock"
+            "storage_type_name":"Stock"
             })
         s.is_valid()
         s.save()
         self.organization_storage = s.instance
-        data = {
-            "organization_storage": self.organization_storage.id,
-            "invoice": "00000",
-            "invoice_date": "2019-02-27",
-            "movement_product_set": json.dumps([{
-                "product": self.products[0].id,
-                "amount": 5,
-                "price": 50.55,
-                "discount": 50
-            },{
-                "product": self.products[1].id,
-                "amount": 10,
-                "price": 120,
-                "discount": 20
-            }])
-        }
-        s = InputSerializer(data=data)
-        self.assertTrue(s.is_valid())
-        s.save()
-        self.inputs = [s.instance]
-        data = {
-            "organization_storage": self.organization_storage.id,
-            "invoice": "00001",
-            "invoice_date": "2019-02-28",
-            "movement_product_set": json.dumps([{
-                "product": self.products[0].id,
-                "amount": 4,
-                "price": 60,
-                "discount": 30
-            }])
-        }
-        s = InputSerializer(data=data)
-        self.assertTrue(s.is_valid())
-        s.save()
-        self.inputs.append(s.instance)
-        data = {
-            "name": "Employee"
-        }
-        s = EmployeeSerializer(data=data)
-        self.assertTrue(s.is_valid())
-        s.save()
-        self.assertEqual(s.instance.name, "Employee")
-        self.employees = [s.instance]
-        data = {
-            "name": "Customer"
-        }
-        s = CustomerSerializer(data=data)
-        self.assertTrue(s.is_valid())
-        s.save()
-        self.assertEqual(s.instance.name, "Customer")
-        self.customers = [s.instance]
-        data = {
-            "name": "Organization"
-        }
-        s = OrganizationSerializer(data=data)
-        self.assertTrue(s.is_valid())
-        s.save()
-        self.assertEqual(s.instance.name, "Organization")
-        self.organizations = [s.instance]
 
     def test_output_create(self):
         data = {
@@ -233,11 +174,11 @@ class OutputTestCase(TestCase):
             "destination": self.customers[0].id,
             "replacer": self.organizations[0].id,
             "organization_storage": self.organization_storage.id,
-            "movement_product_set": json.dumps([{
+            "movement_product_set": [json.dumps([{
                 "product": self.products[0].id,
                 "amount": 1,
                 "price": 50.55,
-            }])
+            }])]
         }
         s = OutputSerializer(data=data)
         self.assertTrue(s.is_valid())
@@ -345,7 +286,8 @@ class CustomerTestCase(TestCase):
         },{
             "name": "contact2",
             "email": "contact@customer.com",
-            "for_quotation": "on"
+            "for_quotation": True,
+            "for_invoice": False,
         }])
         s = CustomerSerializer(self.customers[0], data=data)
         self.assertTrue(s.is_valid())
@@ -387,7 +329,7 @@ class ProviderTestCase(TestCase):
         },{
             "name": "contact2",
             "email": "contact@provider.com",
-            "for_orders": "on"
+            "for_orders": True
         }])
         s = ProviderSerializer(self.providers[0], data=data)
         self.assertTrue(s.is_valid())
@@ -537,6 +479,14 @@ class InvoiceTestCase(TestCase):
         data = {
             "id": self.invoices[0].id,
             "payment_set": json.dumps([
+                {
+                    'date': '2018-10-06',
+                    'amount': 100
+                },
+                {
+                    'date': '2018-10-07',
+                    'amount': 50.5
+                },
                 {
                     'date': '2018-10-08',
                     'amount': 349.5

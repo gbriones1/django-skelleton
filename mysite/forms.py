@@ -5,7 +5,7 @@ from itertools import chain
 
 from django import forms
 from django.utils.encoding import (
-    force_str, force_text, python_2_unicode_compatible,
+    force_str, force_text,
 )
 from django.utils.html import conditional_escape, format_html
 from django.forms.utils import flatatt

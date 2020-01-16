@@ -1,6 +1,6 @@
-webshims.setOptions('waitReady', false);
-webshims.setOptions('forms-ext', {types: 'date'});
-webshims.polyfill('forms forms-ext');
+// webshims.setOptions('waitReady', false);
+// webshims.setOptions('forms-ext', {types: 'date'});
+// webshims.polyfill('forms forms-ext');
 
 function getParameterByName(name, url) {
     if (!url) {
@@ -13,6 +13,86 @@ function getParameterByName(name, url) {
     if (!results[2]) return '';
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
+
+function getFormData(form){
+    var unindexed_array = form.serializeArray();
+    var indexed_array = {};
+
+    $.map(unindexed_array, function(n, i){
+        indexed_array[n['name']] = n['value'];
+    });
+
+    return indexed_array;
+}
+
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+        }
+    }
+});
+
+(function ($) {
+    $.fn.serialize = function (options) {
+        return $.param(this.serializeArray(options));
+    };
+
+    $.fn.serializeArray = function (options) {
+        var o = $.extend({
+            checkboxesAsBools: false
+        }, options || {});
+
+        var rselectTextarea = /select|textarea/i;
+        var rinput = /text|hidden|password|search|number/i;
+
+        return this.map(function () {
+            return this.elements ? $.makeArray(this.elements) : this;
+        })
+        .filter(function () {
+            return this.name && !this.disabled &&
+                (this.checked
+                || (o.checkboxesAsBools && this.type === 'checkbox')
+                || rselectTextarea.test(this.nodeName)
+                || rinput.test(this.type));
+            })
+            .map(function (i, elem) {
+                var val = $(this).val();
+                return val == null ?
+                null :
+                $.isArray(val) ?
+                $.map(val, function (val, i) {
+                    return { name: elem.name, value: val };
+                }) :
+                {
+                    name: elem.name,
+                    value: (o.checkboxesAsBools && this.type === 'checkbox') ?
+                        (this.checked ? true : false) :
+                        val
+                };
+            }).get();
+    };
+})(jQuery);
 
 var urlParams;
 (window.onpopstate = function () {

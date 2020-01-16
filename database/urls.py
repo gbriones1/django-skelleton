@@ -6,8 +6,11 @@ router = routers.DefaultRouter()
 
 from database.viewsets import *
 router.register(r'provider', ProviderViewSet)
+router.register(r'provider_contact', ProviderContactViewSet)
 router.register(r'customer', CustomerViewSet)
+router.register(r'customer_contact', CustomerContactViewSet)
 router.register(r'employee', EmployeeViewSet)
+
 router.register(r'brand', BrandViewSet)
 router.register(r'appliance', ApplianceViewSet)
 router.register(r'product', ProductViewSet)
@@ -25,9 +28,11 @@ router.register(r'payment', PaymentViewSet)
 router.register(r'sell', SellViewSet)
 router.register(r'collection', CollectionViewSet)
 router.register(r'work', WorkViewSet)
+
 router.register(r'input', InputViewSet)
 router.register(r'output', OutputViewSet)
-router.register(r'lending', LendingViewSet)
+# router.register(r'output_product', OutputProductViewSet)
+# router.register(r'lending', LendingViewSet)
 router.register(r'order', OrderViewSet)
 
 # Wire up our API using automatic URL routing.

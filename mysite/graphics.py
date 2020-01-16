@@ -23,9 +23,9 @@ class HTMLButton(HTMLObject):
 
     @staticmethod
     def from_action_text(action):
-        return HTMLButton('', text=action.text, style=action.style, btn_type='submit')
+        return HTMLButton('', text=action.text, style=action.style, btn_type='', add_class=["do-"+action.name])
 
-    def __init__(self, name, icon='', text='', style='', size='', block=False, btn_type='', toggle='', target='', dismiss=''):
+    def __init__(self, name, icon='', text='', style='', size='', block=False, btn_type='', toggle='', target='', dismiss='', add_class=[]):
         super(HTMLButton, self).__init__('button', name)
         class_attr = ['btn']
         if style:
@@ -34,6 +34,7 @@ class HTMLButton(HTMLObject):
             class_attr.append("btn-"+size)
         if block:
             class_attr.append("btn-block")
+        class_attr.extend(add_class)
         self.root.set("class", " ".join(class_attr))
         if btn_type:
             self.root.set('type', btn_type)
@@ -179,7 +180,7 @@ class DescriptionSheet(Section):
 class Modal(Section):
 
     @staticmethod
-    def from_action(action, body=[]):
+    def from_action(action, body=[], api_url=""):
         if action.name == 'multi-delete':
             body = [MultiDeleteInput, MultiDeleteAction, "Seguro que desea eliminar los elementos seleccionados?"]
         elif action.name == 'delete':
@@ -191,7 +192,7 @@ class Modal(Section):
                 if field.__class__.__name__ in filefields:
                     enctype = "multipart/form-data"
                     break
-        return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method, form_enctype=enctype)
+        return Modal(action.name, action.text, buttons=[HTMLButton.from_action_text(action)], body=body, form_method=action.method, form_enctype=enctype, form_action=api_url)
 
     def __init__(self, name, title, buttons=[], add_close_btn=True, body=[], form_action='', form_method='', form_enctype='application/x-www-form-urlencoded'):
         super(Modal, self).__init__("modal")
@@ -245,23 +246,23 @@ class Action(HelperObject):
             "title": 'Editar',
             "icon": 'pencil',
             "level": 'success',
-            "method": 'POST'
+            "method": 'PUT'
         },
         'delete':{
             "title":'Eliminar',
             "icon": 'trash',
             "level": 'danger',
-            "method": 'POST'
+            "method": 'DELETE'
         },
         'multi-delete':{
             "title":'Eliminar',
-            "icon": 'trash',
+            "icon": 'minus-circle',
             "level": 'danger',
-            "method": 'POST'
+            "method": 'DELETE'
         },
         'new':{
             "title":'Crear',
-            "icon": 'plus-square',
+            "icon": 'plus-circle',
             "level": 'primary',
             "method": 'POST'
         },

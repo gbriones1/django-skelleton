@@ -1,0 +1,46 @@
+<!-- % load extratags %} -->
+<div class="modal fade" id="{{ content.name }}" role="dialog">
+    <div class="modal-dialog modal-lg">
+        <form class="form-horizontal" action="{{ content.form_action }}" autocomplete="off" method="{{ content.form_method }}" id="" enctype="{{ content.form_enctype }}">
+            <!-- % csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">{{ content.title }}</h4>
+                </div>
+                <div class="modal-body">
+                    {% for item in content.body %}
+                        {% if item.type == "ModelForm" or item.type == "Form" %}
+                            {% for field in item.obj %}
+                                {% if field.is_hidden %}
+                                    {{ field }}
+                                {% else %}
+                                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                                        <label for="{{ field.id_for_label }}" class="col-sm-2 control-label">{{ field.label }}</label>
+                                        <div class="col-sm-10">
+                                            {{ field }}
+                                            {% for error in field.errors %}
+                                            <span class="help-block">{{ error }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% elif item.name == 'HTMLObject' %}
+                            {{ item.obj.stringify|safe }}
+                        {% elif item.type == 'basestring' %}
+                            {{ item.obj }}
+                        {% endif %}
+                    {% endfor %}
+                    <!-- {{ content.html|safe }} -->
+                </div>
+                <div class="modal-footer">
+                    {% for button in content.buttons %}
+                        {{ button.stringify|safe }}
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -41,11 +41,11 @@ class NewProductForm(forms.ModelForm):
 
 class EditProductForm(forms.ModelForm):
     code = forms.CharField(max_length=30, label='Codigo')
-    brand = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
-    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
+    brandName = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
+    providerName = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
     name = forms.CharField(max_length=200, label='Nombre')
     description = forms.CharField(max_length=255, label='Descripcion', required=False)
-    appliance = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
+    applianceName = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
     id = HiddenField()
@@ -55,11 +55,11 @@ class EditProductForm(forms.ModelForm):
         model = Product
         fields = [
             "code",
-            "brand",
-            "provider",
+            "brandName",
+            "providerName",
             "name",
             "description",
-            "appliance",
+            "applianceName",
             "price",
             "discount",
             ]
@@ -102,10 +102,11 @@ class CustomerContactForm(forms.ModelForm):
     email = forms.EmailField(max_length=255, label='Email', required=False)
     phone = forms.CharField(max_length=200, label='Telefono')
     for_quotation = forms.BooleanField(label="Para cotizaciones")
+    for_invoice = forms.BooleanField(label="Para factura")
 
     class Meta:
         model = Customer_Contact
-        fields = ('name', 'department', 'email', 'phone', 'for_quotation')
+        fields = ('name', 'department', 'email', 'phone', 'for_quotation', 'for_invoice')
 
 class NewCustomerForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
@@ -225,26 +226,29 @@ class EditOrganizationForm(forms.ModelForm):
 
 class NewOrganizationStorageForm(forms.ModelForm):
     action = HiddenField(initial='new')
-    storage_type = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=True, label="Tipo", widget=Datalist())
+    storage_type_name = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=False, label="Tipo", widget=Datalist())
 
     class Meta:
         model = Organization_Storage
-        fields = '__all__'
+        fields = [
+            'organization'
+        ]
 
 
 class EditOrganizationStorageForm(forms.ModelForm):
     id = HiddenField()
     action = HiddenField(initial='edit')
-    storage_type = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=True, label="Tipo", widget=Datalist())
+    storage_type_name = forms.ModelChoiceField(queryset=StorageType.objects.all(), required=False, label="Tipo", widget=Datalist())
 
     class Meta:
         model = Organization_Storage
-        fields = '__all__'
+        fields = [
+            'organization'
+        ]
 
 class NewInputForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    invoice = HiddenField()
     invoice_number = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Numero de factura", widget=Datalist())
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
     movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
@@ -252,19 +256,24 @@ class NewInputForm(forms.ModelForm):
 
     class Meta:
         model = Input
-        fields = '__all__'
+        fields = [
+            'date',
+            'organization_storage'
+
+        ]
 
 class EditInputForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateTimeInput(), label='Fecha')
-    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
     invoice = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Factura")
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Input
-        fields = '__all__'
+        fields = [
+            'date',
+            'invoice'
+        ]
 
 class NewOutputForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
@@ -283,8 +292,6 @@ class NewOutputForm(forms.ModelForm):
 class EditOutputForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateTimeInput(), label='Fecha')
-    organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
     destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
@@ -292,7 +299,12 @@ class EditOutputForm(forms.ModelForm):
 
     class Meta:
         model = Output
-        fields = '__all__'
+        fields = [
+            'date',
+            'employee',
+            'destination',
+            'replacer'
+        ]
 
 class NewLendingForm(forms.ModelForm):
     action = HiddenField(initial='new')
@@ -333,7 +345,6 @@ class NewOrderForm(forms.ModelForm):
 
 class EditOrderForm(forms.ModelForm):
     id = HiddenField()
-    order_product_set = forms.ModelChoiceField(queryset=Order_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
     claimant = forms.ModelChoiceField(queryset=Employee.objects.all(), required=False, label="Solicitante")
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen", empty_label=None)
@@ -342,11 +353,9 @@ class EditOrderForm(forms.ModelForm):
     class Meta:
         model = Order
         fields = (
-            'provider',
             'organization_storage',
             'claimant',
             'replacer',
-            'order_product_set',
         )
 
 class QuotationOtherForm(forms.ModelForm):
@@ -689,6 +698,7 @@ class EmailOutputForm(forms.Form):
 class InputOrderForm(forms.ModelForm):
     order_id = HiddenField()
     invoice = HiddenField()
+    provider = HiddenField()
     invoice_number = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Numero de factura", widget=Datalist())
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
@@ -703,11 +713,12 @@ class InputOrderForm(forms.ModelForm):
 class MailOrderForm(forms.ModelForm):
     id = HiddenField()
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
+    organization_storage = HiddenField()
     action = HiddenField(initial='mail')
 
     class Meta:
         model = Output
-        fields = ['message']
+        fields = ['organization_storage']
 
 class AddStorageProductForm(forms.ModelForm):
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
