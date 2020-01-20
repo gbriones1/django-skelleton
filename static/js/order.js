@@ -56,6 +56,11 @@ function buildTable (){
         columns: [{
             checkbox: true
         }, {
+            field: 'id',
+            title: 'Numero de Pedido',
+            sortable: true,
+            filterControl: 'select'
+        }, {
             field: 'date',
             title: 'Fecha',
             sortable: true,

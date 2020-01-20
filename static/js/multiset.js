@@ -5,6 +5,8 @@ function refreshMutliSetInputs(form) {
     var valueSet = []
     form.find('input.multiset').each(function () {
         var inputSet = $(this);
+        var inputs = $(this).closest('form').find('input.multiset-single');
+        inputs.remove();
         var multiple = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-multiple')
         var editable = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-editable')
         inputSet.closest('.multiSet-container').find('#multiSet-added tbody tr').each(function (key, value) {
@@ -26,10 +28,11 @@ function refreshMutliSetInputs(form) {
             var form = inputSet.closest('form');
             $('<input>').attr({
                 type: 'hidden',
+                class: 'multiset-single',
                 id: 'id_'+inputSet.attr('name')+'['+key+']',
                 name: inputSet.attr('name')+'['+key+']',
                 value: JSON.stringify(itemData)
-            }).appendTo('form');
+            }).appendTo(form);
             valueSet.push(itemData);
         });
         inputSet.val(JSON.stringify(valueSet));
@@ -214,6 +217,11 @@ $('input.multiset').closest('form').submit(function () {
 });
 
 $(document).on('click', 'button.do-new', function () {
+    var form = $(this).closest('.modal-content').find('form')
+    refreshMutliSetInputs(form);
+});
+
+$(document).on('click', 'button.do-edit', function () {
     var form = $(this).closest('.modal-content').find('form')
     refreshMutliSetInputs(form);
 });

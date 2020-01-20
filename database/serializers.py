@@ -47,10 +47,12 @@ class DashboardSerializer(serializers.Serializer):
 
     def validate_reverse_field(self, field, serializer, parent):
         self._errors = {}
+        if not hasattr(self, "reverse_fields_serializers"):
+            self.reverse_fields_serializers = {}
         self.reverse_fields_serializers[field] = []
         for data in json.loads(self.initial_data.get(field, "[]")):
             if 'id' in data:
-                instance = serializer.Meta.model.objects.get(id=pc_data['id'])
+                instance = serializer.Meta.model.objects.get(id=data['id'])
             else:
                 data[parent] = self.instance
                 instance = serializer.Meta.model(**data)
@@ -151,7 +153,7 @@ class ProviderSerializer(DashboardSerializer):
 
     def run_validation(self, data):
         validated_data = super().run_validation(data)
-        self.validate_revese_field('provider_contact_set', ProviderContactSerializer, 'provider')
+        self.validate_reverse_field('provider_contact_set', ProviderContactSerializer, 'provider')
         return validated_data
     
     def update(self, instance, validated_data):
@@ -181,7 +183,7 @@ class CustomerSerializer(DashboardSerializer):
 
     def run_validation(self, data):
         validated_data = super().run_validation(data)
-        self.validate_revese_field('customer_contact_set', CustomerContactSerializer, 'customer')
+        self.validate_reverse_field('customer_contact_set', CustomerContactSerializer, 'customer')
         return validated_data
     
     def update(self, instance, validated_data):
@@ -352,12 +354,14 @@ class InputSerializer(MovementSerializer):
         for i in range(len(validated_data['movement_product_set'])):
             data = json.loads(self.initial_data['movement_product_set'])[i]
             validated_data['movement_product_set'][i]['price'] = Decimal(float(data['price'])-(float(data['price'])*float(data['discount'])/100))
-        return super().create(validated_data)
+        obj = super().create(validated_data)
+        obj.invoice.recalculate_price()
+        return obj
 
 class PaymentSerializer(JSONSubsetSerializer):
-    date = serializers.DateField(format="%Y-%m-%d")
+    date = serializers.DateField(format="%Y-%m-%d", required=False)
     amount = serializers.DecimalField(max_digits=9, decimal_places=2)
-    invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all())
+    invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all(), required=False)
 
     class Meta:
         model = Payment
@@ -375,6 +379,32 @@ class InvoiceSerializer(DashboardSerializer):
 
     class Meta:
         model = Invoice
+        
+    def run_validation(self, data):
+        data2 = data.copy()
+        validated_data = super().run_validation(data2)
+        return validated_data
+
+    def update(self, instance, validated_data):
+        pp_data = validated_data.pop('payment_set')
+        obj = super().update(instance, validated_data)
+        import pdb; pdb.set_trace()
+        # for pp in obj.pricelist_product_set.all():
+        #     data = next(filter(lambda x: x['product'] == pp.product, pp_data), None)
+        #     if data:
+        #         pp.price = data['price']
+        #         pp.save()
+        #         data['pricelist'] = obj
+        #     else:
+        #         pp.delete()
+        # pps = []
+        # for data in pp_data:
+        #     if not data.get('pricelist'):
+        #         data['pricelist'] = obj
+        #         pps.append(PriceList_Product(**data))
+        # if pps:
+        #     PriceList_Product.objects.bulk_create(pps)
+        return obj
 
 
 class PriceListProductSerializer(JSONSubsetSerializer):
@@ -391,6 +421,36 @@ class PriceListSerializer(DashboardSerializer):
 
     class Meta:
         model = PriceList
+
+    def create(self, validated_data):
+        pp_data = validated_data.pop('pricelist_product_set')
+        obj = super().create(validated_data)
+        pps = []
+        for data in pp_data:
+            data['pricelist'] = obj
+            pps.append(PriceList_Product(**data))
+        PriceList_Product.objects.bulk_create(pps)
+        return obj
+    
+    def update(self, instance, validated_data):
+        pp_data = validated_data.pop('pricelist_product_set')
+        obj = super().update(instance, validated_data)
+        for pp in obj.pricelist_product_set.all():
+            data = next(filter(lambda x: x['product'] == pp.product, pp_data), None)
+            if data:
+                pp.price = data['price']
+                pp.save()
+                data['pricelist'] = obj
+            else:
+                pp.delete()
+        pps = []
+        for data in pp_data:
+            if not data.get('pricelist'):
+                data['pricelist'] = obj
+                pps.append(PriceList_Product(**data))
+        if pps:
+            PriceList_Product.objects.bulk_create(pps)
+        return obj
 
 
 class QuotationProductSerializer(JSONSubsetSerializer):

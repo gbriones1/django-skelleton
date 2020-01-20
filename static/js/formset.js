@@ -9,7 +9,7 @@ function refreshFormSetInputs(form) {
                 id: 'id_'+inputSet.attr('name')+'['+key+']',
                 name: inputSet.attr('name')+'['+key+']',
                 value: JSON.stringify(value.dataset)
-            }).appendTo('form');
+            }).appendTo(form);
             var itemData = $(this).data();
             valueSet.push(itemData);
         });
@@ -84,6 +84,7 @@ $(document).on('click', '.formSet-edit', function() {
         var field = form.find('input[name="'+ key +'"]')
         if (field.attr("type") == "checkbox"){
             field.prop('checked', value);
+            field.removeAttr("value");
         }
         var selected = ''
         form.find('select[name="'+ key +'"] option').each(function (){
@@ -137,7 +138,7 @@ $('input.formset').each(function () {
     for (field in formsetFields){
         htmlForm += '<div class="form-group"><label for="'+formsetFields[field][0]+'" class="col-sm-2 control-label">'+formsetFields[field][1]+'</label><div class="col-sm-10">'+formsetFields[field][2]+'</div></div>'
     }
-    $('body').append('<div id="'+formSetModelName+'-modal" class="modal fade formSet-form" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">'+formSetModelName+'</h4></div><div class="modal-body"><form class="form-horizontal">'+htmlForm+'</form></div><div class="modal-footer"><button type="button" data-dismiss="modal" class="btn">Close</button><button type="button" class="btn btn-primary formSet-ok">Ok</button></div></div></div></div>')
+    $('body').append('<div id="'+formSetModelName+'-modal" class="modal fade formSet-form" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title"></h4></div><div class="modal-body"><form class="form-horizontal">'+htmlForm+'</form></div><div class="modal-footer"><button type="button" data-dismiss="modal" class="btn">Close</button><button type="button" class="btn btn-primary formSet-ok">Ok</button></div></div></div></div>')
 })
 
 $('div.form-group input').each(function(){
@@ -156,12 +157,14 @@ $('div.form-group select').each(function(){
 $(document).on('click', 'button.formSet-ok', function(){
     var modal = $(this).closest('.modal')
     var modalForm = modal.find('form')
-    var serialized = modalForm.serializeArray({
-        checkboxesAsBools: true
-    });
+    var checkboxFields = []
+    modalForm.find('input[type="checkbox"]').each(function (){
+        checkboxFields.push($(this).attr('name'));
+    })
+    var formData = new FormData(modalForm.get(0))
     var data = {}
-    for (field in serialized){
-        data[serialized[field].name] = serialized[field].value
+    for (var entry of formData.entries()){
+        data[entry[0]] = entry[1]
     }
     var modalId = modalForm.data("modal");
     var form = $("#"+modalId+" form");
@@ -181,6 +184,14 @@ $(document).on('click', 'button.formSet-ok', function(){
             if (JSON.stringify(oldData) == JSON.stringify(row.data())){
                 for (field in headers) {
                     var text = data[headers[field]];
+                    if (checkboxFields.includes(headers[field])){
+                        if (text == "on"){
+                            text = true
+                        }
+                        else{
+                            text = false
+                        }
+                    }
                     row.attr("data-"+headers[field], text);
                     row.data(headers[field], text);
                     if (text == true){
@@ -199,6 +210,14 @@ $(document).on('click', 'button.formSet-ok', function(){
         var row = $("<tr>");
         for (field in headers){
             var text = data[headers[field]];
+            if (checkboxFields.includes(headers[field])){
+                if (text == "on"){
+                    text = true
+                }
+                else{
+                    text = false
+                }
+            }
             row.attr("data-"+headers[field], text);
             row.data(headers[field], text);
             if (text == true){

@@ -1,82 +1,105 @@
-var customers = [];
-var quotations = [];
-var pricelists = [];
-var pricelistrelated = {};
-
-$.when(getObjectFiltered("quotation", function(data) {quotations = data}), getObject("customer"), getObject("pricelist")).done(function (){
-    customers = JSON.parse(sessionStorage.getItem("customer") || "[]")
-    pricelists = JSON.parse(sessionStorage.getItem("pricelist") || "[]")
-    buildTable()
+var storages = []
+$("#output form").find('select#id_organization_storage').attr('disabled', 'disabled');
+$.getJSON("/database/special-api/instorage", function (json) {
+    storages = json;
+    $("#output form").find('select#id_organization_storage').removeAttr('disabled');
 });
 
-function buildTable (){
-    customerNames = {}
-    customers.forEach(function (item, index) {
-        customerNames[item.id] = item.name
-    });
-    pricelists.forEach(function(item){
-        productPrices = {}
-        item.pricelist_product_set.forEach(function (item){
-            productPrices[item.product] = item.price
-        })
-        pricelistrelated[item.id] = productPrices
-    })
-    data = []
-    quotations.forEach(function (item, index) {
-        item.customer_name = customerNames[item.customer]
-        data.push(item)
-    })
-    $('#table').bootstrapTable({
-        columns: [{
-            checkbox: true
-        }, {
-            field: 'id',
-            title: 'Numero de Cotizacion',
-            sortable: true,
-            filterControl: 'select'
-        }, {
-            field: 'date',
-            title: 'Fecha',
-            sortable: true,
-        }, {
-            field: 'customer_name',
-            title: 'Cliente',
-            sortable: true,
-            filterControl: 'select'
-        }, {
-            field: 'unit',
-            title: 'Unidad',
-            sortable: true,
-            filterControl: 'input'
-        }, {
-            field: 'plates',
-            title: 'Placas',
-            sortable: true,
-            filterControl: 'input'
-        }, {
-            field: 'action',
-            title: 'Acciones',
-            formatter: actionFormatter,
-            width: actions.length*60,
-            align: 'center',
-            events: {
-                'click .edit': editEvent,
-                'click .delete': deleteEvent
-              }
-        }],
-        pagination: true,
-        filterControl: true,
-        height: 600,
-        data: data
-    })
-}
-
-$('select#id_pricelist').attr('disabled', 'disabled');
+var pricelistrelated = []
+$.getJSON("/database/special-api/pricelistrelated", function (json) {
+    pricelistrelated = json;
+});
 
 $('input.multiset').each(function () {
     $(this).closest('.multiSet-container').find('#multiSet-table tbody tr').each( function () {
         $(this).attr("data-base_price", $(this).attr("data-price"));
     });
+});
+
+$('select#id_pricelist').attr('disabled', 'disabled');
+
+$(document).on('click', 'button[data-target="#mail"]', function () {
+    var data = $(this).closest('tr').data()
+    var form = $("#mail form");
+    form.find('input[name="id"]').val(data.id);
+});
+
+$(document).on('click', 'button[data-target="#output"]', function () {
+    var data = $(this).closest('tr').data()
+    var form = $("#output form");
+    form[0].reset();
+    form.trigger("reset");
+    form.find('select').each(function (){
+        $(this).val("");
+    });
+    form.find('select[name="destination"]').removeAttr('disabled');
+    form.find('select[name="organization_storage"]').removeAttr('disabled');
+    for (opIndx in data.quotation_product_set){
+        delete data.quotation_product_set[opIndx].id
+    }
+    initialMultiSetData(form.find('input#id_movement_product_set'), data.quotation_product_set);
+    refreshMutliSetInputs(form);
+    if (data.customer){
+        form.find('select[name="destination"]').val(data.customer);
+        form.find('select[name="destination"]').attr('disabled', 'disabled');
+    }
+    renderFilterForOutput(form);
+});
+
+function renderFilterForOutput(form) {
+    var selectedStorage = form.find('select#id_organization_storage').val();
+    var inStorage = storages[selectedStorage];
+    form.find('table#multiSet-table tr').each(function(){
+        if (!inStorage || !inStorage[$(this).data("id")]){
+            $(this).hide();
+        }
+    });
+}
+
+$(document).on('keyup change', '#output.modal form #multiSet-search', function() {
+    renderFilterForOutput($(this).closest('form'))
+});
+
+$(document).on('change', '#output.modal form select#id_organization_storage', function() {
+    var form = $(this).closest('form')
+    form.find('table#multiSet-table tr').each(function(){
+        $(this).show()
+    });
+    var search = form.find('#multiSet-search-available').val()
+    var table = form.find('#multiSet-table')
+    applySearch(search, table)
+    renderFilterForOutput(form)
+});
+
+$(document).on('click', '#output.modal form .multiSet-add', function(){
+    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
+    return false;
+});
+
+$(document).on('click', '#output.modal form .multiSet-add-all', function(){
+    $(this).closest('form').find('select#id_organization_storage').attr('disabled', 'disabled');
+    return false;
+});
+
+$(document).on('click', '#output.modal form .multiSet-delete', function(){
+    $('input.multiset').each(function functionName() {
+        if ($(this).closest('form').find('#multiSet-added tbody').children().length == 0){
+            $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
+        }
+    })
+    return false;
+});
+
+$(document).on('click', '#output.modal form .multiSet-delete-all', function(){
+    $('input.multiset').each(function functionName() {
+        $(this).closest('form').find('select#id_organization_storage').removeAttr('disabled');
+    })
+    return false;
+});
+
+$('#output.modal form').submit(function () {
+    $(this).find('select#id_organization_storage').removeAttr('disabled');
+    $(this).find('select#id_destination').removeAttr('disabled');
 });
 
 $(document).on('change', 'select#id_base_price', function(){

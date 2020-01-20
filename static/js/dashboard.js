@@ -1,3 +1,8 @@
+TRANSLATIONS = {
+    'name': 'nombre',
+    'This field may not be blank.': 'Este campo no puede estar vacio'
+}
+
 function getObject(name){
     object = sessionStorage.getItem(name)
     if (object){
@@ -15,7 +20,7 @@ function getObject(name){
                 sessionStorage.setItem(name, JSON.stringify(data))
             },
             error: function (data) {
-                alert(data.responseText)
+                handleErrorAlerts(data)
             }
         })
     }
@@ -27,9 +32,30 @@ function getObjectFiltered(name, success) {
         type: "GET",
         success: success,
         error: function (data) {
-            alert(data.responseText)
+            handleErrorAlerts(data)
         }
     })
+}
+
+function handleErrorAlerts(data) {
+    data = JSON.parse(data.responseText)
+    if (typeof(data) == "object") {
+        for (key in data){
+            var value = data[key]
+            var field = TRANSLATIONS[key]
+            if (field == undefined){
+                field = key
+            }
+            var reason = TRANSLATIONS[value]
+            if (reason == undefined){
+                reason = value
+            }
+            createAlert(reason+": "+field, "danger")
+        }
+    }
+    else{
+        createAlert(data, "danger")
+    }
 }
 
 function actionFormatter(value, row, index, field){
@@ -120,7 +146,7 @@ $(document).on('click', 'button.do-new', function () {
             location.reload();
         },
         error: function (data) {
-            alert(data.responseText)
+            handleErrorAlerts(data)
         }
     });
 });
@@ -141,7 +167,7 @@ $(document).on('click', 'button.do-edit', function () {
             location.reload();
         },
         error: function (data) {
-            alert(data.responseText)
+            handleErrorAlerts(data)
         }
     });
 });
@@ -161,7 +187,7 @@ $(document).on('click', 'button.do-delete', function () {
             location.reload();
         },
         error: function (data) {
-            alert(data.responseText)
+            handleErrorAlerts(data)
         }
     });
 });
@@ -180,7 +206,7 @@ $(document).on('click', 'button.do-multi-delete', function () {
                 location.reload();
             },
             error: function (data) {
-                alert(data.responseText)
+                handleErrorAlerts(data)
             }
         });
     })

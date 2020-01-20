@@ -146,7 +146,7 @@ $(document).on('click', 'button[type="submit"]', function () {
 })
 
 var notifications = $('.notifications')
-function showNotification(text, level) {
+function createAlert(text, level) {
 	var icon = '<strong></strong>'
 	switch(level){
 		case "success":
@@ -163,7 +163,7 @@ function showNotification(text, level) {
 			break;
 	}
 	var notice = $('<div>', {
-        class:"alert alert-"+level+" alert-dismissible fade in",
+        class:"alert alert-"+level+" alert-dismissible fade show",
     }).append($('<button>', {
     	type:"button",
     	class:"close",
@@ -178,8 +178,9 @@ function showNotification(text, level) {
     // 	notice.alert('close');
     // }, 5000);
 }
+
 $('.messages').children().each(function () {
-    showNotification($(this).attr("data-message"), $(this).attr("data-level"));
+    createAlert($(this).attr("data-message"), $(this).attr("data-level"));
 });
 
 var messages = {};

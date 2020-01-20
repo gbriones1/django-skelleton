@@ -222,7 +222,9 @@ class OrderViewSet(APIWrapper):
     def create(self, request, *args, **kwargs):
         response = super(OrderViewSet, self).create(request, *args, **kwargs)
         mail_error = None
-        # mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
+        config = Configuration.objects.all()
+        if config and config[0].sender_email:
+            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
         if mail_error:
             response.status_code = 499
             response.data = {"error": mail_error}
@@ -233,13 +235,10 @@ class OrderViewSet(APIWrapper):
             response = Response({}, 201)
             order = Order.objects.get(id=request.data['id'])
             mail_error = None
-            # mail_error = OrderViewSet.send_email(order, request.data.get('message'))
+            mail_error = OrderViewSet.send_email(order, request.data.get('message'))
             if mail_error:
                 response.status_code = 499
                 response.data = {"error": mail_error}
-            else:
-                order.status = Order.STATUS_ASKED
-                order.save()
             return response
         response = super(OrderViewSet, self).update(request, *args, **kwargs)
         return response
@@ -478,6 +477,7 @@ object_map = {
     'percentage': {
         'name': 'Porcentajes',
         'api_path': '/database/api/percentage/',
+        'prefetch': ['percentage'],
         'model': Percentage,
         'viewset': PercentageViewSet,
         'action_forms': {
@@ -486,6 +486,7 @@ object_map = {
             'delete': DeleteForm,
         },
         'table_fields': ['max_price_limit', 'sale_percentage_1', 'sale_percentage_2', 'sale_percentage_3', 'service_percentage_1', 'service_percentage_2', 'service_percentage_3'],
+        'js': ['dashboard', 'percentage']
     },
     'organization': {
         'name': 'Organizaciones',
@@ -518,6 +519,7 @@ object_map = {
     'pricelist': {
         'name': 'Listas de precios',
         'api_path': '/database/api/pricelist/',
+        'prefetch': ['pricelist'],
         'model': PriceList,
         'viewset': PriceListViewSet,
         'action_forms': {
@@ -527,7 +529,7 @@ object_map = {
         },
         'table_fields': ['customer_name',],
         'subset-fields': {'pricelist_product_set': ["product", "price"]},
-        'js': ['multiset', 'pricelist'],
+        'js': ['multiset', 'dashboard', 'pricelist'],
     },
     'storage_product': {
         'name': 'Productos en almacen',
@@ -649,7 +651,7 @@ object_map = {
             graphics.Action('output', 'modal', text='Salida', icon='sign-out', style='info', method="POST"),
             graphics.Action('view', 'navigate', text='Ver', icon='eye', style='info', method="GET"),
             ],
-        'js': ['formset', 'multiset', 'quotation'],
+        'js': ['formset', 'multiset', 'dashboard', 'quotation'],
     },
     'invoice': {
         'name': 'Facturas de compras',
