@@ -349,8 +349,8 @@ class Quotation(models.Model):
     unit = models.CharField(max_length=30, null=True)
     plates = models.CharField(max_length=30, null=True)
     authorized = models.BooleanField(default=False)
-    service = models.DecimalField(max_digits=9, decimal_places=2)
-    discount = models.DecimalField(max_digits=9, decimal_places=2)
+    service = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    discount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
     work_sheet = models.IntegerField(null=True)
 
     def customer_name(self):

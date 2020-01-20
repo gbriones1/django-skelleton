@@ -72,9 +72,9 @@ function buildTable (){
 }
 
 function detailViewFormatter(index, row, element){
-    var table = '<table><tr><th>Pago</th><th>Fecha</th></tr><tbody>'
+    var table = '<table><tr><th>Fecha</th><th>Pago</th></tr><tbody>'
     row.payment_set.forEach(function(item) {
-        table += '<tr><td>'+0+'</td><td>$'+0+'</td></tr>'
+        table += '<tr><td>'+item.date+'</td><td>$'+item.amount+'</td></tr>'
     })
     table += '</tbody></table>'
     return table

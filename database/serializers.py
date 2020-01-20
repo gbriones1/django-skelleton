@@ -12,18 +12,14 @@ from rest_framework.utils import model_meta
 from collections.abc import Mapping
 from rest_framework.exceptions import ValidationError
 
-LABEL_TRANSLATIONS = {
-    "date": "Fecha",
-    "name": "Nombre",
-    "amount": "Cantidad",
-    "unit": "Unidad",
-    "plates": "Placas",
-    "customer_name": "Cliente",
-    "service": "Servicio",
-    "discount": "Descuento",
-    "authorized": "Autorizado",
-    "work_sheet": "Hoja de Trabajo"
-}
+
+class ReverseFieldReference(object):
+
+    def __init__(self, name, model, parent, identifier):
+        self.name = name
+        self.model = model
+        self.parent = parent
+        self.identifier = identifier
 
 class DashboardListSerializer(serializers.ListSerializer):
 
@@ -33,16 +29,35 @@ class DashboardListSerializer(serializers.ListSerializer):
 class DashboardSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False, read_only=True)
 
+    def _get_reverse_field_args(self, validated_data):
+        reverse_fields_args = []
+        if hasattr(self.Meta, 'reverse_fields'):
+            for reverse_fields_ref in self.Meta.reverse_fields:
+                reverse_fields_args.append({
+                    'set_data': validated_data.pop(reverse_fields_ref.name, []),
+                    'reference': reverse_fields_ref
+                })
+        return reverse_fields_args
+
     def create(self, validated_data):
-        return self.Meta.model.objects.create(**validated_data)
+        reverse_fields_args = self._get_reverse_field_args(validated_data)
+        instance = self.Meta.model.objects.create(**validated_data)
+        for reverse_fields_arg in reverse_fields_args:
+            reverse_fields_arg['instance'] = instance
+            self.create_reverse_field(**reverse_fields_arg)
+        return instance
 
     def update(self, instance, validated_data):
+        reverse_fields_args = self._get_reverse_field_args(validated_data)
         for field, value in validated_data.items():
             setattr(instance, field, value)
         for field in instance._meta.fields:
             if field.name != 'id' and not field.name.endswith('_ptr') and not field.name in validated_data.keys():
                 setattr(instance, field.name, None)
         instance.save()
+        for reverse_fields_arg in reverse_fields_args:
+            reverse_fields_arg['instance'] = instance
+            self.update_reverse_field(**reverse_fields_arg)
         return instance
 
     def validate_reverse_field(self, field, serializer, parent):
@@ -64,6 +79,33 @@ class DashboardSerializer(serializers.Serializer):
                 self._errors = s.errors
         if self._errors:
             raise ValidationError(self._errors)
+
+    def create_reverse_field(self, set_data, instance, reference):
+        obj_list = []
+        for data in set_data:
+            data[reference.parent] = instance
+            obj_list.append(reference.model(**data))
+        reference.model.objects.bulk_create(obj_list)
+
+    def update_reverse_field(self, set_data, instance, reference):
+        for obj in getattr(instance, reference.name).all():
+            data = None
+            if reference.identifier:
+                data = next(filter(lambda x: x[reference.identifier] == getattr(obj, reference.identifier), set_data), None)
+            if data:
+                for field, value in data.items():
+                    setattr(obj, field, value)
+                obj.save()
+                data[reference.parent] = instance
+            else:
+                obj.delete()
+        obj_list = []
+        for data in set_data:
+            if not data.get(reference.parent):
+                data[reference.parent] = instance
+                obj_list.append(reference.model(**data))
+        if obj_list:
+            reference.model.objects.bulk_create(obj_list)
 
     class Meta:
         list_serializer_class = DashboardListSerializer
@@ -272,16 +314,6 @@ class MovementSerializer(DashboardSerializer):
         validated_data = super().run_validation(data2)
         return validated_data
 
-    def create(self, validated_data):
-        mp_data = validated_data.pop('movement_product_set')
-        obj = super().create(validated_data)
-        mps = []
-        for data in mp_data:
-            data['movement'] = obj
-            mps.append(Movement_Product(**data))
-        Movement_Product.objects.bulk_create(mps)
-        return obj
-
 class OutputSerializer(MovementSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), required=False)
     destination = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), required=False)
@@ -289,6 +321,14 @@ class OutputSerializer(MovementSerializer):
 
     class Meta:
         model = Output
+        reverse_fields = [
+            ReverseFieldReference(
+                'movement_product_set',
+                Movement_Product,
+                'movement',
+                'product'
+            )
+        ]
 
 
 class OrderProductSerializer(JSONSubsetSerializer):
@@ -313,6 +353,14 @@ class OrderSerializer(DashboardSerializer):
 
     class Meta:
         model = Order
+        reverse_fields = [
+            ReverseFieldReference(
+                'order_product_set',
+                Order_Product,
+                'order',
+                'product'
+            )
+        ]
 
     def get_status_display(self, obj):
         return obj.get_status_display()
@@ -329,16 +377,6 @@ class OrderSerializer(DashboardSerializer):
         validated_data = super().run_validation(data2)
         return validated_data
 
-    def create(self, validated_data):
-        op_data = validated_data.pop('order_product_set')
-        obj = super().create(validated_data)
-        ops = []
-        for data in op_data:
-            data['order'] = obj
-            ops.append(Order_Product(**data))
-        Order_Product.objects.bulk_create(ops)
-        return obj
-
 class InputSerializer(MovementSerializer):
     invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all(), required=False)
     invoice_number = serializers.ReadOnlyField(source='invoice.number')
@@ -346,6 +384,14 @@ class InputSerializer(MovementSerializer):
 
     class Meta:
         model = Input
+        reverse_fields = [
+            ReverseFieldReference(
+                'movement_product_set',
+                Movement_Product,
+                'movement',
+                'product'
+            )
+        ]
 
     def create(self, validated_data):
         if self.initial_data.get('invoice_number'):
@@ -379,31 +425,18 @@ class InvoiceSerializer(DashboardSerializer):
 
     class Meta:
         model = Invoice
-        
-    def run_validation(self, data):
-        data2 = data.copy()
-        validated_data = super().run_validation(data2)
-        return validated_data
+        reverse_fields = [
+            ReverseFieldReference(
+                'payment_set',
+                Payment,
+                'invoice',
+                None
+            )
+        ]
 
     def update(self, instance, validated_data):
-        pp_data = validated_data.pop('payment_set')
         obj = super().update(instance, validated_data)
-        import pdb; pdb.set_trace()
-        # for pp in obj.pricelist_product_set.all():
-        #     data = next(filter(lambda x: x['product'] == pp.product, pp_data), None)
-        #     if data:
-        #         pp.price = data['price']
-        #         pp.save()
-        #         data['pricelist'] = obj
-        #     else:
-        #         pp.delete()
-        # pps = []
-        # for data in pp_data:
-        #     if not data.get('pricelist'):
-        #         data['pricelist'] = obj
-        #         pps.append(PriceList_Product(**data))
-        # if pps:
-        #     PriceList_Product.objects.bulk_create(pps)
+        obj.recalculate_payments()
         return obj
 
 
@@ -421,36 +454,13 @@ class PriceListSerializer(DashboardSerializer):
 
     class Meta:
         model = PriceList
-
-    def create(self, validated_data):
-        pp_data = validated_data.pop('pricelist_product_set')
-        obj = super().create(validated_data)
-        pps = []
-        for data in pp_data:
-            data['pricelist'] = obj
-            pps.append(PriceList_Product(**data))
-        PriceList_Product.objects.bulk_create(pps)
-        return obj
-    
-    def update(self, instance, validated_data):
-        pp_data = validated_data.pop('pricelist_product_set')
-        obj = super().update(instance, validated_data)
-        for pp in obj.pricelist_product_set.all():
-            data = next(filter(lambda x: x['product'] == pp.product, pp_data), None)
-            if data:
-                pp.price = data['price']
-                pp.save()
-                data['pricelist'] = obj
-            else:
-                pp.delete()
-        pps = []
-        for data in pp_data:
-            if not data.get('pricelist'):
-                data['pricelist'] = obj
-                pps.append(PriceList_Product(**data))
-        if pps:
-            PriceList_Product.objects.bulk_create(pps)
-        return obj
+        reverse_fields = [
+            ReverseFieldReference(
+                'pricelist_product_set',
+                PriceList_Product,
+                'pricelist',
+                'product')
+        ]
 
 
 class QuotationProductSerializer(JSONSubsetSerializer):
@@ -476,12 +486,38 @@ class QuotationSerializer(DashboardSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     pricelist = serializers.PrimaryKeyRelatedField(queryset=PriceList.objects.all(), allow_null=True, required=False)
     customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), allow_null=True, required=False)
-    quotation_product_set = QuotationProductSerializer(many=True)
-    quotation_others_set = QuotationOtherSerializer(many=True)
+    quotation_product_set = QuotationProductSerializer(many=True, required=False)
+    quotation_others_set = QuotationOtherSerializer(many=True, required=False)
+    plates = serializers.CharField(allow_null=True, required=False)
+    unit = serializers.CharField(allow_null=True, required=False)
     authorized = serializers.BooleanField(required=False)
+    service = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
+    discount = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
+    work_sheet = serializers.IntegerField(allow_null=True, required=False)
 
     class Meta:
         model = Quotation
+        reverse_fields = [
+            ReverseFieldReference(
+                'quotation_product_set',
+                Quotation_Product,
+                'quotation',
+                'product'
+            ),
+            ReverseFieldReference(
+                'quotation_others_set',
+                Quotation_Others,
+                'quotation',
+                None
+            )
+        ]
+
+    def run_validation(self, data):
+        data2 = data.copy()
+        if self.instance:
+            data2["date"] = self.instance.date
+        validated_data = super().run_validation(data2)
+        return validated_data
 
 
 class CollectionSerializer(JSONSubsetSerializer):

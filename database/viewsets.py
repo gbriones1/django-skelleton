@@ -222,9 +222,9 @@ class OrderViewSet(APIWrapper):
     def create(self, request, *args, **kwargs):
         response = super(OrderViewSet, self).create(request, *args, **kwargs)
         mail_error = None
-        config = Configuration.objects.all()
-        if config and config[0].sender_email:
-            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
+        # config = Configuration.objects.all()
+        # if config and config[0].sender_email:
+        #     mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
         if mail_error:
             response.status_code = 499
             response.data = {"error": mail_error}
@@ -235,7 +235,7 @@ class OrderViewSet(APIWrapper):
             response = Response({}, 201)
             order = Order.objects.get(id=request.data['id'])
             mail_error = None
-            mail_error = OrderViewSet.send_email(order, request.data.get('message'))
+            # mail_error = OrderViewSet.send_email(order, request.data.get('message'))
             if mail_error:
                 response.status_code = 499
                 response.data = {"error": mail_error}

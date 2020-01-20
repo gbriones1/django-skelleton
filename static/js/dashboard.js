@@ -1,6 +1,17 @@
 TRANSLATIONS = {
     'name': 'nombre',
-    'This field may not be blank.': 'Este campo no puede estar vacio'
+    'provider': 'Proveedor',
+    'date': "Fecha",
+    'amount': "Cantidad",
+    'unit': "Unidad",
+    'plates': "Placas",
+    'customer_name': "Cliente",
+    'service': "Servicio",
+    'discount': "Descuento",
+    'authorized': "Autorizado",
+    'work_sheet': "Hoja de Trabajo",
+    'This field may not be blank.': 'Este campo no puede estar vacio',
+    'This field may not be null.': 'Este campo no puede estar vacio',
 }
 
 function getObject(name){
