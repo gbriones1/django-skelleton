@@ -2,11 +2,13 @@ var products = [];
 var brands = [];
 var appliances = [];
 var providers = [];
+var percentages = [];
 
-$.when(getObject("product"), getObject("brand"), getObject("provider"), getObject("appliance")).done(function (){
+$.when(getObject("product"), getObject("percentage"), getObject("brand"), getObject("provider"), getObject("appliance")).done(function (){
     brands = JSON.parse(sessionStorage.getItem("brand") || "[]")
     providers = JSON.parse(sessionStorage.getItem("provider") || "[]")
     appliances = JSON.parse(sessionStorage.getItem("appliance") || "[]")
+    percentages = JSON.parse(sessionStorage.getItem("percentage") || "[]")
     products = JSON.parse(sessionStorage.getItem("product") || "[]")
     buildTable()
 });
@@ -24,12 +26,21 @@ function buildTable (){
     appliances.forEach(function (item, index) {
         applianceNames[item.id] = item.name
     });
+    percentages.sort((a, b) => parseFloat(a['max_price_limit']) - parseFloat(b['max_price_limit']))
     data = []
     products.forEach(function (item, index) {
         item.providerName = providerNames[item.provider]
         item.brandName = brandNames[item.brand]
         item.applianceName = applianceNames[item.appliance]
         item.realPrice = (item.price - item.price*(item.discount/100)).toFixed(2)
+        for (var percentage of percentages){
+            if (parseFloat(percentage['max_price_limit']) >= parseFloat(item.realPrice)){
+                item.percentage_1 = (parseFloat(item.realPrice)+(parseFloat(item.realPrice)*parseFloat(percentage['sale_percentage_1'])/100)).toFixed(2)
+                item.percentage_2 = (parseFloat(item.realPrice)+(parseFloat(item.realPrice)*parseFloat(percentage['sale_percentage_2'])/100)).toFixed(2)
+                item.percentage_3 = (parseFloat(item.realPrice)+(parseFloat(item.realPrice)*parseFloat(percentage['sale_percentage_3'])/100)).toFixed(2)
+                break
+            }
+        }
         data.push(item)
     })
     $('#table').bootstrapTable({
@@ -68,6 +79,24 @@ function buildTable (){
         }, {
             field: 'realPrice',
             title: 'Precio de Compra',
+            sortable: true,
+            filterControl: 'input',
+            align: 'right'
+        }, {
+            field: 'percentage_1',
+            title: 'Precio de Venta 1',
+            sortable: true,
+            filterControl: 'input',
+            align: 'right'
+        }, {
+            field: 'percentage_2',
+            title: 'Precio de Venta 2',
+            sortable: true,
+            filterControl: 'input',
+            align: 'right'
+        }, {
+            field: 'percentage_3',
+            title: 'Precio de Venta 3',
             sortable: true,
             filterControl: 'input',
             align: 'right'
