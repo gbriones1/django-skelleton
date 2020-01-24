@@ -44,6 +44,7 @@ function buildTable (){
     });
     products.forEach(function (item, index) {
         productNames[item.id] = item.code + " - " + item.name + " - " + item.description
+        item.price_raw = item.price
         productProviders[item.id] = item.provider
     });
     data = []
@@ -52,7 +53,11 @@ function buildTable (){
         item['destination_name'] = customerNames[item.destination]
         item['replacer_name'] = organizationNames[item.replacer]
         item['storage_name'] = orgStoNames[item.organization_storage]
-        
+        var itemProducts = []
+        item.movement_product_set.forEach(function (movement){
+            itemProducts.push(productNames[movement.product])
+        });
+        item['products'] = itemProducts.join(",")
         data.push(item);
     })
     $('#table').bootstrapTable({
@@ -83,6 +88,12 @@ function buildTable (){
             sortable: true,
             filterControl: 'select'
         }, {
+            field: 'products',
+            title: 'Productos',
+            formatter: productFormatter,
+            width: 60,
+            filterControl: 'input'
+        }, {
             field: 'action',
             title: 'Acciones',
             formatter: actionFormatter,
@@ -109,6 +120,10 @@ function detailViewFormatter(index, row, element){
     })
     table += '</tbody></table>'
     return table
+}
+
+function productFormatter(element, row, index){
+    return '<a class="detail-icon" href="#"><i class="fa fa-plus"></i></a><div style="display: none;">'+element+"</div>"
 }
 
 function renderFilter(form) {
@@ -206,7 +221,18 @@ function createOrder(data){
             console.log('sucess');
         },
         error: function (data) {
-            alert(data.responseText)
+            handleErrorAlerts(data)
         }
     });
 }
+
+$('.multiSet-container').each(function () {
+    $(this).find('table#multiSet-table tr').each(function(){
+        var priceRaw = $(this).data("price")
+        var discount = $(this).data("discount")
+        var price = (priceRaw - priceRaw*(discount/100)).toFixed(2)
+        $(this).data("price-raw", priceRaw)
+        $(this).data("price", price)
+        $(this).attr("data-price", price)
+    });
+})
