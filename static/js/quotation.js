@@ -227,3 +227,16 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     }
     initialMultiSetData(form.find('input#id_quotation_product_set'), value)
 });
+
+$('.multiSet-container').each(function () {
+    $(this).find('table#multiSet-table tr').each(function(){
+        var priceRaw = $(this).data("price")
+        var discount = $(this).data("discount")
+        var price = (priceRaw - priceRaw*(discount/100)).toFixed(2)
+        $(this).data("price-raw", priceRaw)
+        $(this).data("price", price)
+        $(this).data("base_price", price)
+        $(this).attr("data-price", price)
+        $(this).attr("data-base_price", price)
+    });
+})
