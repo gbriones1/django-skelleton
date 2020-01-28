@@ -6,7 +6,6 @@
         <meta name="viewport" content="width=device-width">
         {% block page_title %}
         {% endblock %}
-        <!-- {% load staticfiles %} -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/1.10.7/css/jquery.dataTables.min.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -14,7 +13,6 @@
         {% for css in stylesheets %}
             <link rel="stylesheet" href="/static/css/{{ css }}.css">
         {% endfor %}
-        <!-- <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}"> -->
     </head>
     <body>
         <div class="container-fluid">

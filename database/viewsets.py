@@ -313,6 +313,11 @@ def render_sheet(request, name, obj_id, instance):
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
     serializer_class = QuotationSerializer
+    
+    def update(self, request, *args, **kwargs):
+        if request.data.get('action') == 'mail':
+            return self.mail(request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
 
     def mail(self, request, *args, **kwargs):
         status = 500
@@ -321,15 +326,22 @@ class QuotationViewSet(APIWrapper):
         contacts = quotation.customer.customer_contact_set.filter(for_quotation=True)
         if contacts:
             config = Configuration.objects.all()
-            if config:
+            if config and config[0].quotations_email:
                 rendered = render_sheet(request, 'quotation', quotation.id, quotation)
-                html_string = rendered.content.replace('src=/static/', 'src={}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href=/static/', 'href={}/static/'.format(request.META["HTTP_ORIGIN"]))
+                html_string = rendered.content.decode().replace('src="/static/', 'src="{}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href="/static/', 'href="{}/static/'.format(request.META["HTTP_ORIGIN"]))
                 html_file = tempfile.mktemp()+".html"
+                # print(html_file)
                 with open(html_file, "w") as f:
                     f.write(html_string)
                 os.chmod(html_file, 438)
-                proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc = subprocess.Popen(["wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = proc.communicate()
+                # print(err)
+                # pdf_file = tempfile.mktemp()+".pdf"
+                # print(pdf_file)
+                # with open(pdf_file, "wb") as f:
+                #     f.write(out)
                 os.remove(html_file)
                 if not settings.DEV_ENV:
                     if send_email(config[0].quotations_email, config[0].quotations_password, [contact.email for contact in contacts], request.POST.get('subject', ''), request.POST.get('message', ''), attachments=[{"content":out, "filename":"cotizacion.pdf"}]):
@@ -344,7 +356,7 @@ class QuotationViewSet(APIWrapper):
                     else:
                         response = "Fallo envio de email a {}".format([contact.email for contact in contacts])
             else:
-                return "No hay email para enviar cotizaciones. Ir a Configuracion para establecerlo"
+                response = "No hay email para enviar cotizaciones. Ir a Configuracion para establecerlo"
         else:
             response =  "No se encontraron destinatarios para el cliente {}".format(quotation.customer.name)
         response = Response([response], status=status)
@@ -642,7 +654,7 @@ object_map = {
             'output': QuotationOutputForm,
         },
         'table_fields': ['id', 'date', 'unit', 'plates', 'authorized', 'service', 'discount', 'total', 'customer_name', 'work_sheet'],
-        'sheet_desc': ['customer_name', 'unit', 'plates', 'work_sheet'],
+        'sheet_desc': ['customer_name', 'unit', 'plates', 'work'],
         'sheet_cont': ['quotation_product_set', 'quotation_others_set', 'service', 'discount'],
         'filter_form': DateTimeRangeFilterForm(),
         'custom_reg_actions': [

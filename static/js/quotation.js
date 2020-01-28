@@ -79,7 +79,8 @@ function buildTable (){
                 'click .edit': editEvent,
                 'click .delete': deleteEvent,
                 'click .output': outputEvent,
-                'click .view': viewEvent
+                'click .view': viewEvent,
+                'click .mail': mailEvent
               }
         }],
         pagination: true,
@@ -308,7 +309,35 @@ $(document).on('click', 'button.do-output', function () {
     });
 });
 
-
 function viewEvent (e, value, data, index) {
     window.location = '/database/quotation/'+data.id;
 };
+
+function mailEvent (e, value, data, index) {
+    var mailform = $("#mail form");
+    mailform .submit(function() {
+        return false;
+    });
+    mailform[0].reset();
+    mailform.find('input[name="id"]').val(data['id']);
+}
+
+$(document).on('click', 'button.do-mail', function () {
+    var form = $(this).closest('.modal-content').find('form');
+    refreshMutliSetInputs(form);
+    var formData = new FormData(form.get(0));
+    var id = JSON.parse(formData.get('id'))
+    $.ajax({
+        url: "/database/api/quotation/"+id+"/",
+        data: formData,
+        contentType: false,
+        processData: false,
+        type: 'PUT',
+        success: function (data) {
+            location.reload();
+        },
+        error: function (data) {
+            createAlert(data.responseText, "danger")
+        }
+    });
+});
