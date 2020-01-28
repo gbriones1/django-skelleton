@@ -722,7 +722,8 @@ object_map = {
             'edit': EditWorkForm,
             'delete': DeleteForm,
         },
-        'filter_form': DateRangeFilterForm()
+        'filter_form': DateRangeFilterForm(),
+        'js': ['dashboard', 'work'],
     },
     'employee_work': {
         'name': 'Comisiones',

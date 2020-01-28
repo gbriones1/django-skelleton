@@ -10,6 +10,7 @@ TRANSLATIONS = {
     'discount': "Descuento",
     'authorized': "Autorizado",
     'work_sheet': "Hoja de Trabajo",
+    'organization_storage': 'Almacen',
     'This field may not be blank.': 'Este campo no puede estar vacio',
     'This field may not be null.': 'Este campo no puede estar vacio',
 }
@@ -130,7 +131,7 @@ function editEvent (e, value, data, index) {
         })
         editform.find('select[name="'+ key +'"]').val(selected);
         editform.find('input[type="checkbox"]').each(function () {
-            $(this).val("Si")
+            $(this).val(true)
         });
     }
 }

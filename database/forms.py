@@ -383,7 +383,8 @@ class NewQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
-    work_sheet = forms.IntegerField(label='Hoja de trabajo', required=False, min_value=0, initial=0)
+    # work_sheet = forms.IntegerField(label='Hoja de trabajo', required=False, min_value=0, initial=None)
+    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
@@ -399,7 +400,7 @@ class NewQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
-            'work_sheet',
+            'work_number',
             'authorized'
         )
 
@@ -417,7 +418,7 @@ class EditQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
-    work_sheet = forms.IntegerField(label='Hoja de trabajo', required=False, min_value=0, initial=0)
+    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
 
     class Meta:
@@ -434,7 +435,7 @@ class EditQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
-            'work_sheet',
+            'work_number',
             'authorized'
         )
 
@@ -601,16 +602,19 @@ class EditCollectionForm(forms.ModelForm):
         fields = '__all__'
 
 class NewWorkForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
+    number = forms.IntegerField(label="Numero")
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     action = HiddenField(initial='new')
 
     class Meta:
         model = Work
-        fields = '__all__'
+        fields = (
+            'date',
+            'number'
+        )
 
 
 class EditWorkForm(forms.ModelForm):
-    name = forms.CharField(max_length=200, label='Nombre')
     id = HiddenField()
     action = HiddenField(initial='edit')
 

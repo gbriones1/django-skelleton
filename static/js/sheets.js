@@ -1,55 +1,86 @@
+function getObject(name){
+    object = sessionStorage.getItem(name)
+    if (object){
+        console.log(name+" cached")
+        return function (param) {
+            _mockAjaxOptions = param;
+            param.complete("data", "textStatus", "jqXHR");
+        }
+    } else {
+        console.log(name+" not cached")
+        return $.ajax({
+            url: '/database/api/'+name+"/",
+            type: "GET",
+            success: function (data) {
+                sessionStorage.setItem(name, JSON.stringify(data))
+            },
+            error: function (data) {
+                handleErrorAlerts(data)
+            }
+        })
+    }
+}
+
 $('.sheet').each(function () {
     var sheet = $(this);
-    var url = $(this).attr("use_rest")+"/"+$(this).attr("data-obj_id")+"/";
+    var url = $(this).attr("use_rest")+$(this).attr("data-obj_id")+"/";
     var headSection = $(this).find(".sheet-head")
     var descSection = $(this).find(".sheet-desc");
     var contSection = $(this).find(".sheet-cont");
     var footSection = $(this).find(".sheet-foot");
     var contFields = contSection.data().fields;
     var descFields = descSection.data().fields;
-    $.getJSON(url, function (data) {
-        console.log(data);
-        headSection.find(".folio").text(data.id);
-        headSection.find(".date").text(data.date);
-        for (var field in descFields){
-            if (data[field]){
-                descSection.append('<div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;"><tr><th>'+descFields[field].label+'</th></tr><tr><td>'+data[field]+'</td></tr></table></div>');
-            }
-        }
-        var total = 0.0
-        for (field in contFields){
-            var price = 0.0;
-            var amount = 1;
-            var name = ''
-            if (field.endsWith('product_set')){
-                for (p in data[field]){
-                    name = data[field][p].product.code+" - "+ data[field][p].product.name+ ' - '+data[field][p].product.description
-                    price = parseFloat(data[field][p].price);
-                    amount = parseInt(data[field][p].amount);
-                    total += price*amount
-                    contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+    $.when(getObject("product")).done(function (){
+        var products = JSON.parse(sessionStorage.getItem("product") || "[]")
+        var productNames = {}
+        products.forEach(function (item, index) {
+            productNames[item.id] = item.code + " - " + item.name + " - " + item.description
+        });
+        $.getJSON(url, function (data) {
+            console.log(data);
+            headSection.find(".folio").text(data.id);
+            headSection.find(".date").text(data.date);
+            for (var field in descFields){
+                if (data[field]){
+                    descSection.append('<div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;"><tr><th>'+descFields[field].label+'</th></tr><tr><td>'+data[field]+'</td></tr></table></div>');
                 }
             }
-            else if (field.endsWith("others_set")) {
-                for (p in data[field]){
-                    name = data[field][p].description;
-                    price = parseFloat(data[field][p].price);
-                    amount = parseInt(data[field][p].amount);
-                    total += price*amount
-                    contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+            var total = 0.0
+            for (field in contFields){
+                var price = 0.0;
+                var amount = 1;
+                var name = ''
+                if (field.endsWith('product_set')){
+                    for (p in data[field]){
+                        console.log(data[field][p])
+                        name = productNames[data[field][p].product]
+                        price = parseFloat(data[field][p].price);
+                        amount = parseInt(data[field][p].amount);
+                        total += price*amount
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                    }
                 }
-            }
-            else {
-                price = parseFloat(data[field]);
-                if (price){
-                    name = contFields[field].label;
-                    amount = 1;
-                    total += price*amount;
-                    contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                else if (field.endsWith("others_set")) {
+                    for (p in data[field]){
+                        name = data[field][p].description;
+                        price = parseFloat(data[field][p].price);
+                        amount = parseInt(data[field][p].amount);
+                        total += price*amount
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                    }
                 }
-            }
+                else {
+                    price = parseFloat(data[field]);
+                    if (price){
+                        name = contFields[field].label;
+                        amount = 1;
+                        total += price*amount;
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                    }
+                }
 
-        }
-        footSection.find(".total").text("$"+total)
+            }
+            footSection.find(".total").text("$"+total)
+        });
     });
 });

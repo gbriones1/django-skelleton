@@ -13,6 +13,19 @@ from collections.abc import Mapping
 from rest_framework.exceptions import ValidationError
 
 
+LABEL_TRANSLATIONS = {
+    "date": "Fecha",
+    "name": "Nombre",
+    "amount": "Cantidad",
+    "unit": "Unidad",
+    "plates": "Placas",
+    "customer_name": "Cliente",
+    "service": "Servicio",
+    "discount": "Descuento",
+    "authorized": "Autorizado",
+    "work_sheet": "Hoja de Trabajo"
+}
+
 class ReverseFieldReference(object):
 
     def __init__(self, name, model, parent, identifier):
@@ -493,7 +506,8 @@ class QuotationSerializer(DashboardSerializer):
     authorized = serializers.BooleanField(required=False)
     service = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     discount = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
-    work_sheet = serializers.IntegerField(allow_null=True, required=False)
+    work = serializers.PrimaryKeyRelatedField(queryset=Work.objects.all(), required=False)
+    work_number = serializers.ReadOnlyField(source='work.number')
 
     class Meta:
         model = Quotation
@@ -519,6 +533,18 @@ class QuotationSerializer(DashboardSerializer):
         validated_data = super().run_validation(data2)
         return validated_data
 
+    def create(self, validated_data):
+        if self.initial_data.get('work_number'):
+            work, _ = Work.objects.get_or_create(number=self.initial_data.get('work_number'))
+            validated_data['work'] = work
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        if self.initial_data.get('work_number'):
+            work, _ = Work.objects.get_or_create(number=self.initial_data.get('work_number'))
+            validated_data['work'] = work
+        return super().update(instance, validated_data)
+
 
 class CollectionSerializer(JSONSubsetSerializer):
     date = serializers.DateField()
@@ -538,10 +564,10 @@ class SellSerializer(DashboardSerializer):
 
 class WorkSerializer(DashboardSerializer):
     date = serializers.DateField()
+    number = serializers.IntegerField()
     start_time = serializers.TimeField(required=False)
     end_time = serializers.TimeField(required=False)
     unit_section = serializers.CharField(required=False)
-    quotation = serializers.PrimaryKeyRelatedField(queryset=Quotation.objects.all(), allow_null=True, required=False)
 
     class Meta:
         model = Work

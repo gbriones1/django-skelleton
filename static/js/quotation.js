@@ -1,11 +1,16 @@
 var customers = [];
 var quotations = [];
 var pricelists = [];
+var orgSto = [];
+var stoPro = [];
 var pricelistrelated = {};
+var storages = {};
 
-$.when(getObjectFiltered("quotation", function(data) {quotations = data}), getObject("customer"), getObject("pricelist")).done(function (){
+$.when(getObjectFiltered("quotation", function(data) {quotations = data}), getObject("storage_product"), getObject("organization_storage"), getObject("customer"), getObject("pricelist")).done(function (){
     customers = JSON.parse(sessionStorage.getItem("customer") || "[]")
     pricelists = JSON.parse(sessionStorage.getItem("pricelist") || "[]")
+    stoPro = JSON.parse(sessionStorage.getItem("storage_product") || "[]")
+    orgSto = JSON.parse(sessionStorage.getItem("organization_storage") || "[]")
     buildTable()
 });
 
@@ -21,6 +26,12 @@ function buildTable (){
         })
         pricelistrelated[item.id] = productPrices
     })
+    orgSto.forEach(function (item, index) {
+        storages[item.id] = {};
+    });
+    stoPro.forEach(function (item) {
+        storages[item.organization_storage][item.product] = item.amount
+    });
     data = []
     quotations.forEach(function (item, index) {
         item.customer_name = customerNames[item.customer]
@@ -54,6 +65,11 @@ function buildTable (){
             sortable: true,
             filterControl: 'input'
         }, {
+            field: 'work_number',
+            title: 'Hoja de trabajo',
+            sortable: true,
+            filterControl: 'input'
+        }, {
             field: 'action',
             title: 'Acciones',
             formatter: actionFormatter,
@@ -61,7 +77,9 @@ function buildTable (){
             align: 'center',
             events: {
                 'click .edit': editEvent,
-                'click .delete': deleteEvent
+                'click .delete': deleteEvent,
+                'click .output': outputEvent,
+                'click .view': viewEvent
               }
         }],
         pagination: true,
@@ -240,3 +258,57 @@ $('.multiSet-container').each(function () {
         $(this).attr("data-base_price", price)
     });
 })
+
+function renderFilterForOutput(form) {
+    var selectedStorage = form.find('select#id_organization_storage').val();
+    var inStorage = storages[selectedStorage];
+    form.find('table#multiSet-table tr').each(function(){
+        if (!inStorage || !inStorage[$(this).data("id")]){
+            $(this).hide();
+        }
+    });
+}
+
+$(document).on('change', '#output.modal form select#id_organization_storage', function() {
+    var form = $(this).closest('form')
+    form.find('table#multiSet-table tr').each(function(){
+        $(this).show()
+    });
+    var search = form.find('#multiSet-search-available').val()
+    var table = form.find('#multiSet-table')
+    applySearch(search, table)
+    renderFilterForOutput(form)
+});
+
+function outputEvent (e, value, data, index) {
+    var form = $("#output form");
+    form .submit(function() {
+        return false;
+    });
+    form[0].reset();
+    initialMultiSetData(form.find('input#id_movement_product_set'), data.quotation_product_set);
+    refreshMutliSetInputs(form);
+    renderFilterForOutput(form);
+}
+
+$(document).on('click', 'button.do-output', function () {
+    var form = $(this).closest('.modal-content').find('form');
+    refreshMutliSetInputs(form);
+    var formData = new FormData(form.get(0));
+    $.ajax({
+        url: "/database/api/output/",
+        data: new URLSearchParams(formData).toString(),
+        type: 'POST',
+        success: function (data) {
+            window.location = '/database/output/';
+        },
+        error: function (data) {
+            handleErrorAlerts(data)
+        }
+    });
+});
+
+
+function viewEvent (e, value, data, index) {
+    window.location = '/database/quotation/'+data.id;
+};
