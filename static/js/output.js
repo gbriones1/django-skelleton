@@ -128,7 +128,7 @@ function productFormatter(element, row, index){
 
 function renderFilter(form) {
     var selectedStorage = form.find('select#id_organization_storage').val();
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         var inStorage = storages[selectedStorage];
         if (!inStorage){
             $(this).hide();
@@ -141,16 +141,16 @@ function renderFilter(form) {
 
 $(document).on('change', '#new select#id_organization_storage', function() {
     var form = $(this).closest('form')
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         $(this).show()
     });
-    var search = form.find('#multiSet-search-available').val()
-    var table = form.find('#multiSet-table')
+    var search = form.find('.multiSet-search-available').val()
+    var table = form.find('.multiSet-table')
     applySearch(search, table)
     renderFilter(form)
 });
 
-$(document).on('keyup change', '#multiSet-search-available', function() {
+$(document).on('keyup change', '.multiSet-search-available', function() {
     renderFilter($(this).closest('form'))
 });
 
@@ -227,7 +227,7 @@ function createOrder(data){
 }
 
 $('.multiSet-container').each(function () {
-    $(this).find('table#multiSet-table tr').each(function(){
+    $(this).find('table.multiSet-table tr').each(function(){
         var priceRaw = $(this).data("price")
         var discount = $(this).data("discount")
         var price = (priceRaw - priceRaw*(discount/100)).toFixed(2)

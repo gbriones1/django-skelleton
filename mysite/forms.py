@@ -92,9 +92,9 @@ class MultiSet(forms.widgets.Select):
         output.append(format_html('<h4{} >Available</h4>', flatatt({"style": "float: left;"})))
         output.append(format_html('<button{}><i class="fa fa-forward"></i></button>', flatatt({"class":"btn btn-primary btn-sm multiSet-add-all", "type":"button", "style": "float: right;"})))
         if self.search:
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":"multiSet-search-available"})))
+            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-available"})))
         output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        table_attrs = {"class": "table", "id":"multiSet-table"}
+        table_attrs = {"class": "table", "class":"multiSet-table"}
         if self.amounts:
             table_attrs['data-multiple'] = 'true'
         editable = {}
@@ -141,15 +141,14 @@ class MultiSet(forms.widgets.Select):
         output.append(format_html('<h4{}>Added</h4>', flatatt({"style": "float: left;"})))
         output.append(format_html('<button{}><i class="fa fa-backward"></i></button>', flatatt({"class":"btn btn-danger btn-sm multiSet-delete-all", "type":"button", "style": "float: right;"})))
         if self.search:
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":"multiSet-search-added"})))
+            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-added"})))
         output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        output.append(format_html('<table{} >', flatatt({"class": "table", 'id':"multiSet-added"})))
+        output.append(format_html('<table{} >', flatatt({"class": "table", 'class':"multiSet-added"})))
         output.append('<thead></thead><tbody></tbody></table>')
         output.append('</div>')
         output.append('</div>')
 
         output.append(format_html('<input{} />', flatatt(final_attrs)))
-        # output.append('<script>var multiSetModelName="'+model_name+'"; var multiSetInputSetId="'+final_attrs["id"]+'"</script>')
         output.append('</div>')
 
         return mark_safe('\n'.join(output))
@@ -174,7 +173,7 @@ class FormSet(forms.widgets.Select):
         final_attrs["class"] = 'formset'
         final_attrs["data-model"] = model_name
         output = []
-        table_attrs = {"class": "table", "id":"formSet-table"}
+        table_attrs = {"class": "table", "class":"formSet-table"}
         if self.allow_create:
             table_attrs['data-allow_create'] = 'true'
         output.append(format_html('<div{}>', flatatt({"class": "row formSet-container"})))
@@ -198,14 +197,13 @@ class FormSet(forms.widgets.Select):
         if self.search:
             output.append(format_html('<div{}>', flatatt({"class": "row"})))
             output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "id":"formSet-search"})))
+            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"formSet-search"})))
             output.append('</div>')
             output.append('</div>')
 
         final_attrs["data-fields"] = json.dumps(form_fields)
         output.append(format_html('<input{} />', flatatt(final_attrs)))
         output.append('</div>')
-        # output.append('<script>var formSetModelName="'+model_name+'"; var formSetInputSetId="'+final_attrs["id"]+'"; var formsetFields='+json.dumps(form_fields)+'</script>')
 
         return mark_safe('\n'.join(output))
 

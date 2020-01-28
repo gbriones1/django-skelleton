@@ -4,7 +4,7 @@ function refreshFormSetInputs(form) {
         var inputSet = $(this);
         var inputs = $(this).closest('form').find('input.formset-single');
         inputs.remove();
-        inputSet.closest('.formSet-container').find('#formSet-table tbody tr').each(function (key, value) {
+        inputSet.closest('.formSet-container').find('.formSet-table tbody tr').each(function (key, value) {
             var form = inputSet.closest('form');
             $('<input>').attr({
                 type: 'hidden',
@@ -23,12 +23,12 @@ function refreshFormSetInputs(form) {
 function initialFormSetData(input, data) {
     var headers = []
     var div = input.closest(".formSet-container")
-    div.find('#formSet-table thead th').each(function () {
+    div.find('.formSet-table thead th').each(function () {
         if ($(this).data("field")){
             headers.push($(this).data("field"));
         }
     });
-    var body = div.find('#formSet-table tbody')
+    var body = div.find('.formSet-table tbody')
     body.empty()
     for (index in data){
         var row = $('<tr>')
@@ -44,7 +44,7 @@ function initialFormSetData(input, data) {
         }
         row.attr("data-id", data[index].id);
         row.append('<td><button type="buttton" class="btn btn-sm btn-success formSet-edit"><i class="fa fa-pencil"></i></button></td>');
-        if (div.find('#formSet-table').attr('data-allow_create')){
+        if (div.find('.formSet-table').attr('data-allow_create')){
             row.append('<td><button type="buttton" class="btn btn-sm btn-danger formSet-delete"><i class="fa fa-trash"></i></button></td>');
         }
         body.append(row)
@@ -172,7 +172,7 @@ $(document).on('click', 'button.formSet-ok', function(){
     var modalId = modalForm.data("modal");
     var form = $("#"+modalId+" form");
     var headers = []
-    form.find('#formSet-table thead th').each(function () {
+    form.find('.formSet-table thead th').each(function () {
         if ($(this).data("field")){
             headers.push($(this).data("field"));
         }
@@ -182,7 +182,7 @@ $(document).on('click', 'button.formSet-ok', function(){
         oldData = JSON.parse(oldData)
     }
     if (oldData){
-        form.find('#formSet-table tbody tr').each(function(){
+        form.find('.formSet-table tbody tr').each(function(){
             var row = $(this);
             if (JSON.stringify(oldData) == JSON.stringify(row.data())){
                 for (field in headers) {
@@ -233,10 +233,10 @@ $(document).on('click', 'button.formSet-ok', function(){
             row.append("<td>"+text+"</td>");
         }
         row.append('<td><button type="buttton" class="btn btn-sm btn-success formSet-edit"><i class="fa fa-pencil"></i></button></td>');
-        if (form.find('#formSet-table').attr('data-allow_create')){
+        if (form.find('.formSet-table').attr('data-allow_create')){
             row.append('<td><button type="buttton" class="btn btn-sm btn-danger formSet-delete"><i class="fa fa-trash"></i></button></td>');
         }
-        form.find('#formSet-table').append(row);
+        form.find('.formSet-table').append(row);
     }
     modalForm.removeAttr("data-modal");
     modalForm.data("modal", "");

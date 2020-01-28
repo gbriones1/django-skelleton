@@ -92,7 +92,7 @@ function buildTable (){
 $('select#id_pricelist').attr('disabled', 'disabled');
 
 $('input.multiset').each(function () {
-    $(this).closest('.multiSet-container').find('#multiSet-table tbody tr').each( function () {
+    $(this).closest('.multiSet-container').find('.multiSet-table tbody tr').each( function () {
         $(this).attr("data-base_price", $(this).attr("data-price"));
     });
 });
@@ -104,7 +104,7 @@ $(document).on('change', 'select#id_base_price', function(){
         form.find('select#id_customer').val("");
         form.find('select#id_customer').attr('disabled', 'disabled');
         form.find('select#id_pricelist').removeAttr('disabled');
-        form.find('#multiSet-table tbody tr').each(function () {
+        form.find('.multiSet-table tbody tr').each(function () {
             $(this).hide();
         });
     }
@@ -113,7 +113,7 @@ $(document).on('change', 'select#id_base_price', function(){
         form.find('select#id_pricelist').val('');
         form.find('select#id_pricelist').attr('disabled', 'disabled');
         var percentagesDef = JSON.parse(form.find('input#id_percentages').val())
-        form.find('#multiSet-table tbody tr').each(function () {
+        form.find('.multiSet-table tbody tr').each(function () {
             $(this).show()
             var basePrice = parseFloat($(this).attr("data-base_price"));
             var percentage = 0
@@ -135,19 +135,19 @@ $(document).on('change', 'select#id_pricelist', function(){
     var form = $(this).closest('form')
     if (form.find('select#id_pricelist').val()){
         var pricelistId = form.find('select#id_pricelist').val();
-        form.find('#multiSet-table tbody tr').each(function () {
+        form.find('.multiSet-table tbody tr').each(function () {
             $(this).show();
             $(this).attr("data-price", pricelistrelated[pricelistId][$(this).data("id")]);
         });
         form.find('select#id_base_price').attr('disabled', 'disabled');
-        var search = form.find('#multiSet-search-available').val()
-        var table = form.find('#multiSet-table')
+        var search = form.find('.multiSet-search-available').val()
+        var table = form.find('.multiSet-table')
         applySearch(search, table)
         renderFilter(form)
     }
     else{
         form.find('select#id_base_price').removeAttr('disabled');
-        form.find('#multiSet-table tbody tr').each(function () {
+        form.find('.multiSet-table tbody tr').each(function () {
             $(this).hide();
         });
     }
@@ -156,7 +156,7 @@ $(document).on('change', 'select#id_pricelist', function(){
 function renderFilter(form) {
     var pricelistId = parseInt(form.find('select#id_pricelist').val());
     var related = pricelistrelated[pricelistId];
-    form.find('#multiSet-table tbody tr').each(function () {
+    form.find('.multiSet-table tbody tr').each(function () {
         if (!related || !related[$(this).data("id")]){
             $(this).hide();
         }
@@ -187,7 +187,7 @@ $(document).on('click', '.multiSet-add-all', function(){
 
 $(document).on('click', '.multiSet-delete', function(){
     $('input.multiset').each(function functionName() {
-        if ($(this).closest('form').find('#multiSet-added tbody').children().length == 0){
+        if ($(this).closest('form').find('.multiSet-added tbody').children().length == 0){
             if ($(this).closest('form').find('select#id_pricelist').val()){
                 $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
             }
@@ -220,11 +220,11 @@ $(document).on('submit', 'form', function(){
 
 $(document).on('click', 'button[data-target="#edit"]', function () {
     var form = $("#edit form");
-    form.find('#multiSet-table tbody tr').each(function () {
+    form.find('.multiSet-table tbody tr').each(function () {
         $(this).show();
     });
     if (form.find('select#id_pricelist').val()){
-        if (form.find('#multiSet-added tbody').children().length != 0){
+        if (form.find('.multiSet-added tbody').children().length != 0){
             form.find('select#id_pricelist').attr('disabled', 'disabled');
         }
         form.find('select#id_base_price').val("pricelist");
@@ -235,7 +235,7 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     }
     else {
         form.find('select#id_pricelist').attr('disabled', 'disabled');
-        if (form.find('#multiSet-added tbody').children().length != 0){
+        if (form.find('.multiSet-added tbody').children().length != 0){
             form.find('select#id_base_price option[value="pricelist"]').attr('disabled', 'disabled');
         }
     }
@@ -247,7 +247,7 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
 });
 
 $('.multiSet-container').each(function () {
-    $(this).find('table#multiSet-table tr').each(function(){
+    $(this).find('table.multiSet-table tr').each(function(){
         var priceRaw = $(this).data("price")
         var discount = $(this).data("discount")
         var price = (priceRaw - priceRaw*(discount/100)).toFixed(2)
@@ -262,7 +262,7 @@ $('.multiSet-container').each(function () {
 function renderFilterForOutput(form) {
     var selectedStorage = form.find('select#id_organization_storage').val();
     var inStorage = storages[selectedStorage];
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         if (!inStorage || !inStorage[$(this).data("id")]){
             $(this).hide();
         }
@@ -271,11 +271,11 @@ function renderFilterForOutput(form) {
 
 $(document).on('change', '#output.modal form select#id_organization_storage', function() {
     var form = $(this).closest('form')
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         $(this).show()
     });
-    var search = form.find('#multiSet-search-available').val()
-    var table = form.find('#multiSet-table')
+    var search = form.find('.multiSet-search-available').val()
+    var table = form.find('.multiSet-table')
     applySearch(search, table)
     renderFilterForOutput(form)
 });

@@ -1,15 +1,12 @@
-// console.log(multiSetModelName)
-// console.log(multiSetInputSetId)
-
 function refreshMutliSetInputs(form) {
     var valueSet = []
     form.find('input.multiset').each(function () {
         var inputSet = $(this);
         var inputs = $(this).closest('form').find('input.multiset-single');
         inputs.remove();
-        var multiple = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-multiple')
-        var editable = inputSet.closest('.multiSet-container').find('table#multiSet-table').attr('data-editable')
-        inputSet.closest('.multiSet-container').find('#multiSet-added tbody tr').each(function (key, value) {
+        var multiple = inputSet.closest('.multiSet-container').find('table.multiSet-table').attr('data-multiple')
+        var editable = inputSet.closest('.multiSet-container').find('table.multiSet-table').attr('data-editable')
+        inputSet.closest('.multiSet-container').find('.multiSet-added tbody tr').each(function (key, value) {
             var itemData = null;
             if (multiple || editable){
                 itemData = $(this).data();
@@ -53,10 +50,10 @@ function initialMultiSetData(input, data) {
     var div = input.closest('.multiSet-container')
     // var modelName = input.attr('data-model')
     var reference = input.data("related")
-    var added = div.find('#multiSet-added')
+    var added = div.find('.multiSet-added')
     added.empty()
-    var multiple = div.find('#multiSet-table').attr('data-multiple')
-    var editable = div.find('#multiSet-table').attr('data-editable')
+    var multiple = div.find('.multiSet-table').attr('data-multiple')
+    var editable = div.find('.multiSet-table').attr('data-editable')
     var thead = "<thead><tr><th>Nombre</td>"
     if (multiple){
         thead += "<th>Cant</th>"
@@ -71,7 +68,7 @@ function initialMultiSetData(input, data) {
     added.append(thead)
     var body = $('<tbody>');
     for (index in data){
-        var text = $(div.find('#multiSet-table tr[data-id="'+data[index][reference]+'"]').children()[0]).text()
+        var text = $(div.find('.multiSet-table tr[data-id="'+data[index][reference]+'"]').children()[0]).text()
         var row = '<tr data-id="'+data[index].id+'" data-'+reference+'="'+data[index][reference]+'"><td>'+text+'</td>'
         if (multiple){
             row += '<td><input type="number" class="form-control multiSet-amount" value="'+data[index].amount+'"></td>'
@@ -93,13 +90,13 @@ function initialMultiSetData(input, data) {
     refreshMutliSetInputs(input.closest('form'));
 }
 
-$(document).on('keyup change', '#multiSet-search-available', function() {
-    var table = $(this).closest('.multiSet-container').find('table#multiSet-table')
+$(document).on('keyup change', '.multiSet-search-available', function() {
+    var table = $(this).closest('.multiSet-container').find('table.multiSet-table')
     applySearch($(this).val(), table);
 });
 
-$(document).on('keyup change', '#multiSet-search-added', function() {
-    var table = $(this).closest('.multiSet-container').find('table#multiSet-added')
+$(document).on('keyup change', '.multiSet-search-added', function() {
+    var table = $(this).closest('.multiSet-container').find('table.multiSet-added')
     applySearch($(this).val(), table);
 });
 
@@ -109,8 +106,8 @@ $(document).on('click', '.multiSet-add', function(){
     var multiple = $(this).closest('table').attr('data-multiple')
     var editable = $(this).closest('table').attr('data-editable')
     var text = $($(this).closest('tr').children()[0]).text()
-    var added_thead = $(this).closest('.multiSet-container').find('#multiSet-added thead')
-    var added = $(this).closest('.multiSet-container').find('#multiSet-added tbody')
+    var added_thead = $(this).closest('.multiSet-container').find('.multiSet-added thead')
+    var added = $(this).closest('.multiSet-container').find('.multiSet-added tbody')
     if (added_thead.children().length == 0){
         var thead = "<tr><th>Nombre</td>"
         if (multiple){
@@ -161,11 +158,11 @@ $(document).on('click', '.multiSet-delete', function() {
 
 $(document).on('click', '.multiSet-add-all', function(){
     var div = $(this).closest('.multiSet-container');
-    var added = div.find('#multiSet-added tbody');
-    var multiple = div.find('#multiSet-table').attr('data-multiple');
-    var editable = div.find('#multiSet-table').attr('data-editable');
+    var added = div.find('.multiSet-added tbody');
+    var multiple = div.find('.multiSet-table').attr('data-multiple');
+    var editable = div.find('.multiSet-table').attr('data-editable');
     var reference = div.find('input.multiset').data("related");
-    div.find('#multiSet-table tbody tr').each(function() {
+    div.find('.multiSet-table tbody tr').each(function() {
         if (this.style.display != 'none'){
             var val = $(this).attr('data-id')
             var text = $($(this).children()[0]).text()
@@ -194,8 +191,7 @@ $(document).on('click', '.multiSet-add-all', function(){
 });
 
 $(document).on('click', '.multiSet-delete-all', function() {
-    // var div = $(this).closest('div');
-    $(this).closest('div').find('#multiSet-added tbody tr').remove();
+    $(this).closest('div').find('.multiSet-added tbody tr').remove();
     refreshMutliSetInputs($(this).closest("form"));
     return false;
 });
