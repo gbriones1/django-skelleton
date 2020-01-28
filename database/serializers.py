@@ -84,8 +84,12 @@ class DashboardSerializer(serializers.Serializer):
             else:
                 data[parent] = self.instance
                 instance = serializer.Meta.model(**data)
-            data[parent] = self.instance.id
+            if self.instance:
+                data[parent] = self.instance.id
             s = serializer(instance, data=data)
+            if not self.instance:
+                s.fields[parent].required = False
+                s.fields[parent].allow_null = True
             if s.is_valid():
                 self.reverse_fields_serializers[field].append(s)
             else:
@@ -210,6 +214,13 @@ class ProviderSerializer(DashboardSerializer):
         validated_data = super().run_validation(data)
         self.validate_reverse_field('provider_contact_set', ProviderContactSerializer, 'provider')
         return validated_data
+
+    def create(self, validated_data):
+        obj = super().create(validated_data)
+        for pcs in self.reverse_fields_serializers['provider_contact_set']:
+            pcs.validated_data['provider'] = obj
+            pcs.save()
+        return obj
     
     def update(self, instance, validated_data):
         updated_ids = []
@@ -240,6 +251,13 @@ class CustomerSerializer(DashboardSerializer):
         validated_data = super().run_validation(data)
         self.validate_reverse_field('customer_contact_set', CustomerContactSerializer, 'customer')
         return validated_data
+
+    def create(self, validated_data):
+        obj = super().create(validated_data)
+        for pcs in self.reverse_fields_serializers['customer_contact_set']:
+            pcs.validated_data['customer'] = obj
+            pcs.save()
+        return obj
     
     def update(self, instance, validated_data):
         updated_ids = []
