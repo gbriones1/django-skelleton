@@ -6,11 +6,13 @@ TRANSLATIONS = {
     'unit': "Unidad",
     'plates': "Placas",
     'customer_name': "Cliente",
+    'customer': "Cliente",
     'service': "Servicio",
     'discount': "Descuento",
     'authorized': "Autorizado",
     'work_sheet': "Hoja de Trabajo",
     'organization_storage': 'Almacen',
+    'This field is required.': 'Este campo no puede estar vacio',
     'This field may not be blank.': 'Este campo no puede estar vacio',
     'This field may not be null.': 'Este campo no puede estar vacio',
 }

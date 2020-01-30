@@ -94,7 +94,7 @@ class MultiSet(forms.widgets.Select):
         if self.search:
             output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-available"})))
         output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        table_attrs = {"class": "table", "class":"multiSet-table"}
+        table_attrs = {"class": "table", "class":"table multiSet-table"}
         if self.amounts:
             table_attrs['data-multiple'] = 'true'
         editable = {}
@@ -143,7 +143,7 @@ class MultiSet(forms.widgets.Select):
         if self.search:
             output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-added"})))
         output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        output.append(format_html('<table{} >', flatatt({"class": "table", 'class':"multiSet-added"})))
+        output.append(format_html('<table{} >', flatatt({"class": "table", 'class':"table multiSet-added"})))
         output.append('<thead></thead><tbody></tbody></table>')
         output.append('</div>')
         output.append('</div>')
@@ -173,7 +173,7 @@ class FormSet(forms.widgets.Select):
         final_attrs["class"] = 'formset'
         final_attrs["data-model"] = model_name
         output = []
-        table_attrs = {"class": "table", "class":"formSet-table"}
+        table_attrs = {"class": "table", "class":"table formSet-table"}
         if self.allow_create:
             table_attrs['data-allow_create'] = 'true'
         output.append(format_html('<div{}>', flatatt({"class": "row formSet-container"})))

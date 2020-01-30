@@ -35,7 +35,7 @@ function initialFormSetData(input, data) {
         for (field in headers){
             var text = data[index][headers[field]];
             row.attr("data-"+headers[field], text);
-            if (text == true){
+            if (text === true){
                 text = '<i class="fa fa-check-circle"></i>'
             } else if (text === false) {
                 text = ''
@@ -197,7 +197,7 @@ $(document).on('click', 'button.formSet-ok', function(){
                     }
                     row.attr("data-"+headers[field], text);
                     row.data(headers[field], text);
-                    if (text == true){
+                    if (text === true){
                         text = '<i class="fa fa-check-circle"></i>'
                         $(row.children()[field]).html(text);
                     } else if (text === false) {
@@ -223,7 +223,7 @@ $(document).on('click', 'button.formSet-ok', function(){
             }
             row.attr("data-"+headers[field], text);
             row.data(headers[field], text);
-            if (text == true){
+            if (text === true){
                 text = '<i class="fa fa-check-circle"></i>'
             } else if (text === false) {
                 text = ''

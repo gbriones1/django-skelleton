@@ -516,7 +516,7 @@ class QuotationOtherSerializer(JSONSubsetSerializer):
 class QuotationSerializer(DashboardSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     pricelist = serializers.PrimaryKeyRelatedField(queryset=PriceList.objects.all(), allow_null=True, required=False)
-    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), allow_null=True, required=False)
+    customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
     quotation_product_set = QuotationProductSerializer(many=True, required=False)
     quotation_others_set = QuotationOtherSerializer(many=True, required=False)
     plates = serializers.CharField(allow_null=True, required=False)
@@ -548,6 +548,8 @@ class QuotationSerializer(DashboardSerializer):
         data2 = data.copy()
         if self.instance:
             data2["date"] = self.instance.date
+        elif not data2.get('customer') and data2.get('pricelist'):
+            data2['customer'] = PriceList.objects.get(id=data2.get('pricelist')).customer.id
         validated_data = super().run_validation(data2)
         return validated_data
 

@@ -74,6 +74,9 @@ $('.sheet').each(function () {
                     if (price){
                         name = contFields[field].label;
                         amount = 1;
+                        if (field == 'discount'){
+                            amount = -1;
+                        }
                         total += price*amount;
                         contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
                     }

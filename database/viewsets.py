@@ -650,8 +650,8 @@ object_map = {
             'edit': EditQuotationForm,
             'delete': DeleteForm,
             'mail': QuotationMailForm,
-            # 'work': QuotationWorkForm,
             'output': QuotationOutputForm,
+            'sell': QuotationSellForm
         },
         'table_fields': ['id', 'date', 'unit', 'plates', 'authorized', 'service', 'discount', 'total', 'customer_name', 'work_sheet'],
         'sheet_desc': ['customer_name', 'unit', 'plates', 'work'],
@@ -662,6 +662,7 @@ object_map = {
             # graphics.Action('work', 'modal', text='Trabajo', icon='wrench', style='info', method="POST"),
             graphics.Action('output', 'modal', text='Salida', icon='sign-out', style='info', method="POST"),
             graphics.Action('view', 'navigate', text='Ver', icon='eye', style='info', method="GET"),
+            graphics.Action('sell', 'modal', text='Venta', icon='money', style='info', method="POST"),
             ],
         'js': ['formset', 'multiset', 'dashboard', 'quotation'],
     },

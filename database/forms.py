@@ -376,7 +376,7 @@ class NewQuotationForm(forms.ModelForm):
     unit = forms.CharField(max_length=60, label='Unidad')
     plates = forms.CharField(max_length=10, label='Placas')
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenJSONField(PercentageSerializer)
+    # percentages = HiddenJSONField(PercentageSerializer)
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
@@ -392,7 +392,6 @@ class NewQuotationForm(forms.ModelForm):
             'unit',
             'plates',
             'base_price',
-            'percentages',
             'pricelist',
             'customer',
             'quotation_product_set',
@@ -410,9 +409,8 @@ class EditQuotationForm(forms.ModelForm):
     unit = forms.CharField(max_length=60, label='Unidad')
     plates = forms.CharField(max_length=10, label='Placas')
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
-    percentages = HiddenJSONField(PercentageSerializer)
-    pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
-    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
+    pricelist = HiddenField()
+    customer = HiddenField()
     quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
@@ -427,7 +425,6 @@ class EditQuotationForm(forms.ModelForm):
             'unit',
             'plates',
             'base_price',
-            'percentages',
             'pricelist',
             'customer',
             'quotation_product_set',
@@ -638,6 +635,27 @@ class QuotationMailForm(forms.Form):
     subject = forms.CharField(label="Asunto", initial="Cotizacion de Muelles Obrero")
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje se envia la siguente cotizacion")
     action = HiddenField(initial='mail')
+
+class QuotationSellForm(forms.ModelForm):
+    number = forms.CharField(max_length=200, label='Numero')
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    due = forms.DateField(widget=DateInput(), label='Vence')
+    customer = HiddenField()
+    price = HiddenField()
+    credit = HiddenField()
+    discount = HiddenField()
+    action = HiddenField(initial='sell')
+
+    class Meta:
+        model = Sell
+        fields = (
+            "number",
+            "date",
+            "due",
+            "customer",
+            "price",
+            "discount"
+        )
 
 class QuotationWorkForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%d"))

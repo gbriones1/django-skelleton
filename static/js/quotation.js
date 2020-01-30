@@ -3,12 +3,14 @@ var quotations = [];
 var pricelists = [];
 var orgSto = [];
 var stoPro = [];
+var pergentages = [];
 var pricelistrelated = {};
 var storages = {};
 
-$.when(getObjectFiltered("quotation", function(data) {quotations = data}), getObject("storage_product"), getObject("organization_storage"), getObject("customer"), getObject("pricelist")).done(function (){
+$.when(getObjectFiltered("quotation", function(data) {quotations = data}), getObject("percentage"), getObject("storage_product"), getObject("organization_storage"), getObject("customer"), getObject("pricelist")).done(function (){
     customers = JSON.parse(sessionStorage.getItem("customer") || "[]")
     pricelists = JSON.parse(sessionStorage.getItem("pricelist") || "[]")
+    percentages = JSON.parse(sessionStorage.getItem("percentage") || "[]")
     stoPro = JSON.parse(sessionStorage.getItem("storage_product") || "[]")
     orgSto = JSON.parse(sessionStorage.getItem("organization_storage") || "[]")
     buildTable()
@@ -35,6 +37,16 @@ function buildTable (){
     data = []
     quotations.forEach(function (item, index) {
         item.customer_name = customerNames[item.customer]
+        var total = 0
+        item.quotation_product_set.forEach(function (item2){
+            total += item2.price * item2.amount
+        })
+        item.quotation_others_set.forEach(function (item2){
+            total += item2.price * item2.amount
+        })
+        total += parseFloat(item.service)
+        total -= parseFloat(item.discount)
+        item.total = total.toFixed(2)
         data.push(item)
     })
     $('#table').bootstrapTable({
@@ -70,13 +82,18 @@ function buildTable (){
             sortable: true,
             filterControl: 'input'
         }, {
+            field: 'total',
+            title: 'Total',
+            sortable: true,
+            filterControl: 'input'
+        }, {
             field: 'action',
             title: 'Acciones',
             formatter: actionFormatter,
             width: actions.length*60,
             align: 'center',
             events: {
-                'click .edit': editEvent,
+                'click .edit': quotationEditEvent,
                 'click .delete': deleteEvent,
                 'click .output': outputEvent,
                 'click .view': viewEvent,
@@ -98,31 +115,40 @@ $('input.multiset').each(function () {
     });
 });
 
-$(document).on('change', 'select#id_base_price', function(){
+$(document).on('change', 'select[name="base_price"]', function(){
     var percentageName = $(this).val()
     var form = $(this).closest('form')
+    var data = getFormData(form)
     if (percentageName == 'pricelist'){
         form.find('select#id_customer').val("");
         form.find('select#id_customer').attr('disabled', 'disabled');
         form.find('select#id_pricelist').removeAttr('disabled');
-        form.find('.multiSet-table tbody tr').each(function () {
-            $(this).hide();
-        });
+        if (data.pricelist){
+            form.find('.multiSet-table tbody tr').each(function () {
+                $(this).show()
+                $(this).attr("data-price", pricelistrelated[data.pricelist][$(this).data("id")]);
+            });
+            renderFilter(form, data.pricelist);
+        }
+        else {
+            form.find('.multiSet-table tbody tr').each(function () {
+                $(this).hide();
+            });
+        }
     }
     else {
         form.find('select#id_customer').removeAttr('disabled');
         form.find('select#id_pricelist').val('');
         form.find('select#id_pricelist').attr('disabled', 'disabled');
-        var percentagesDef = JSON.parse(form.find('input#id_percentages').val())
         form.find('.multiSet-table tbody tr').each(function () {
             $(this).show()
             var basePrice = parseFloat($(this).attr("data-base_price"));
             var percentage = 0
             if (percentageName){
-                for (index in percentagesDef){
-                    var max_price_limit = parseFloat(percentagesDef[index].max_price_limit)
+                for (index in percentages){
+                    var max_price_limit = parseFloat(percentages[index].max_price_limit)
                     if (basePrice <= max_price_limit){
-                        percentage = parseFloat(percentagesDef[index][percentageName])
+                        percentage = parseFloat(percentages[index][percentageName])
                         break;
                     }
                 }
@@ -144,7 +170,7 @@ $(document).on('change', 'select#id_pricelist', function(){
         var search = form.find('.multiSet-search-available').val()
         var table = form.find('.multiSet-table')
         applySearch(search, table)
-        renderFilter(form)
+        renderFilter(form, parseInt(form.find('select#id_pricelist').val()))
     }
     else{
         form.find('select#id_base_price').removeAttr('disabled');
@@ -154,8 +180,7 @@ $(document).on('change', 'select#id_pricelist', function(){
     }
 });
 
-function renderFilter(form) {
-    var pricelistId = parseInt(form.find('select#id_pricelist').val());
+function renderFilter(form, pricelistId) {
     var related = pricelistrelated[pricelistId];
     form.find('.multiSet-table tbody tr').each(function () {
         if (!related || !related[$(this).data("id")]){
@@ -166,7 +191,6 @@ function renderFilter(form) {
 
 $(document).on('click', '.multiSet-add', function(){
     if($(this).closest('form').find('select#id_pricelist').val()){
-        $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_base_price').attr('disabled', 'disabled');
     }
     else {
@@ -177,7 +201,6 @@ $(document).on('click', '.multiSet-add', function(){
 
 $(document).on('click', '.multiSet-add-all', function(){
     if($(this).closest('form').find('select#id_pricelist').val()){
-        $(this).closest('form').find('select#id_pricelist').attr('disabled', 'disabled');
         $(this).closest('form').find('select#id_base_price').attr('disabled', 'disabled');
     }
     else {
@@ -189,10 +212,7 @@ $(document).on('click', '.multiSet-add-all', function(){
 $(document).on('click', '.multiSet-delete', function(){
     $('input.multiset').each(function functionName() {
         if ($(this).closest('form').find('.multiSet-added tbody').children().length == 0){
-            if ($(this).closest('form').find('select#id_pricelist').val()){
-                $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
-            }
-            else{
+            if (!$(this).closest('form').find('select#id_pricelist').val()){
                 $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
                 $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
             }
@@ -203,10 +223,7 @@ $(document).on('click', '.multiSet-delete', function(){
 
 $(document).on('click', '.multiSet-delete-all', function(){
     $('input.multiset').each(function functionName() {
-        if ($(this).closest('form').find('select#id_pricelist').val()){
-            $(this).closest('form').find('select#id_pricelist').removeAttr('disabled');
-        }
-        else{
+        if (!$(this).closest('form').find('select#id_pricelist').val()){
             $(this).closest('form').find('select#id_base_price').removeAttr('disabled');
             $(this).closest('form').find('select#id_base_price option[value="pricelist"]').removeAttr('disabled');
         }
@@ -214,38 +231,20 @@ $(document).on('click', '.multiSet-delete-all', function(){
     return false;
 });
 
-$(document).on('submit', 'form', function(){
-    $(this).find('select#id_pricelist').removeAttr('disabled');
-    $(this).find('select#id_customer').removeAttr('disabled');
-});
-
-$(document).on('click', 'button[data-target="#edit"]', function () {
+function quotationEditEvent(e, value, data, index) {
+    editEvent(e, value, data, index)
     var form = $("#edit form");
-    form.find('.multiSet-table tbody tr').each(function () {
-        $(this).show();
-    });
-    if (form.find('select#id_pricelist').val()){
-        if (form.find('.multiSet-added tbody').children().length != 0){
-            form.find('select#id_pricelist').attr('disabled', 'disabled');
-        }
-        form.find('select#id_base_price').val("pricelist");
-        form.find('select#id_base_price').attr('disabled', 'disabled');
-        form.find('select#id_customer').val('');
-        form.find('select#id_customer').attr('disabled', 'disabled');
-        renderFilter(form)
+    if (data.pricelist){
+        form.find('.multiSet-table tbody tr').each(function () {
+            $(this).show()
+            $(this).attr("data-price", pricelistrelated[data.pricelist][$(this).data("id")]);
+        });
+        renderFilter(form, data.pricelist)
+        form.find('select[name="base_price"]').val("pricelist")
     }
-    else {
-        form.find('select#id_pricelist').attr('disabled', 'disabled');
-        if (form.find('.multiSet-added tbody').children().length != 0){
-            form.find('select#id_base_price option[value="pricelist"]').attr('disabled', 'disabled');
-        }
-    }
-    var value = form.find('input#id_quotation_product_set').val() || "[]"
-    if (value){
-        value = JSON.parse(value)
-    }
-    initialMultiSetData(form.find('input#id_quotation_product_set'), value)
-});
+    initialMultiSetData(form.find('input[name="quotation_product_set"]'), data.quotation_product_set)
+    initialMultiSetData(form.find('input[name="quotation_others_set"]'), data.quotation_others_set)
+}
 
 $('.multiSet-container').each(function () {
     $(this).find('table.multiSet-table tr').each(function(){
