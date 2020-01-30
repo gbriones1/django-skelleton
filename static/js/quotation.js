@@ -301,6 +301,7 @@ $(document).on('click', 'button.do-output', function () {
         data: new URLSearchParams(formData).toString(),
         type: 'POST',
         success: function (data) {
+            sessionStorage.removeItem('storage_product')
             window.location = '/database/output/';
         },
         error: function (data) {

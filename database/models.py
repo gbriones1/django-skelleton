@@ -415,11 +415,7 @@ class Movement_Product(models.Model):
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
     def save(self, *args, **kwargs):
-        sp = Storage_Product.objects.filter(organization_storage=self.movement.organization_storage, product=self.product)
-        if sp:
-            sp = sp[0]
-        else:
-            sp = Storage_Product(organization_storage=self.movement.organization_storage, product=self.product, amount=0, must_have=0)
+        sp, _ = Storage_Product.objects.get_or_create(organization_storage=self.movement.organization_storage, product=self.product)
         difference = self.amount
         if self.id:
             old = Movement_Product.objects.get(id=self.id)

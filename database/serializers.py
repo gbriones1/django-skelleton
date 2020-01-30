@@ -98,11 +98,10 @@ class DashboardSerializer(serializers.Serializer):
             raise ValidationError(self._errors)
 
     def create_reverse_field(self, set_data, instance, reference):
-        obj_list = []
         for data in set_data:
             data[reference.parent] = instance
-            obj_list.append(reference.model(**data))
-        reference.model.objects.bulk_create(obj_list)
+            obj = reference.model(**data)
+            obj.save()
 
     def update_reverse_field(self, set_data, instance, reference):
         for obj in getattr(instance, reference.name).all():
