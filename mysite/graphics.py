@@ -174,9 +174,11 @@ class DescriptionSheet(Section):
                         self.total += float(p.price)*int(p.amount)
                         self.cont.append({'label': p.description, 'price': float(p.price), "amount": int(p.amount), "total": float(p.price)*int(p.amount)})
                 elif float(getattr(instance, field)):
-                    self.total += float(getattr(instance, field))
-                    self.cont.append({'label': cont_fields[field]['label'], 'price': float(getattr(instance, field)), "amount": 1, "total": float(getattr(instance, field))})
-
+                    price = float(getattr(instance, field))
+                    if field == 'discount':
+                        price *= -1
+                    self.total += price
+                    self.cont.append({'label': cont_fields[field]['label'], 'price': price, "amount": 1, "total": price})
 class Modal(Section):
 
     @staticmethod

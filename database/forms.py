@@ -682,13 +682,20 @@ class QuotationOutputForm(forms.ModelForm):
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
     movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
-    destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
+    destination = HiddenField()
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
     action = HiddenField(initial='output')
 
     class Meta:
         model = Output
-        fields = "__all__"
+        fields = (
+            'date',
+            'organization_storage',
+            'employee',
+            'replacer',
+            'movement_product_set',
+            'destination'
+        )
 
 class OrderOutputForm(forms.ModelForm):
     id = HiddenField()

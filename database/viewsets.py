@@ -654,7 +654,7 @@ object_map = {
             'sell': QuotationSellForm
         },
         'table_fields': ['id', 'date', 'unit', 'plates', 'authorized', 'service', 'discount', 'total', 'customer_name', 'work_sheet'],
-        'sheet_desc': ['customer_name', 'unit', 'plates', 'work'],
+        'sheet_desc': ['customer_name', 'unit', 'plates'],
         'sheet_cont': ['quotation_product_set', 'quotation_others_set', 'service', 'discount'],
         'filter_form': DateTimeRangeFilterForm(),
         'custom_reg_actions': [

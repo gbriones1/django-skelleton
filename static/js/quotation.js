@@ -286,6 +286,7 @@ function outputEvent (e, value, data, index) {
         return false;
     });
     form[0].reset();
+    form.find('input[name="destination"]').val(data.customer);
     initialMultiSetData(form.find('input#id_movement_product_set'), data.quotation_product_set);
     refreshMutliSetInputs(form);
     renderFilterForOutput(form);
