@@ -175,10 +175,11 @@ $(document).on('click', 'button.do-input', function () {
         data: new URLSearchParams(formData).toString(),
         type: 'POST',
         success: function (data) {
+            sessionStorage.removeItem('storage_product')
             window.location = '/database/input/'
         },
         error: function (data) {
-            alert(data.responseText)
+            createAlert(data.responseText, "danger")
         }
     });
 });
@@ -208,7 +209,7 @@ $(document).on('click', 'button.do-mail', function () {
             location.reload();
         },
         error: function (data) {
-            alert(data.responseText)
+            createAlert(data.responseText, "danger")
         }
     });
 });

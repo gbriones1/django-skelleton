@@ -224,7 +224,7 @@ class OrderViewSet(APIWrapper):
         mail_error = None
         config = Configuration.objects.all()
         if config and config[0].sender_email:
-            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'))
+            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'), fail_no_dest=False)
         if mail_error:
             response.status_code = 499
             response.data = {"error": mail_error}
@@ -267,7 +267,7 @@ class OrderViewSet(APIWrapper):
         return Response([response], status=status)
 
     @staticmethod
-    def send_email(order, message):
+    def send_email(order, message, fail_no_dest=True):
         message = message+"\n\nPedido numero: {}\n".format(order.id)
         for p in order.order_product:
             message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
@@ -292,7 +292,7 @@ class OrderViewSet(APIWrapper):
                         return "Fallo envio de email a {}".format(dest)
             else:
                 return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
-        else:
+        elif fail_no_dest:
             return "No se encontraron destinatarios para el proveedor {}".format(order.provider.name)
         return None
 

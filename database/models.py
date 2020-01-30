@@ -59,7 +59,7 @@ class Provider_Contact(models.Model):
 
 class Invoice(models.Model):
     number = models.CharField(max_length=30)
-    date = models.DateField()
+    date = models.DateField(default=timezone.now)
     due = models.DateField(null=True)
     provider = models.ForeignKey(Provider, null=True, on_delete=models.CASCADE)
     price = models.DecimalField(max_digits=9, decimal_places=2, default=0)
@@ -71,7 +71,7 @@ class Invoice(models.Model):
         return self.number
 
     class Meta:
-        unique_together = ('number', 'date')
+        unique_together = ('number', 'provider')
 
     def recalculate_payments(self, *args, **kwargs):
         acc = 0
@@ -237,9 +237,12 @@ class Product(models.Model):
             if obj_copy.picture and obj_copy.picture != self.picture:
                 os.remove(obj_copy.picture.file.name)
             super(Product, self).save(*args, **kwargs)
-            picture = Image.open(self.picture.file)
-            picture.thumbnail((500,500), Image.ANTIALIAS)
-            picture.save(self.picture.file.name)
+            try:
+                picture = Image.open(self.picture.file)
+                picture.thumbnail((500,500), Image.ANTIALIAS)
+                picture.save(self.picture.file.name)
+            except:
+                pass
         else:
             if obj_copy.picture:
                 os.remove(obj_copy.picture.file.name)
@@ -283,8 +286,8 @@ class Organization_Storage(models.Model):
 class Storage_Product(models.Model):
     organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    amount = models.IntegerField()
-    must_have = models.IntegerField(null=True)
+    amount = models.IntegerField(default=0)
+    must_have = models.IntegerField(default=0)
 
     @property
     def product_code(self):
@@ -456,6 +459,7 @@ class Movement_Product(models.Model):
 
 class Input(Movement):
     invoice = models.ForeignKey(Invoice, null=True, on_delete=models.CASCADE)
+    provider = models.ForeignKey(Provider, null=True, on_delete=models.CASCADE)
 
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)

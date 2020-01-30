@@ -408,6 +408,7 @@ class OrderSerializer(DashboardSerializer):
         return validated_data
 
 class InputSerializer(MovementSerializer):
+    provider = serializers.PrimaryKeyRelatedField(queryset=Provider.objects.all())
     invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all(), required=False)
     invoice_number = serializers.ReadOnlyField(source='invoice.number')
     invoice_date = serializers.ReadOnlyField(source='invoice.date')
@@ -425,13 +426,15 @@ class InputSerializer(MovementSerializer):
 
     def create(self, validated_data):
         if self.initial_data.get('invoice_number'):
-            invoice, _ = Invoice.objects.get_or_create(number=self.initial_data.get('invoice_number'), date=self.initial_data.get('invoice_date'))
+            provider = Provider.objects.get(id=self.initial_data['provider'])
+            invoice, _ = Invoice.objects.get_or_create(number=self.initial_data.get('invoice_number'), provider=provider)
             validated_data['invoice'] = invoice
         for i in range(len(validated_data['movement_product_set'])):
             data = json.loads(self.initial_data['movement_product_set'])[i]
             validated_data['movement_product_set'][i]['price'] = Decimal(float(data['price'])-(float(data['price'])*float(data['discount'])/100))
         obj = super().create(validated_data)
-        obj.invoice.recalculate_price()
+        if obj.invoice:
+            obj.invoice.recalculate_price()
         return obj
 
 class PaymentSerializer(JSONSubsetSerializer):
