@@ -577,12 +577,28 @@ class CollectionSerializer(JSONSubsetSerializer):
         model = Collection
 
 class SellSerializer(DashboardSerializer):
+    number = serializers.CharField()
+    date = serializers.DateField()
     customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), allow_null=True, required=False)
+    price = serializers.DecimalField(max_digits=9, decimal_places=2)
     paid = serializers.BooleanField(required=False)
-    collection_set = CollectionSerializer(many=True)
+    collection_set = CollectionSerializer(many=True, required=False)
 
     class Meta:
         model = Sell
+        reverse_fields = [
+            ReverseFieldReference(
+                'collection_set',
+                Collection,
+                'sell',
+                None
+            )
+        ]
+
+    def update(self, instance, validated_data):
+        obj = super().update(instance, validated_data)
+        obj.recalculate_collections()
+        return obj
 
 class WorkSerializer(DashboardSerializer):
     date = serializers.DateField()

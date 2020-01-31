@@ -541,8 +541,6 @@ class NewSellForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -552,8 +550,7 @@ class NewSellForm(forms.ModelForm):
             "date",
             "due",
             "customer",
-            "price",
-            "discount"
+            "price"
         )
 
 
@@ -564,8 +561,6 @@ class EditSellForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
     collection_set = forms.ModelChoiceField(queryset=Collection.objects.none(), required=True, label="Cobros", widget=FormSet(form=CollectionForm()), empty_label=None)
     action = HiddenField(initial='edit')
 
@@ -576,8 +571,7 @@ class EditSellForm(forms.ModelForm):
             "date",
             "due",
             "customer",
-            "price",
-            "discount"
+            "price"
         )
 
 class NewCollectionForm(forms.ModelForm):
@@ -641,8 +635,6 @@ class QuotationSellForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     customer = HiddenField()
     price = HiddenField()
-    credit = HiddenField()
-    discount = HiddenField()
     action = HiddenField(initial='sell')
 
     class Meta:
@@ -652,8 +644,7 @@ class QuotationSellForm(forms.ModelForm):
             "date",
             "due",
             "customer",
-            "price",
-            "discount"
+            "price"
         )
 
 class QuotationWorkForm(forms.ModelForm):

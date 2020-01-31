@@ -167,6 +167,8 @@ function inputEvent (e, value, data, index) {
 }
 
 $(document).on('click', 'button.do-input', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form');
     refreshMutliSetInputs(form);
     var formData = new FormData(form.get(0));
@@ -179,7 +181,8 @@ $(document).on('click', 'button.do-input', function () {
             window.location = '/database/input/'
         },
         error: function (data) {
-            createAlert(data.responseText, "danger")
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
         }
     });
 });
@@ -195,6 +198,8 @@ function mailEvent (e, value, data, index) {
 }
 
 $(document).on('click', 'button.do-mail', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form');
     refreshMutliSetInputs(form);
     var formData = new FormData(form.get(0));
@@ -209,7 +214,8 @@ $(document).on('click', 'button.do-mail', function () {
             location.reload();
         },
         error: function (data) {
-            createAlert(data.responseText, "danger")
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
         }
     });
 });

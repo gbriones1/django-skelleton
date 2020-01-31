@@ -114,9 +114,6 @@ function renderFilter(form) {
 
 $(document).on('change', '#new select[name="provider"]', function() {
     var form = $(this).closest('form')
-    // form.find('table.multiSet-table tr').each(function(){
-    //     $(this).show()
-    // });
     var search = form.find('.multiSet-search-available').val()
     var table = form.find('.multiSet-table')
     applySearch(search, table)

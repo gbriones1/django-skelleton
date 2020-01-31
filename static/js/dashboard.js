@@ -12,6 +12,7 @@ TRANSLATIONS = {
     'authorized': "Autorizado",
     'work_sheet': "Hoja de Trabajo",
     'organization_storage': 'Almacen',
+    'number': 'Numero',
     'This field is required.': 'Este campo no puede estar vacio',
     'This field may not be blank.': 'Este campo no puede estar vacio',
     'This field may not be null.': 'Este campo no puede estar vacio',
@@ -148,6 +149,8 @@ function deleteEvent (e, value, data, index) {
 }
 
 $(document).on('click', 'button.do-new', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form')
     $.ajax({
         url: form.attr("action"),
@@ -160,12 +163,15 @@ $(document).on('click', 'button.do-new', function () {
             location.reload();
         },
         error: function (data) {
+            button.attr('disabled', false)
             handleErrorAlerts(data)
         }
     });
 });
 
 $(document).on('click', 'button.do-edit', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form')
     formData = getFormData(form)
     $.ajax({
@@ -181,13 +187,15 @@ $(document).on('click', 'button.do-edit', function () {
             location.reload();
         },
         error: function (data) {
+            button.attr('disabled', false)
             handleErrorAlerts(data)
         }
     });
 });
 
 $(document).on('click', 'button.do-delete', function () {
-    console.log("Delete")
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form')
     formData = getFormData(form)
     $.ajax({
@@ -201,13 +209,15 @@ $(document).on('click', 'button.do-delete', function () {
             location.reload();
         },
         error: function (data) {
+            button.attr('disabled', false)
             handleErrorAlerts(data)
         }
     });
 });
 
 $(document).on('click', 'button.do-multi-delete', function () {
-    console.log("Multi-delete")
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form')
     $("#table").bootstrapTable('getSelections').forEach(function (item, index) {
         $.ajax({
@@ -220,6 +230,7 @@ $(document).on('click', 'button.do-multi-delete', function () {
                 location.reload();
             },
             error: function (data) {
+                button.attr('disabled', false)
                 handleErrorAlerts(data)
             }
         });

@@ -177,6 +177,8 @@ $(document).on('click', 'button[data-target="#order"]', function () {
 });
 
 $(document).on('click', 'button.do-order', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var orders = {};
     var form = $(this).closest('.modal-content').find('form');
     refreshMutliSetInputs(form);
@@ -208,6 +210,8 @@ $(document).on('click', 'button.do-order', function () {
     if (calls.length > 0){
         $.when.apply(null, calls).then(function () {
             window.location = '/database/order/'
+        }, function(){
+            button.attr('disabled', false)
         });
     }
 });

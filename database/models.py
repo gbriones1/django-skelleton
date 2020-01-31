@@ -115,7 +115,7 @@ class Customer_Contact(models.Model):
     for_invoice = models.BooleanField(default=False)
 
 class Sell(models.Model):
-    number = models.CharField(max_length=30)
+    number = models.CharField(max_length=30, unique=True)
     date = models.DateField()
     due = models.DateField(null=True)
     customer = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
@@ -126,9 +126,6 @@ class Sell(models.Model):
 
     def __str__(self):
         return self.number
-
-    class Meta:
-        unique_together = ('number', 'date')
 
     def recalculate_collections(self, *args, **kwargs):
         acc = 0

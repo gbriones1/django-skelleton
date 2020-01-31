@@ -97,7 +97,8 @@ function buildTable (){
                 'click .delete': deleteEvent,
                 'click .output': outputEvent,
                 'click .view': viewEvent,
-                'click .mail': mailEvent
+                'click .mail': mailEvent,
+                'click .sell': sellEvent
               }
         }],
         pagination: true,
@@ -293,6 +294,8 @@ function outputEvent (e, value, data, index) {
 }
 
 $(document).on('click', 'button.do-output', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form');
     refreshMutliSetInputs(form);
     var formData = new FormData(form.get(0));
@@ -305,6 +308,7 @@ $(document).on('click', 'button.do-output', function () {
             window.location = '/database/output/';
         },
         error: function (data) {
+            button.attr('disabled', false)
             handleErrorAlerts(data)
         }
     });
@@ -324,6 +328,8 @@ function mailEvent (e, value, data, index) {
 }
 
 $(document).on('click', 'button.do-mail', function () {
+    var button = $(this)
+    button.attr('disabled', true)
     var form = $(this).closest('.modal-content').find('form');
     refreshMutliSetInputs(form);
     var formData = new FormData(form.get(0));
@@ -338,7 +344,35 @@ $(document).on('click', 'button.do-mail', function () {
             location.reload();
         },
         error: function (data) {
-            createAlert(data.responseText, "danger")
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
+        }
+    });
+});
+
+function sellEvent (e, value, data, index) {
+    var form = $("#sell form");
+    form[0].reset();
+    form.find('input[name="customer"]').val(data.customer);
+    form.find('input[name="price"]').val(data.total);
+}
+
+$(document).on('click', 'button.do-sell', function () {
+    var button = $(this)
+    button.attr('disabled', true)
+    var form = $(this).closest('.modal-content').find('form');
+    refreshMutliSetInputs(form);
+    var formData = new FormData(form.get(0));
+    $.ajax({
+        url: "/database/api/sell/",
+        data: new URLSearchParams(formData).toString(),
+        type: 'POST',
+        success: function (data) {
+            window.location = '/database/sell/';
+        },
+        error: function (data) {
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
         }
     });
 });
