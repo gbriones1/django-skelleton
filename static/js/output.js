@@ -184,7 +184,7 @@ $(document).on('click', 'button.do-order', function () {
     var products = JSON.parse(formData.get('order_product_set'))
     for (idx in products) {
         if (orders[productProviders[products[idx].product]]){
-            orders[productProviders[products[idx].product]]["order_product_set[0]"].push(products[idx])
+            orders[productProviders[products[idx].product]].order_product_set.push(products[idx])
         }
         else {
             orders[productProviders[products[idx].product]] = {
