@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mysqldump --no-data -u root --skip-password modb > "schema.sql"
+mysqldump --no-data -u root -ppass modb > "schema.sql"
