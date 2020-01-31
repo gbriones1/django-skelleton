@@ -14,95 +14,93 @@
 {% endblock %}
 
 {% block site_wrapper %}
-<div class="col-sm-6 col-sm-offset-3 main">
-    <div class="row">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-            <h3 class="panel-title">Configuraciones Generales</h3>
-            </div>
-            <div class="panel-body">
-                <form class="form-horizontal" action="." method="POST">
-                    <!-- {% csrf_token %} -->
-                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                    {% for field in form %}
-                    <div class="form-group {% if field.errors %}has-error{% endif %}">
-                        <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
-                        <div class="col-sm-8">
-                            {{ field }}
-                            {% for error in field.errors %}
-                            <span class="help-block">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
+<div class="card">
+    <div class="card-body">
+        <h3 class="card-title">Correos Electronicos</h3>
+        <form class="" action="." method="POST">
+            <!-- {% csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            {% for field in form %}
+            <div class="form-group row {% if field.errors %}has-error{% endif %}">
+                <label for="{{ field.id_for_label }}" class="col-sm-4  col-form-label">{{ field.label }}</label>
+                <div class="col-sm-8">
+                    {{ field }}
+                    {% for error in field.errors %}
+                    <span class="help-block">{{ error }}</span>
                     {% endfor %}
-                    <!-- <div class="form-group">
-                        <label for="company_email" class="col-sm-2 control-label">Email</label>
-                        <div class="col-sm-10">
-                            <input type="email" class="form-control" name="company_email" value="" id="company_email">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="company_password" class="col-sm-2 control-label">Password</label>
-                        <div class="col-sm-10">
-                            <input type="password" class="form-control" name="company_password" value="" id="company_password">
-                        </div>
-                    </div> -->
-                    <div class="form-group">
-                        <div class="col-sm-8 col-sm-offset-4">
-                            <button type="submit" class="btn btn-success btn-block"> Guardar</button>
-                        </div>
-                    </div>
-                  </form>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-            <h3 class="panel-title">Respaldos automaticos</h3>
+            {% endfor %}
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="submit" class="btn btn-success btn-block"> Guardar</button>
+                </div>
             </div>
-            <div class="panel-body">
-                <form class="form-horizontal" action="./backup/" method="POST" id="backupform">
-                    <!-- {% csrf_token %} -->
-                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                    <input type="hidden" name="action" value="">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">Crear respaldo</label>
-                        <div class="col-sm-8">
-                            <button type="button" id="backup" class="btn btn-success btn-block"> Respaldar ahora</button>
-                        </div>
-                    </div>
-                    {% for field in backupform %}
-                    <div class="form-group {% if field.errors %}has-error{% endif %}">
-                        <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
-                        <div class="col-sm-8">
-                            {{ field }}
-                            {% for error in field.errors %}
-                            <span class="help-block">{{ error }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                    <div class="form-group">
-                        <div class="col-sm-8 col-sm-offset-4">
-                            <button type="button" id="send" class="btn btn-info btn-block"> Enviar por email</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-8 col-sm-offset-4">
-                            <button type="button" id="restore-btn" class="btn btn-warning btn-block" data-title="Restore" data-toggle="modal" data-target="#restore" > Restaurar respaldo</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="col-sm-8 col-sm-offset-4">
-                            <button type="button" id="delete-btn" class="btn btn-danger btn-block" data-title="Delete" data-toggle="modal" data-target="#delete" > Eliminar respaldo</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
+        </form>
     </div>
 </div>
+
+<hr>
+<div class="card">
+    <div class="card-body">
+        <h3 class="card-title">Reportes</h3>
+        <form class="" action="." method="POST">
+            <!-- {% csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            {% for field in reports_form %}
+            <div class="form-group row {% if field.errors %}has-error{% endif %}">
+                <label for="{{ field.id_for_label }}" class="col-sm-4  col-form-label">{{ field.label }}</label>
+                <div class="col-sm-8">
+                    {{ field }}
+                    {% for error in field.errors %}
+                    <span class="help-block">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="submit" class="btn btn-success btn-block"> Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<hr>
+
+<div class="card">
+    <div class="card-body">
+        <h3 class="card-title">Respaldos automaticos</h3>
+        <form class="" action="./backup/" method="POST" id="backupform">
+            <!-- {% csrf_token %} -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="">
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="button" id="backup" class="btn btn-success btn-block"> Respaldar ahora</button>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="button" id="send" class="btn btn-info btn-block"> Enviar por email</button>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="button" id="restore-btn" class="btn btn-warning btn-block" data-title="Restore" data-toggle="modal" data-target="#restore" > Restaurar respaldo</button>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-sm-12">
+                    <button type="button" id="delete-btn" class="btn btn-danger btn-block" data-title="Delete" data-toggle="modal" data-target="#delete" > Eliminar respaldo</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
 <div class="modal fade" id="restore" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
