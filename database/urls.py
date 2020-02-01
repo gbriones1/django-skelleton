@@ -5,6 +5,7 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 
 from database.viewsets import *
+
 router.register(r'provider', ProviderViewSet)
 router.register(r'provider_contact', ProviderContactViewSet)
 router.register(r'customer', CustomerViewSet)
@@ -39,7 +40,6 @@ router.register(r'order', OrderViewSet)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
 	url(r'^api/', include(router.urls)),
-	url(r'^special-api/(?P<name>\W*\w*)', views.special_api),
 	url(r'^$', views.index),
 	url(r'^reports/(?P<name>\W*\w*)$', views.reports),
 	url(r'^(?P<name>\w+\W*\w*)/(?P<obj_id>\d*)$', views.main),

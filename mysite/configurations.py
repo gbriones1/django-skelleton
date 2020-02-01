@@ -1,4 +1,4 @@
 APPNAME = 'Database Admin'
-VERSION = '2.0 Beta'
+VERSION = '3.0'
 YEAR = '2017'
 PAGE_TITLE = APPNAME

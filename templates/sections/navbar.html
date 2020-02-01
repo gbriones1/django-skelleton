@@ -5,58 +5,60 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item dropdown {{ mr_active }}">
+                <li class="nav-item dropdown {{ navbar_active.resources }}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Recursos Materiales</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown01">
                         <h6 class="dropdown-header">Tablas</h6>
-                        <a class="dropdown-item" href="/database/product/">Refacciones</a>
-                        <a class="dropdown-item" href="/database/brand/">Marcas</a>
-                        <a class="dropdown-item" href="/database/appliance/">Aplicaciones</a>
-                        <a class="dropdown-item" href="/database/organization/">Organizaciones</a>
-                        <a class="dropdown-item" href="/database/organization_storage/">Almacenes</a>
+                        <a class="dropdown-item {{ navbar_active.product }}" href="/database/product/">Refacciones</a>
+                        <a class="dropdown-item {{ navbar_active.brand }}" href="/database/brand/">Marcas</a>
+                        <a class="dropdown-item {{ navbar_active.appliance }}" href="/database/appliance/">Aplicaciones</a>
+                        <a class="dropdown-item {{ navbar_active.organization }}" href="/database/organization/">Organizaciones</a>
+                        <a class="dropdown-item {{ navbar_active.organization_storage }}" href="/database/organization_storage/">Almacenes</a>
                         <div class="dropdown-divider"></div>
                         <h6 class="dropdown-header">Existencias</h6>
-                        <a class="dropdown-item" href="/database/storage_product/">Productos en almacenes</a>
+                        <a class="dropdown-item {{ navbar_active.storage_product }}" href="/database/storage_product/">Productos en almacenes</a>
                         <div class="dropdown-divider"></div>
                         <h6 class="dropdown-header">Movimientos</h6>
-                        <a class="dropdown-item" href="/database/input/">Entradas</a>
-                        <a class="dropdown-item" href="/database/output/">Salidas</a>
-                        <a class="dropdown-item" href="/database/lending/">Prestamos</a>
+                        <a class="dropdown-item {{ navbar_active.input }}" href="/database/input/">Entradas</a>
+                        <a class="dropdown-item {{ navbar_active.output }}" href="/database/output/">Salidas</a>
                     </div>
                 </li>
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ navbar_active.purchases }}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown02" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Compras</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown02">
                         <h6 class="dropdown-header">Tablas</h6>
-                        <a class="dropdown-item" href="/database/provider/">Proveedores</a>
+                        <a class="dropdown-item {{ navbar_active.provider }}" href="/database/provider/">Proveedores</a>
                         <div class="dropdown-divider"></div>
                         <h6 class="dropdown-header">Movimientos</h6>
-                        <a class="dropdown-item" href="/database/order/">Pedidos</a>
-                        <a class="dropdown-item" href="/database/invoice/">Facturas</a>
+                        <a class="dropdown-item {{ navbar_active.order }}" href="/database/order/">Pedidos</a>
+                        <a class="dropdown-item {{ navbar_active.invoice }}" href="/database/invoice/">Facturas</a>
                     </div>
                 </li>
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ navbar_active.sales }}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Ventas</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown03">
                         <h6 class="dropdown-header">Tablas</h6>
-                        <a class="dropdown-item" href="/database/customer/">Clientes</a>
-                        <a class="dropdown-item" href="/database/pricelist/">Listas de precios</a>
-                        <a class="dropdown-item" href="/database/percentage/">Porcentajes de precios</a>
+                        <a class="dropdown-item {{ navbar_active.customer }}" href="/database/customer/">Clientes</a>
+                        <a class="dropdown-item {{ navbar_active.pricelist }}" href="/database/pricelist/">Listas de precios</a>
+                        <a class="dropdown-item {{ navbar_active.percentage }}" href="/database/percentage/">Porcentajes de precios</a>
                         <div class="dropdown-divider"></div>
                         <h6 class="dropdown-header">Movimientos</h6>
-                        <a class="dropdown-item" href="/database/quotation/">Cotizaciones</a>
-                        <a class="dropdown-item" href="/database/sell/">Facturas</a>
+                        <a class="dropdown-item {{ navbar_active.quotation }}" href="/database/quotation/">Cotizaciones</a>
+                        <a class="dropdown-item {{ navbar_active.sell }}" href="/database/sell/">Facturas</a>
                     </div>
                 </li>
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ navbar_active.hr }}">
                     <a class="nav-link dropdown-toggle" href="#" id="dropdown03" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Recursos Humanos</a>
                     <div class="dropdown-menu" aria-labelledby="dropdown03">
                         <h6 class="dropdown-header">Tablas</h6>
-                        <a class="dropdown-item" href="/database/employee/">Trabajadores</a>
+                        <a class="dropdown-item {{ navbar_active.employee }}" href="/database/employee/">Trabajadores</a>
                         <div class="dropdown-divider"></div>
                         <h6 class="dropdown-header">Movimientos</h6>
-                        <a class="dropdown-item" href="/database/work/">Hojas de Trabajo</a>
+                        <a class="dropdown-item {{ navbar_active.work }}" href="/database/work/">Hojas de Trabajo</a>
                     </div>
+                </li>
+                <li class="nav-item {{ navbar_active.reports }}">
+                  <a class="nav-link" href="/database/reports/">Reportes</a>
                 </li>
             </ul>
             {% if request.user.is_authenticated %}
