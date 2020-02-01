@@ -1,8 +1,8 @@
--- MariaDB dump 10.17  Distrib 10.4.6-MariaDB, for Linux (x86_64)
+-- MySQL dump 10.15  Distrib 10.0.38-MariaDB, for debian-linux-gnu (i686)
 --
 -- Host: localhost    Database: modb
 -- ------------------------------------------------------
--- Server version	10.4.6-MariaDB
+-- Server version	10.0.38-MariaDB-0ubuntu0.16.04.1
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -88,7 +88,7 @@ CREATE TABLE `auth_user` (
   `date_joined` datetime(6) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -156,7 +156,7 @@ CREATE TABLE `database_appliance` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -170,7 +170,7 @@ CREATE TABLE `database_brand` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=86 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=84 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -223,7 +223,7 @@ CREATE TABLE `database_customer` (
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `database_customer_name_51de86ce_uniq` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=983 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=999 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -245,7 +245,7 @@ CREATE TABLE `database_customer_contact` (
   PRIMARY KEY (`id`),
   KEY `database_customer_co_customer_id_b82d84e5_fk_database_` (`customer_id`),
   CONSTRAINT `database_customer_co_customer_id_b82d84e5_fk_database_` FOREIGN KEY (`customer_id`) REFERENCES `database_customer` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -260,7 +260,7 @@ CREATE TABLE `database_employee` (
   `name` varchar(100) NOT NULL,
   `phone` varchar(15) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=277 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=276 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -293,10 +293,13 @@ DROP TABLE IF EXISTS `database_input`;
 CREATE TABLE `database_input` (
   `invoice_id` int(11) DEFAULT NULL,
   `movement_ptr_id` int(11) NOT NULL,
+  `provider_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`movement_ptr_id`),
   KEY `database_input_invoice_id_08593029_fk_database_invoice_id` (`invoice_id`),
+  KEY `database_input_provider_id_8ac152ef_fk_database_provider_id` (`provider_id`),
   CONSTRAINT `database_input_invoice_id_08593029_fk_database_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `database_invoice` (`id`),
-  CONSTRAINT `database_input_movement_ptr_id_115b3554_fk_database_movement_id` FOREIGN KEY (`movement_ptr_id`) REFERENCES `database_movement` (`id`)
+  CONSTRAINT `database_input_movement_ptr_id_115b3554_fk_database_movement_id` FOREIGN KEY (`movement_ptr_id`) REFERENCES `database_movement` (`id`),
+  CONSTRAINT `database_input_provider_id_8ac152ef_fk_database_provider_id` FOREIGN KEY (`provider_id`) REFERENCES `database_provider` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -318,10 +321,10 @@ CREATE TABLE `database_invoice` (
   `paid` tinyint(1) NOT NULL,
   `provider_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `database_invoice_number_date_2c4d9900_uniq` (`number`,`date`),
+  UNIQUE KEY `database_invoice_number_provider_id_08401e87_uniq` (`number`,`provider_id`),
   KEY `database_invoice_provider_id_b21afe00_fk_database_provider_id` (`provider_id`),
   CONSTRAINT `database_invoice_provider_id_b21afe00_fk_database_provider_id` FOREIGN KEY (`provider_id`) REFERENCES `database_provider` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8151 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=8348 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -405,7 +408,7 @@ CREATE TABLE `database_movement` (
   PRIMARY KEY (`id`),
   KEY `database_movement_organization_storage_4b2dfa09_fk_database_` (`organization_storage_id`),
   CONSTRAINT `database_movement_organization_storage_4b2dfa09_fk_database_` FOREIGN KEY (`organization_storage_id`) REFERENCES `database_organization_storage` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30594 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=31540 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -426,7 +429,7 @@ CREATE TABLE `database_movement_product` (
   KEY `database_movement_pr_movement_id_cac1721b_fk_database_` (`movement_id`),
   CONSTRAINT `database_movement_pr_movement_id_cac1721b_fk_database_` FOREIGN KEY (`movement_id`) REFERENCES `database_movement` (`id`),
   CONSTRAINT `database_movement_pr_product_id_daa43a10_fk_database_` FOREIGN KEY (`product_id`) REFERENCES `database_product` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=111318 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=114711 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -454,7 +457,7 @@ CREATE TABLE `database_order` (
   CONSTRAINT `database_order_organization_storage_c992742f_fk_database_` FOREIGN KEY (`organization_storage_id`) REFERENCES `database_organization_storage` (`id`),
   CONSTRAINT `database_order_provider_id_2102e8aa_fk_database_provider_id` FOREIGN KEY (`provider_id`) REFERENCES `database_provider` (`id`),
   CONSTRAINT `database_order_replacer_id_c3563faf_fk_database_organization_id` FOREIGN KEY (`replacer_id`) REFERENCES `database_organization` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6377 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6587 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -475,7 +478,7 @@ CREATE TABLE `database_order_product` (
   KEY `database_order_produ_product_id_49f3319c_fk_database_` (`product_id`),
   CONSTRAINT `database_order_produ_product_id_49f3319c_fk_database_` FOREIGN KEY (`product_id`) REFERENCES `database_product` (`id`),
   CONSTRAINT `database_order_product_order_id_f15fa77a_fk_database_order_id` FOREIGN KEY (`order_id`) REFERENCES `database_order` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34511 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=35664 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -489,7 +492,7 @@ CREATE TABLE `database_organization` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -508,7 +511,7 @@ CREATE TABLE `database_organization_storage` (
   KEY `database_organizatio_storage_type_id_320d4a73_fk_database_` (`storage_type_id`),
   CONSTRAINT `database_organizatio_organization_id_b3350820_fk_database_` FOREIGN KEY (`organization_id`) REFERENCES `database_organization` (`id`),
   CONSTRAINT `database_organizatio_storage_type_id_320d4a73_fk_database_` FOREIGN KEY (`storage_type_id`) REFERENCES `database_storagetype` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -549,7 +552,7 @@ CREATE TABLE `database_payment` (
   PRIMARY KEY (`id`),
   KEY `database_payment_invoice_id_cd6514fa_fk_database_invoice_id` (`invoice_id`),
   CONSTRAINT `database_payment_invoice_id_cd6514fa_fk_database_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `database_invoice` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -585,7 +588,7 @@ CREATE TABLE `database_pricelist` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `customer_id` (`customer_id`),
   CONSTRAINT `database_pricelist_customer_id_f189b0b9_fk_database_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `database_customer` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -606,7 +609,7 @@ CREATE TABLE `database_pricelist_product` (
   KEY `database_pricelist_p_product_id_8392824b_fk_database_` (`product_id`),
   CONSTRAINT `database_pricelist_p_pricelist_id_37031f45_fk_database_` FOREIGN KEY (`pricelist_id`) REFERENCES `database_pricelist` (`id`),
   CONSTRAINT `database_pricelist_p_product_id_8392824b_fk_database_` FOREIGN KEY (`product_id`) REFERENCES `database_product` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -635,7 +638,7 @@ CREATE TABLE `database_product` (
   CONSTRAINT `database_product_appliance_id_6fa4860b_fk_database_appliance_id` FOREIGN KEY (`appliance_id`) REFERENCES `database_appliance` (`id`),
   CONSTRAINT `database_product_brand_id_f22b830a_fk_database_brand_id` FOREIGN KEY (`brand_id`) REFERENCES `database_brand` (`id`),
   CONSTRAINT `database_product_provider_id_3007d844_fk_database_provider_id` FOREIGN KEY (`provider_id`) REFERENCES `database_provider` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1805 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1813 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -671,7 +674,7 @@ CREATE TABLE `database_provider_contact` (
   PRIMARY KEY (`id`),
   KEY `database_provider_co_provider_id_a253b3a8_fk_database_` (`provider_id`),
   CONSTRAINT `database_provider_co_provider_id_a253b3a8_fk_database_` FOREIGN KEY (`provider_id`) REFERENCES `database_provider` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -699,7 +702,7 @@ CREATE TABLE `database_quotation` (
   CONSTRAINT `database_quotation_customer_id_d5204f87_fk_database_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `database_customer` (`id`),
   CONSTRAINT `database_quotation_pricelist_id_88187099_fk_database_` FOREIGN KEY (`pricelist_id`) REFERENCES `database_pricelist` (`id`),
   CONSTRAINT `database_quotation_work_id_08ade9ba_fk_database_work_id` FOREIGN KEY (`work_id`) REFERENCES `database_work` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -718,7 +721,7 @@ CREATE TABLE `database_quotation_others` (
   PRIMARY KEY (`id`),
   KEY `database_quotation_o_quotation_id_a523942e_fk_database_` (`quotation_id`),
   CONSTRAINT `database_quotation_o_quotation_id_a523942e_fk_database_` FOREIGN KEY (`quotation_id`) REFERENCES `database_quotation` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -739,7 +742,7 @@ CREATE TABLE `database_quotation_product` (
   KEY `database_quotation_p_quotation_id_8d435181_fk_database_` (`quotation_id`),
   CONSTRAINT `database_quotation_p_product_id_e7ffe3f2_fk_database_` FOREIGN KEY (`product_id`) REFERENCES `database_product` (`id`),
   CONSTRAINT `database_quotation_p_quotation_id_8d435181_fk_database_` FOREIGN KEY (`quotation_id`) REFERENCES `database_quotation` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -778,13 +781,13 @@ CREATE TABLE `database_storage_product` (
   `amount` int(11) NOT NULL,
   `organization_storage_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
-  `must_have` int(11) DEFAULT NULL,
+  `must_have` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `database_storage_pro_organization_storage_0545b0de_fk_database_` (`organization_storage_id`),
   KEY `database_storage_pro_product_id_cfbcd9d8_fk_database_` (`product_id`),
   CONSTRAINT `database_storage_pro_organization_storage_0545b0de_fk_database_` FOREIGN KEY (`organization_storage_id`) REFERENCES `database_organization_storage` (`id`),
   CONSTRAINT `database_storage_pro_product_id_cfbcd9d8_fk_database_` FOREIGN KEY (`product_id`) REFERENCES `database_product` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5148 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5154 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -818,7 +821,7 @@ CREATE TABLE `database_storagetype` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -855,7 +858,7 @@ CREATE TABLE `database_work` (
   `number` int(11) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `number` (`number`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -868,7 +871,7 @@ DROP TABLE IF EXISTS `django_admin_log`;
 CREATE TABLE `django_admin_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `action_time` datetime(6) NOT NULL,
-  `object_id` longtext DEFAULT NULL,
+  `object_id` longtext,
   `object_repr` varchar(200) NOT NULL,
   `action_flag` smallint(5) unsigned NOT NULL,
   `change_message` longtext NOT NULL,
@@ -911,7 +914,7 @@ CREATE TABLE `django_migrations` (
   `name` varchar(255) NOT NULL,
   `applied` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -939,4 +942,4 @@ CREATE TABLE `django_session` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2020-01-30  8:19:31
+-- Dump completed on 2020-01-31 17:24:02
