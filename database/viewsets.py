@@ -141,6 +141,11 @@ class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
     serializer_class = OutputSerializer
 
+    def create(self, request, *args, **kwargs):
+        if request.data.get('action') == 'email':
+            return self.email(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs)
+
     def order(self, request, *args, **kwargs):
         provider_map = {}
         for product_info in json.loads(request.POST.get('order_product_set', '[]')):
