@@ -194,3 +194,7 @@ input.form-control {
 		padding-top: 48px; /* Space for fixed navbar */
 	}
 }
+
+.sheet-cont td.right {
+	text-align: right;
+}

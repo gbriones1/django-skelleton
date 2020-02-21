@@ -38,15 +38,13 @@
                 </thead>
                 <tbody>
                     {% for item in content.cont %}
-                    <tr><td>{{ item.label }}</td><td>{{ item.price }}</td><td>{{ item.amount }}</td><td>{{ item.total }}</td></tr>
+                    <tr><td>{{ item.label }}</td><td>${{ item.price }}</td><td>{{ item.amount }}</td><td>${{ item.total }}</td></tr>
                     {% endfor %}
                 </tbody>
+                <tfoot>
+                        <tr><th></th><th class="col-xs-2"></th><th class="col-xs-2">Total</th><th class="col-xs-2 total">{{ content.total }}</th></tr>
+                </tfoot>
             </table>
-        </div>
-        <div class="row sheet-foot">
-            <div class="col-xs-8"></div>
-            <div class="col-xs-2">Total</div>
-            <div class="col-xs-2 total">{{ content.total }}</div>
-        </div>
+        </th>
     </div>
 </div>

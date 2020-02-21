@@ -667,7 +667,7 @@ object_map = {
             # graphics.Action('work', 'modal', text='Trabajo', icon='wrench', style='info', method="POST"),
             graphics.Action('output', 'modal', text='Salida', icon='sign-out', style='info', method="POST"),
             graphics.Action('view', 'navigate', text='Ver', icon='eye', style='info', method="GET"),
-            graphics.Action('sell', 'modal', text='Facturar', icon='money', style='info', method="POST"),
+            graphics.Action('sell', 'modal', text='Registrar Ingreso', icon='money', style='info', method="POST"),
             ],
         'js': ['formset', 'multiset', 'dashboard', 'quotation'],
     },

@@ -27,7 +27,6 @@ $('.sheet').each(function () {
     var headSection = $(this).find(".sheet-head")
     var descSection = $(this).find(".sheet-desc");
     var contSection = $(this).find(".sheet-cont");
-    var footSection = $(this).find(".sheet-foot");
     var contFields = contSection.data().fields;
     var descFields = descSection.data().fields;
     $.when(getObject("product")).done(function (){
@@ -57,7 +56,7 @@ $('.sheet').each(function () {
                         price = parseFloat(data[field][p].price);
                         amount = parseInt(data[field][p].amount);
                         total += price*amount
-                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td class="right">$'+price.toFixed(2)+'</td><td>'+amount+'</td><td class="right">$'+(price*amount).toFixed(2)+'</td></tr>')
                     }
                 }
                 else if (field.endsWith("others_set")) {
@@ -66,7 +65,7 @@ $('.sheet').each(function () {
                         price = parseFloat(data[field][p].price);
                         amount = parseInt(data[field][p].amount);
                         total += price*amount
-                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td class="right">$'+price+'</td><td>'+amount+'</td><td class="right">$'+(price*amount).toFixed(2)+'</td></tr>')
                     }
                 }
                 else {
@@ -78,12 +77,12 @@ $('.sheet').each(function () {
                             amount = -1;
                         }
                         total += price*amount;
-                        contSection.find('tbody').append('<tr><td>'+name+'</td><td>'+price+'</td><td>'+amount+'</td><td>'+(price*amount)+'</td></tr>')
+                        contSection.find('tbody').append('<tr><td>'+name+'</td><td class="right">$'+price.toFixed(2)+'</td><td>'+amount+'</td><td class="right">$'+(price*amount).toFixed(2)+'</td></tr>')
                     }
                 }
 
             }
-            footSection.find(".total").text("$"+total)
+            contSection.find(".total").text("$"+total.toFixed(2));
         });
     });
 });

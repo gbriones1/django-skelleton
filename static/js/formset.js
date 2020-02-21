@@ -49,7 +49,7 @@ function initialFormSetData(input, data) {
         }
         body.append(row)
     }
-    // refreshFormSetInputs(form);
+    refreshFormSetInputs(input.closest('form'));
 }
 
 $(document).on('click', '.formSet-edit', function() {

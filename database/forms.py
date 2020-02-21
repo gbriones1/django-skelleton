@@ -472,8 +472,6 @@ class NewInvoiceForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -483,8 +481,7 @@ class NewInvoiceForm(forms.ModelForm):
             "date",
             "due",
             "provider",
-            "price",
-            "discount"
+            "price"
         )
 
 
@@ -495,8 +492,6 @@ class EditInvoiceForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
-    credit = forms.DecimalField(max_digits=9, decimal_places=2, label='Credito', required=True, min_value=0, initial=0)
-    discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=True, min_value=0, initial=0)
     payment_set = forms.ModelChoiceField(queryset=Payment.objects.none(), required=True, label="Pagos", widget=FormSet(form=PaymentForm()), empty_label=None)
     action = HiddenField(initial='edit')
 
@@ -507,8 +502,7 @@ class EditInvoiceForm(forms.ModelForm):
             "date",
             "due",
             "provider",
-            "price",
-            "discount"
+            "price"
         )
 
 class NewPaymentForm(forms.ModelForm):
@@ -593,18 +587,24 @@ class EditCollectionForm(forms.ModelForm):
 class NewWorkForm(forms.ModelForm):
     number = forms.IntegerField(label="Numero")
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
+    employee_work_set = forms.ModelChoiceField(queryset=Employee.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
         model = Work
         fields = (
+            'number',
             'date',
-            'number'
+            'unit_section'
         )
 
 
 class EditWorkForm(forms.ModelForm):
     id = HiddenField()
+    date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
+    unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
+    employee_work_set = forms.ModelChoiceField(queryset=Employee.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:

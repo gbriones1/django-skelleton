@@ -547,6 +547,7 @@ class QuotationSerializer(DashboardSerializer):
         ]
 
     def run_validation(self, data):
+        import pdb; pdb.set_trace()
         data2 = data.copy()
         if self.instance:
             data2["date"] = self.instance.date

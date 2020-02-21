@@ -7,6 +7,8 @@ var labels = []
 var dateRanges = []
 var earningsData = []
 var collectionsData = []
+var spendingsData = []
+var paymentsData = []
 
 function getObjectDateRange(name, from, to, success) {
     return $.ajax({
@@ -54,7 +56,6 @@ for (var i = 7; i >= 0; i--){
 }
 
 $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (data){
-    // console.log(data);
     for (sell of data){
         var sellDate = new Date(sell.date+"T00:00:00")
         // console.log(sellDate)
@@ -65,7 +66,6 @@ $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (
             }
         }
     }
-    // console.log(dateRanges)
     for (idx in dateRanges){
         var total = 0
         var collections = 0
@@ -78,13 +78,36 @@ $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (
         earningsData.push(total)
         collectionsData.push(collections)
     }
+}), getObjectDateRange("invoice", formatDate(start), formatDate(end), function (data){
+    var invoiceRanges = Array(dateRanges.length).fill(null).map(()=>new Array());;
+    for (invoice of data){
+        var buyDate = new Date(invoice.date+"T00:00:00")
+        for (var idx in dateRanges){
+            if (buyDate >= dateRanges[idx][0] && buyDate <= dateRanges[idx][1]){
+                invoiceRanges[idx].push(invoice)
+                break;
+            }
+        }
+    }
+    for (idx in invoiceRanges){
+        var total = 0
+        var payments = 0
+        for (invoice of invoiceRanges[idx]){
+            total += parseFloat(invoice.price)
+            for (payment of invoice.payment_set){
+                payments += parseFloat(payment.amount)
+            }
+        }
+        spendingsData.push(total)
+        paymentsData.push(payments)
+    }
 })).done(function (){
-    renderChart()
+    renderCharts()
 })
 
-function renderChart (){
+function renderCharts (){
     var ctx = document.getElementById('earningsChart').getContext('2d');
-    var myChart = new Chart(ctx, {
+    var earningsChart = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
@@ -99,6 +122,35 @@ function renderChart (){
                 data: collectionsData,
                 backgroundColor: 'rgba(153, 102, 255, 0.2)',
                 borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+    var ctx = document.getElementById('spendingsChart').getContext('2d');
+    var spendingsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Gastos teoricos',
+                data: spendingsData,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Gastos relativos',
+                data: paymentsData,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1
             }]
         },

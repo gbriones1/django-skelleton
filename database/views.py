@@ -28,7 +28,7 @@ NAVBAR_STRUCTURE = {
         "invoice",
     ],
     "sales": [
-        "client",
+        "customer",
         "pricelist",
         "percentage",
         "quotation",
