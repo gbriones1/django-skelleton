@@ -741,7 +741,7 @@ object_map = {
             'delete': DeleteForm,
         },
         'filter_form': DateRangeFilterForm(),
-        'js': ['dashboard', 'work'],
+        'js': ['multiset', 'dashboard', 'work'],
     },
     'employee_work': {
         'name': 'Comisiones',

@@ -588,7 +588,7 @@ class NewWorkForm(forms.ModelForm):
     number = forms.IntegerField(label="Numero")
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
-    employee_work_set = forms.ModelChoiceField(queryset=Employee.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
+    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -604,12 +604,15 @@ class EditWorkForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
-    employee_work_set = forms.ModelChoiceField(queryset=Employee.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
+    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Work
-        fields = '__all__'
+        fields = (
+            'date',
+            'unit_section'
+        )
 
 class ChangeStorageProductForm(forms.ModelForm):
     id = HiddenField()

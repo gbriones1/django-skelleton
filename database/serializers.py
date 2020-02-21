@@ -547,7 +547,6 @@ class QuotationSerializer(DashboardSerializer):
         ]
 
     def run_validation(self, data):
-        import pdb; pdb.set_trace()
         data2 = data.copy()
         if self.instance:
             data2["date"] = self.instance.date
@@ -601,20 +600,36 @@ class SellSerializer(DashboardSerializer):
         obj.recalculate_collections()
         return obj
 
+class EmployeeWorkSerializer(JSONSubsetSerializer):
+    work = serializers.PrimaryKeyRelatedField(queryset=Work.objects.all(), allow_null=True, required=False)
+    employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), allow_null=True, required=False)
+    earning = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
+
+    class Meta:
+        model = Employee_Work
+
 class WorkSerializer(DashboardSerializer):
     date = serializers.DateField()
     number = serializers.IntegerField()
     start_time = serializers.TimeField(required=False)
     end_time = serializers.TimeField(required=False)
     unit_section = serializers.CharField(required=False)
+    employee_work_set = EmployeeWorkSerializer(many=True, required=False)
 
     class Meta:
         model = Work
+        reverse_fields = [
+            ReverseFieldReference(
+                'employee_work_set',
+                Employee_Work,
+                'work',
+                'employee'
+            )
+        ]
 
-class EmployeeWorkSerializer(DashboardSerializer):
-    work = serializers.PrimaryKeyRelatedField(queryset=Work.objects.all(), allow_null=True, required=False)
-    employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), allow_null=True, required=False)
-    earning = serializers.DecimalField(max_digits=9, decimal_places=2)
-
-    class Meta:
-        model = Employee_Work
+    def run_validation(self, data):
+        data2 = data.copy()
+        if self.instance:
+            data2["number"] = self.instance.number
+        validated_data = super().run_validation(data2)
+        return validated_data

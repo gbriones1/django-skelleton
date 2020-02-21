@@ -20,7 +20,7 @@ function refreshMutliSetInputs(form) {
                 }
             }
             else{
-                itemData = $(this).data('id');
+                itemData = $(this).data();
             }
             var form = inputSet.closest('form');
             $('<input>').attr({

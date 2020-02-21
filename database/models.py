@@ -355,7 +355,7 @@ class Work(models.Model):
 class Employee_Work(models.Model):
     work = models.ForeignKey(Work, on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    earning = models.DecimalField(max_digits=9, decimal_places=2)
+    earning = models.DecimalField(max_digits=9, decimal_places=2, default=0)
 
     class Meta:
         unique_together = ('work', 'employee',)
