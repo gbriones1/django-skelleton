@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=10">
+        <meta name="viewport" content="width=device-width">
+        {% block page_title %}
+        {% endblock %}
+        <!-- % load staticfiles %} -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+        <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
+        <link rel="stylesheet" href="/static/css/main.css">
+        {% for css in stylesheets %}
+            <link rel="stylesheet" href="/static/css/{{ css }}.css">
+        {% endfor %}
+        <!-- <link rel="shortcut icon" href="% static 'img/favicon.ico' %}"> -->
+    </head>
+    <body>
+        {% block navbar %}
+        {% endblock %}
+        {% block header %}
+        {% endblock %}
+        <div class="container-fluid">
+            <div class="row">
+                <nav id="sidebar" class="col-md-2 d-none d-md-block bg-light sidebar">
+                    {% block sidebar %}
+                    {% endblock %}
+                </nav>
+                <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-12 px-4">
+                    {% block site_wrapper %}
+                    {% endblock %}
+                </main>
+            </div>
+        </div>
+        {% block footer %}
+        {% endblock %}
+        {% block modals %}
+        {% endblock %}
+        {% include 'sections/notifications.html' %}
+        {% block popup %}
+        {% endblock %}
+        {% include 'sections/globalMessages.html' %}
+        <div class="loading">
+        	<div style="float: left;padding-left: 20px;"><strong><h1 style="margin-top: 10px;">LOADING </h1></strong></div><img style="height: 50px;width: 50px;" src="/static/img/loading.gif" width="100">
+        </div>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
+        <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/extensions/filter-control/bootstrap-table-filter-control.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js" integrity="sha256-R4pqcOYV8lt7snxMQO/HSbVCFRPMdrhAFMH+vr9giYI=" crossorigin="anonymous"></script>
+        <script>{{ inline_script|safe }}</script>
+        <script src="/static/js/main.js"></script>
+        {% for js in scripts %}
+            <script src="/static/js/{{ js }}.js"></script>
+        {% endfor %}
+    </body>
+</html>

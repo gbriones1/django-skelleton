@@ -118,14 +118,15 @@ def render_sheet(request, name, obj_id):
 @login_required
 def reports(request, name):
     PAGE_TITLE = "Reportes"
+    APPNAME = configurations.APPNAME
+    YEAR = configurations.YEAR
+    VERSION = configurations.VERSION
     navbar_active = {"reports": "active"}
     if not name:
-        APPNAME = configurations.APPNAME
-        YEAR = configurations.YEAR
-        VERSION = configurations.VERSION
-        scripts = ["reports"]
+        scripts = ["reports", "reports_weekly"]
         return render(request, 'pages/reports.html', locals())
     else:
+        scripts = ["reports", "reports_{}".format(name)]
         return render(request, 'pages/reports.html', locals())
     raise Http404("Page does not exist")
 

@@ -701,7 +701,7 @@ object_map = {
         'filter_form': DateRangeFilterForm()
     },
     'sell': {
-        'name': 'Facturas de ventas',
+        'name': 'Ingresos',
         'api_path': '/database/api/sell/',
         'use_cache': False,
         'model': Sell,

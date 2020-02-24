@@ -555,6 +555,7 @@ class EditSellForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    invoiced = forms.BooleanField(required=False, label="Facturado")
     collection_set = forms.ModelChoiceField(queryset=Collection.objects.none(), required=True, label="Cobros", widget=FormSet(form=CollectionForm()), empty_label=None)
     action = HiddenField(initial='edit')
 
@@ -565,7 +566,8 @@ class EditSellForm(forms.ModelForm):
             "date",
             "due",
             "customer",
-            "price"
+            "price",
+            "invoiced"
         )
 
 class NewCollectionForm(forms.ModelForm):

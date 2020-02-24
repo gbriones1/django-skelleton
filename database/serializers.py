@@ -582,6 +582,7 @@ class SellSerializer(DashboardSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), allow_null=True, required=False)
     price = serializers.DecimalField(max_digits=9, decimal_places=2)
     paid = serializers.BooleanField(required=False)
+    invoiced = serializers.BooleanField(required=False)
     collection_set = CollectionSerializer(many=True, required=False)
 
     class Meta:

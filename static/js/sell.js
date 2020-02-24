@@ -18,6 +18,10 @@ function buildTable (){
         if (item.paid){
             item.paid_status = "Si"
         }
+        item.invoiced_status = "No"
+        if (item.invoiced){
+            item.invoiced_status = "Si"
+        }
         data.push(item)
     })
     $('#table').bootstrapTable({
@@ -29,7 +33,7 @@ function buildTable (){
             sortable: true,
         }, {
             field: 'number',
-            title: 'Factura',
+            title: 'Folio',
             sortable: true,
             filterControl: 'input'
         }, {
@@ -49,6 +53,11 @@ function buildTable (){
         }, {
             field: 'paid_status',
             title: 'Pagado',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'invoiced_status',
+            title: 'Facturado',
             sortable: true,
             filterControl: 'select'
         }, {

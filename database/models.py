@@ -123,6 +123,7 @@ class Sell(models.Model):
     credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     paid = models.BooleanField(default=False)
+    invoiced = models.BooleanField(default=False)
 
     def __str__(self):
         return self.number

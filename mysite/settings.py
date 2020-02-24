@@ -37,8 +37,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '-c&qt=71oi^e5s8(ene*$b89^#%*0xeve$x_trs91veok9#0h0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-DEV_ENV = False
+DEBUG = True
+DEV_ENV = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -114,7 +114,7 @@ else:
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'modb',
             'USER': 'root',
-            'PASSWORD': 'pass',
+            'PASSWORD': '',
             'HOST': '127.0.0.1',
             'PORT': '3306',
             'TEST': {
