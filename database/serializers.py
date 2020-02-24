@@ -572,6 +572,7 @@ class CollectionSerializer(JSONSubsetSerializer):
     date = serializers.DateField()
     amount = serializers.DecimalField(max_digits=9, decimal_places=2)
     sell = serializers.PrimaryKeyRelatedField(queryset=Sell.objects.all(), allow_null=True, required=False)
+    method = serializers.CharField()
 
     class Meta:
         model = Collection

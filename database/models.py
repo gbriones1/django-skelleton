@@ -139,9 +139,18 @@ class Sell(models.Model):
         self.save()
 
 class Collection(models.Model):
+    METHOD_CASH = 'C'
+    METHOD_TRANSFER = 'T'
+    METHOD_CHECK = 'K'
+    METHOD_CHOICES = (
+        (METHOD_CASH, 'Efectivo'),
+        (METHOD_TRANSFER, 'Transferencia'),
+        (METHOD_CHECK, 'Cheque')
+    )
     date = models.DateField()
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     sell = models.ForeignKey(Sell, on_delete=models.CASCADE)
+    method = models.CharField(max_length=1, choices=METHOD_CHOICES, null=True, default=METHOD_CASH)
 
 class Employee(models.Model):
     name = models.CharField(max_length=100)

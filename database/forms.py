@@ -524,6 +524,7 @@ class EditPaymentForm(forms.ModelForm):
 class CollectionForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     amount = forms.DecimalField(max_digits=9, decimal_places=2, label='Cantidad', required=True, min_value=0, initial=0)
+    method = forms.ChoiceField(choices=Collection.METHOD_CHOICES, label="Forma de pago")
 
     class Meta:
         model = Payment

@@ -81,9 +81,21 @@ function buildTable (){
 }
 
 function detailViewFormatter(index, row, element){
-    var table = '<table><tr><th>Fecha</th><th>Pago</th></tr><tbody>'
+    var table = '<table><tr><th>Fecha</th><th>Pago</th><th>Forma de pago</th></tr><tbody>'
     row.collection_set.forEach(function(item) {
-        table += '<tr><td>'+item.date+'</td><td>$'+item.amount+'</td></tr>'
+        var method = ''
+        switch(item.method) {
+            case "C":
+                method = "Efectivo"
+                break;
+            case "T":
+                method = "Transferencia"
+                break;
+            case "K":
+                method = "Cheque"
+                break;
+        }
+        table += '<tr><td>'+item.date+'</td><td>$'+item.amount+'</td><td>'+method+'</td></tr>'
     })
     table += '</tbody></table>'
     return table

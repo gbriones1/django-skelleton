@@ -35,7 +35,14 @@
             <div class="col-sm-2"><select class="form-control" id="weekSelect"></select></div> 
         </div>
     </form>
-    <table id="reportsTable"></table>
+    <div id="salesToolbar">
+        <h3>Ingresos</h3>
+    </div>
+    <table id="salesTable"></table>
+    <div id="collectionsToolbar">
+        <h3>Cobros</h3>
+    </div>
+    <table id="collectionsTable"></table>
     {% elif name == 'charts' %}
     <canvas class="my-4 chartjs-render-monitor" id="earningsChart"></canvas>
     <canvas class="my-4 chartjs-render-monitor" id="spendingsChart"></canvas>

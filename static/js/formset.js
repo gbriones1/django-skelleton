@@ -29,6 +29,16 @@ function initialFormSetData(input, data) {
         }
     });
     var body = div.find('.formSet-table tbody')
+    var formSetModelName = div.find('input.formset').data("model")
+    var choiceFields = {}
+    $('#'+formSetModelName+'-modal').find("form select").each(function (){
+        var choiceName = $(this).attr("name")
+        choiceFields[choiceName] = {}
+        $(this).find('option').each(function (){
+            choiceFields[choiceName][$(this).val()] = $(this).text()
+        })
+    })
+    console.log(choiceFields)
     body.empty()
     for (index in data){
         var row = $('<tr>')
@@ -39,6 +49,8 @@ function initialFormSetData(input, data) {
                 text = '<i class="fa fa-check-circle"></i>'
             } else if (text === false) {
                 text = ''
+            } else if (headers[field] in choiceFields){
+                text = choiceFields[headers[field]][text]
             }
             row.append("<td>"+text+"</td>");
         }
@@ -177,6 +189,14 @@ $(document).on('click', 'button.formSet-ok', function(){
             headers.push($(this).data("field"));
         }
     });
+    var choiceFields = {}
+    modalForm.find("select").each(function (){
+        var choiceName = $(this).attr("name")
+        choiceFields[choiceName] = {}
+        $(this).find('option').each(function (){
+            choiceFields[choiceName][$(this).val()] = $(this).text()
+        })
+    })
     var oldData = modalForm.data("old");
     if (oldData){
         oldData = JSON.parse(oldData)
@@ -191,7 +211,7 @@ $(document).on('click', 'button.formSet-ok', function(){
                         if (text == "on"){
                             text = true
                         }
-                        else{
+                        else {
                             text = false
                         }
                     }
@@ -202,6 +222,8 @@ $(document).on('click', 'button.formSet-ok', function(){
                         $(row.children()[field]).html(text);
                     } else if (text === false) {
                         $(row.children()[field]).text("");
+                    } else if (headers[field] in choiceFields){
+                        $(row.children()[field]).text(choiceFields[headers[field]][text])
                     } else if (typeof text !== 'undefined') {
                         $(row.children()[field]).text(text);
                     }
@@ -227,6 +249,8 @@ $(document).on('click', 'button.formSet-ok', function(){
                 text = '<i class="fa fa-check-circle"></i>'
             } else if (text === false) {
                 text = ''
+            } else if (headers[field] in choiceFields){
+                text = choiceFields[headers[field]][text]
             } else if (typeof text == 'undefined') {
                 text = ''
             }

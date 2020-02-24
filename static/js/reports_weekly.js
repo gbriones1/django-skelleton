@@ -1,4 +1,5 @@
 var salesData = []
+var collectionsData = []
 var customers = []
 var customerNames = {}
 
@@ -19,8 +20,8 @@ function totalPriceFormatter(data) {
     }, 0).toFixed(2)
 }
 
-function buildTable(){
-    $('#reportsTable').bootstrapTable({
+function buildTables(){
+    $('#salesTable').bootstrapTable({
         columns: [{
             field: 'customer_name',
             title: 'Cliente',
@@ -57,19 +58,52 @@ function buildTable(){
         }],
         filterControl: true,
         showFooter: true,
+        showExport: true,
+        toolbar: "#salesToolbar"
     })
-    updateTable($('#weekSelect').val())
+    $('#collectionsTable').bootstrapTable({
+        columns: [{
+            field: 'customer_name',
+            title: 'Cliente',
+            sortable: true,
+            filterControl: 'select'
+        },{
+            field: 'date',
+            title: 'Fecha',
+            sortable: true,
+            filterControl: 'input'
+        },{
+            field: 'amount',
+            title: 'Cantidad',
+            sortable: true,
+            filterControl: 'input',
+            footerFormatter: totalPriceFormatter
+        },{
+            field: 'method_name',
+            title: 'Forma de pago',
+            sortable: true,
+            filterControl: 'select'
+        }],
+        filterControl: true,
+        showFooter: true,
+        showExport: true,
+        toolbar: "#collectionsToolbar"
+    })
+    updateTables($('#weekSelect').val())
 }
 
-function updateTable(rangeIdx) {
-    data = []
+function updateTables(rangeIdx) {
+    salesTableData = []
+    collectionsTableData = []
     for (sell of salesData){
         var sellDate = new Date(sell.date+"T00:00:00")
         if (sellDate >= dateRanges[rangeIdx][0] && sellDate <= dateRanges[rangeIdx][1]){
-            data.push(sell)
+            salesTableData.push(sell)
+            Array.prototype.push.apply(collectionsTableData, sell.collection_set)
         }
     }
-    $('#reportsTable').bootstrapTable('load', data)
+    $('#salesTable').bootstrapTable('load', salesTableData)
+    $('#collectionsTable').bootstrapTable('load', collectionsTableData)
 }
 
 $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (data){
@@ -80,9 +114,22 @@ $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (
         customerNames[customer.id] = customer.name
     }
     for (sell of salesData){
+        sell.customer_name = customerNames[sell.customer]
         sell.collected = 0
         for (collection of sell.collection_set){
             sell.collected += parseFloat(collection.amount)
+            collection.customer_name = sell.customer_name
+            switch(collection.method) {
+                case "C":
+                    collection.method_name = "Efectivo"
+                    break;
+                case "T":
+                    collection.method_name = "Transferencia"
+                    break;
+                case "K":
+                    collection.method_name = "Cheque"
+                    break;
+            }
         }
         sell.debt = sell.price - sell.collected
         sell.debt = sell.debt.toFixed(2)
@@ -91,10 +138,9 @@ $.when(getObjectDateRange("sell", formatDate(start), formatDate(end), function (
         if (sell.invoiced){
             sell.invoiced_status = "Si"
         }
-        sell.customer_name = customerNames[sell.customer]
     }
     $(document).on("change", "#weekSelect", function(){
-        updateTable($(this).val())
+        updateTables($(this).val())
     });
-    buildTable()
+    buildTables()
 })
