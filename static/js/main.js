@@ -183,6 +183,15 @@ $('.global-messages').children().each(function () {
     messages[$(this).attr("data-action")] = $(this).attr("data-parameter");
 });
 
+for (var action in messages){
+    if (action.startsWith("update-")){
+        var name = action.substring(7);
+        if (messages[action] > sessionStorage.getItem(action)){
+            sessionStorage.removeItem(name)
+        }
+        sessionStorage.setItem(action, messages[action])
+    }
+}
 
 $('#update_userpass form').submit(function (argument) {
     $('input[name="next"]').val(location.pathname);

@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.shortcuts import render
 from django.http import HttpResponse
 
@@ -18,6 +19,7 @@ import urllib
 import os
 import subprocess
 import tempfile
+import time
 
 object_map = {}
 
@@ -30,6 +32,7 @@ class APIWrapper(viewsets.ModelViewSet):
         return super(APIWrapper, self).retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+        cache.set(self.get_queryset().model.__name__, time.time(), None)
         return super(APIWrapper, self).destroy(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
@@ -40,6 +43,7 @@ class APIWrapper(viewsets.ModelViewSet):
         # self.serializer = serializer
         # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         # import pdb; pdb.set_trace()
+        cache.set(self.get_queryset().model.__name__, time.time(), None)
         return super(APIWrapper, self).create(request, *args, **kwargs)
 
     def update(self, request, *args, **kwargs):
@@ -53,9 +57,11 @@ class APIWrapper(viewsets.ModelViewSet):
         #     instance._prefetched_objects_cache = {}
         #
         # return Response(serializer.data)
+        cache.set(self.get_queryset().model.__name__, time.time(), None)
         return super(APIWrapper, self).update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
+        cache.set(self.get_queryset().model.__name__, time.time(), None)
         return super(APIWrapper, self).partial_update(request, *args, **kwargs)
 
     def custom(self, request, *args, **kwargs):
@@ -76,7 +82,7 @@ class ProviderContactViewSet(APIWrapper):
     queryset = Provider_Contact.objects.order_by('provider')
     serializer_class = ProviderContactSerializer
 
-class CustomerViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(APIWrapper):
     queryset = Customer.objects.order_by('name')
     serializer_class = CustomerSerializer
 
@@ -84,15 +90,15 @@ class CustomerContactViewSet(APIWrapper):
     queryset = Customer_Contact.objects.order_by('customer')
     serializer_class = CustomerContactSerializer
 
-class EmployeeViewSet(viewsets.ModelViewSet):
+class EmployeeViewSet(APIWrapper):
     queryset = Employee.objects.order_by('name')
     serializer_class = EmployeeSerializer
 
-class BrandViewSet(viewsets.ModelViewSet):
+class BrandViewSet(APIWrapper):
     queryset = Brand.objects.order_by('name')
     serializer_class = BrandSerializer
 
-class ApplianceViewSet(viewsets.ModelViewSet):
+class ApplianceViewSet(APIWrapper):
     queryset = Appliance.objects.order_by('name')
     serializer_class = ApplianceSerializer
 
@@ -111,11 +117,11 @@ class ProductViewSet(APIWrapper):
         product.save()
         return Response([""], status=200)
 
-class PercentageViewSet(viewsets.ModelViewSet):
+class PercentageViewSet(APIWrapper):
     queryset = Percentage.objects.order_by('max_price_limit')
     serializer_class = PercentageSerializer
 
-class OrganizationViewSet(viewsets.ModelViewSet):
+class OrganizationViewSet(APIWrapper):
     queryset = Organization.objects.order_by('name')
     serializer_class = OrganizationSerializer
 

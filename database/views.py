@@ -5,11 +5,12 @@ from database.serializers import LABEL_TRANSLATIONS
 from database.viewsets import object_map
 
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils import timezone
 
-from mysite import configurations, graphics
+from mysite import configurations, graphics, extensions
 
 NAVBAR_STRUCTURE = {
     "resources": [
@@ -82,8 +83,16 @@ def main(request, name, obj_id):
     else:
         raise Http404("Page does not exist")
     navbar_active = get_navbar_active(name)
+    global_messages = get_cache_messages(name)
     return render(request, 'pages/dashboard.html', locals())
 
+def get_cache_messages(name):
+    messages = []
+    update_tsp = cache.get(object_map[name]['model'].__name__)
+    if update_tsp:
+        for dep_obj in object_map[name].get('prefetch', []):
+            messages.append(extensions.Message("update-{}".format(dep_obj), update_tsp))
+    return messages
 
 def get_navbar_active(name):
     active = {}
@@ -124,6 +133,7 @@ def reports(request, name):
     navbar_active = {"reports": "active"}
     if not name:
         scripts = ["reports", "reports_weekly"]
+        global_messages = get_cache_messages("customer")
         return render(request, 'pages/reports.html', locals())
     else:
         scripts = ["reports", "reports_{}".format(name)]

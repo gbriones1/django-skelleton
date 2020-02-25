@@ -252,7 +252,10 @@ class Product(models.Model):
                 pass
         else:
             if obj_copy.picture:
-                os.remove(obj_copy.picture.file.name)
+                try:
+                    os.remove(obj_copy.picture.file.name)
+                except:
+                    pass
             super(Product, self).save(*args, **kwargs)
 
 
