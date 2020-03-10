@@ -64,7 +64,7 @@ def users(request):
         graphics.Modal.from_action(graphics.Action.crud_button('multi-delete'), [DeleteForm()]),
     ]
     users = User.objects.all()
-    scripts = ["tables"]
+    scripts = ["dashboard"]
     return render(request, 'pages/accounts.html', locals())
 
 def update_pass(request):

@@ -157,9 +157,11 @@ $(document).on('click', 'button.do-new', function () {
         data: new URLSearchParams(new FormData(form.get(0))).toString(),
         type: form.attr("method"),
         success: function (data) {
-            prefetch.forEach(function(item) {
-                sessionStorage.removeItem(item)
-            });
+            if (typeof prefetch !== "undefined"){
+                prefetch.forEach(function(item) {
+                    sessionStorage.removeItem(item)
+                });
+            }
             location.reload();
         },
         error: function (data) {
@@ -181,9 +183,11 @@ $(document).on('click', 'button.do-edit', function () {
         processData: false,
         type: form.attr("method"),
         success: function (data) {
-            prefetch.forEach(function(item) {
-                sessionStorage.removeItem(item)
-            });
+            if (typeof prefetch !== "undefined"){
+                prefetch.forEach(function(item) {
+                    sessionStorage.removeItem(item)
+                });
+            }
             location.reload();
         },
         error: function (data) {

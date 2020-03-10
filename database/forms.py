@@ -15,11 +15,11 @@ class DeleteForm(forms.Form):
 
 class NewProductForm(forms.ModelForm):
     code = forms.CharField(max_length=30, label='Codigo')
-    brand = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
-    provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
+    brand_name = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
+    provider_name = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
     name = forms.CharField(max_length=200, label='Nombre')
     description = forms.CharField(max_length=255, label='Descripcion', required=False)
-    appliance = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
+    appliance_name = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
     picture = forms.ImageField()
@@ -29,11 +29,11 @@ class NewProductForm(forms.ModelForm):
         model = Product
         fields = [
             "code",
-            "brand",
-            "provider",
+            "brand_name",
+            "provider_name",
             "name",
             "description",
-            "appliance",
+            "appliance_name",
             "price",
             "discount",
             "picture",
@@ -41,11 +41,11 @@ class NewProductForm(forms.ModelForm):
 
 class EditProductForm(forms.ModelForm):
     code = forms.CharField(max_length=30, label='Codigo')
-    brandName = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
-    providerName = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
+    brand_name = forms.ModelChoiceField(queryset=Brand.objects.all(), required=False, label="Marca", widget=Datalist())
+    provider_name = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor", widget=Datalist())
     name = forms.CharField(max_length=200, label='Nombre')
     description = forms.CharField(max_length=255, label='Descripcion', required=False)
-    applianceName = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
+    appliance_name = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
     id = HiddenField()
@@ -55,11 +55,11 @@ class EditProductForm(forms.ModelForm):
         model = Product
         fields = [
             "code",
-            "brandName",
-            "providerName",
+            "brand_name",
+            "provider_name",
             "name",
             "description",
-            "applianceName",
+            "appliance_name",
             "price",
             "discount",
             ]

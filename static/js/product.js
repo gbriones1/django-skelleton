@@ -29,9 +29,9 @@ function buildTable (){
     percentages.sort((a, b) => parseFloat(a['max_price_limit']) - parseFloat(b['max_price_limit']))
     data = []
     products.forEach(function (item, index) {
-        item.providerName = providerNames[item.provider]
-        item.brandName = brandNames[item.brand]
-        item.applianceName = applianceNames[item.appliance]
+        item.provider_name = providerNames[item.provider]
+        item.brand_name = brandNames[item.brand]
+        item.appliance_name = applianceNames[item.appliance]
         item.realPrice = (item.price - item.price*(item.discount/100)).toFixed(2)
         for (var percentage of percentages){
             if (parseFloat(percentage['max_price_limit']) >= parseFloat(item.realPrice)){
@@ -52,12 +52,12 @@ function buildTable (){
             sortable: true,
             filterControl: 'input'
         }, {
-            field: 'providerName',
+            field: 'provider_name',
             title: 'Proveedor',
             sortable: true,
             filterControl: 'select'
         }, {
-            field: 'brandName',
+            field: 'brand_name',
             title: 'Marca',
             sortable: true,
             filterControl: 'select'
@@ -72,7 +72,7 @@ function buildTable (){
             sortable: true,
             filterControl: 'input'
         }, {
-            field: 'applianceName',
+            field: 'appliance_name',
             title: 'Aplicacion',
             sortable: true,
             filterControl: 'select'

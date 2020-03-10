@@ -151,18 +151,18 @@ class ProductSerializer(DashboardSerializer):
     picture = serializers.CharField(required=False)
 
     def create(self, validated_data):
-        brand, _ = Brand.objects.get_or_create(name=self.initial_data.get('brandName'))
-        provider, _ = Provider.objects.get_or_create(name=self.initial_data.get('providerName'))
-        appliance, _ = Appliance.objects.get_or_create(name=self.initial_data.get('applianceName'))
+        brand, _ = Brand.objects.get_or_create(name=self.initial_data.get('brand_name'))
+        provider, _ = Provider.objects.get_or_create(name=self.initial_data.get('provider_name'))
+        appliance, _ = Appliance.objects.get_or_create(name=self.initial_data.get('appliance_name'))
         validated_data['brand'] = brand
         validated_data['provider'] = provider
         validated_data['appliance'] = appliance
         return super().create(validated_data)
     
     def update(self, instance, validated_data):
-        brand, _ = Brand.objects.get_or_create(name=self.initial_data.get('brandName'))
-        provider, _ = Provider.objects.get_or_create(name=self.initial_data.get('providerName'))
-        appliance, _ = Appliance.objects.get_or_create(name=self.initial_data.get('applianceName'))
+        brand, _ = Brand.objects.get_or_create(name=self.initial_data.get('brand_name'))
+        provider, _ = Provider.objects.get_or_create(name=self.initial_data.get('provider_name'))
+        appliance, _ = Appliance.objects.get_or_create(name=self.initial_data.get('appliance_name'))
         validated_data['brand'] = brand
         validated_data['provider'] = provider
         validated_data['appliance'] = appliance
