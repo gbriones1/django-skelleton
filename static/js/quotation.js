@@ -47,6 +47,10 @@ function buildTable (){
         total += parseFloat(item.service)
         total -= parseFloat(item.discount)
         item.total = total.toFixed(2)
+        item.authorized_name = "No"
+        if (item.authorized){
+            item.authorized_name = "Si"
+        }
         data.push(item)
     })
     $('#table').bootstrapTable({
@@ -81,6 +85,11 @@ function buildTable (){
             title: 'Hoja de trabajo',
             sortable: true,
             filterControl: 'input'
+        }, {
+            field: 'authorized_name',
+            title: 'Autorizado',
+            sortable: true,
+            filterControl: 'select'
         }, {
             field: 'total',
             title: 'Total',
