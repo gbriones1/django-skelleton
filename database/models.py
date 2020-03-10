@@ -261,7 +261,10 @@ class Product(models.Model):
 
     def delete(self, *args, **kwargs):
         if self.picture:
-            os.remove(self.picture.file.name)
+            try:
+                os.remove(self.picture.file.name)
+            except:
+                pass
         super(Product, self).delete(*args, **kwargs)
 
 

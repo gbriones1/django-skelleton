@@ -252,7 +252,7 @@ class NewInputForm(forms.ModelForm):
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=True, label="Proveedor")
     invoice_number = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Numero de factura", widget=Datalist())
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
+    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -277,7 +277,7 @@ class EditInputForm(forms.ModelForm):
 class NewOutputForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
+    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
     destination = forms.ModelChoiceField(queryset=Customer.objects.order_by('name'), label="Destino")
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
@@ -324,7 +324,7 @@ class EditLendingForm(forms.ModelForm):
 class NewOrderForm(forms.ModelForm):
     action = HiddenField(initial='new')
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
-    order_product_set = forms.ModelChoiceField(queryset=Order_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
+    order_product_set = forms.ModelChoiceField(queryset=Order_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True), empty_label=None)
     provider = forms.ModelChoiceField(queryset=Provider.objects.order_by('name'), required=False, label="Proveedor")
     claimant = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), required=False, label="Solicitante")
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
@@ -378,7 +378,7 @@ class NewQuotationForm(forms.ModelForm):
     # percentages = HiddenJSONField(PercentageSerializer)
     pricelist = forms.ModelChoiceField(queryset=PriceList.objects.all(), required=False, label="Lista de precios")
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")
-    quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
+    quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
@@ -410,7 +410,7 @@ class EditQuotationForm(forms.ModelForm):
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('pricelist', 'Lista de precios'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
     pricelist = HiddenField()
     customer = HiddenField()
-    quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
+    quotation_product_set = forms.ModelChoiceField(queryset=Quotation_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
@@ -438,7 +438,7 @@ class NewPriceListForm(forms.ModelForm):
     customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=False, label="Cliente")#, widget=Datalist())
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
     percentages = HiddenJSONField(PercentageSerializer)
-    pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
+    pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -451,7 +451,7 @@ class EditPriceListForm(forms.ModelForm):
     customer = HiddenField()
     base_price = forms.ChoiceField(required=False, label="Precio Base", choices = ([('', 'Precio base'), ('sale_percentage_1','Precio de Venta 1'), ('sale_percentage_2','Precio de Venta 2'),('sale_percentage_3','Precio de Venta 3'), ('service_percentage_1','Precio de Servicio 1'), ('service_percentage_2','Precio de Servicio 2'),('service_percentage_3','Precio de Servicio 3')]))
     percentages = HiddenJSONField(PercentageSerializer)
-    pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
+    pricelist_product_set = forms.ModelChoiceField(queryset=PriceList_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=False, editable_fields=['price']), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -591,7 +591,7 @@ class NewWorkForm(forms.ModelForm):
     number = forms.IntegerField(label="Numero")
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
-    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
+    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(model=Employee, related_field="employee"), empty_label=None)
     action = HiddenField(initial='new')
 
     class Meta:
@@ -607,7 +607,7 @@ class EditWorkForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
-    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(source_queryset=Employee.objects.all(), related_field="employee"), empty_label=None)
+    employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(model=Employee, related_field="employee"), empty_label=None)
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -676,7 +676,7 @@ class QuotationWorkForm(forms.ModelForm):
 class QuotationOutputForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
+    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price']), empty_label=None)
     employee = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Empleado")
     destination = HiddenField()
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
@@ -699,7 +699,7 @@ class OrderOutputForm(forms.ModelForm):
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
     claimant = forms.ModelChoiceField(queryset=Employee.objects.order_by('name'), label="Solicitante")
     replacer = forms.ModelChoiceField(queryset=Organization.objects.order_by('name'), label="Repone")
-    order_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True), empty_label=None)
+    order_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True), empty_label=None)
     action = HiddenField(initial='order')
 
     class Meta:
@@ -726,7 +726,7 @@ class InputOrderForm(forms.ModelForm):
     invoice_number = forms.ModelChoiceField(queryset=Invoice.objects.order_by('number'), label="Numero de factura", widget=Datalist())
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
     organization_storage = forms.ModelChoiceField(queryset=Organization_Storage.objects.all(), required=True, label="Almacen")
-    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(source_queryset=Product.objects.all(), related_field="product", amounts=True, editable_fields=['price'], extra_fields={"discount":{"tag":"input", "type":"number"}}), empty_label=None)
+    movement_product_set = forms.ModelChoiceField(queryset=Movement_Product.objects.none(), required=False, label="Refacciones", widget=MultiSet(model=Product, related_field="product", amounts=True, editable_fields=['price'], extra_fields={"discount":{"tag":"input", "type":"number"}}), empty_label=None)
     action = HiddenField(initial='input')
 
     class Meta:

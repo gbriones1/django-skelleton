@@ -4,6 +4,7 @@ import sys
 from itertools import chain
 
 from django import forms
+from django.core.cache import cache
 from django.utils.encoding import (
     force_str, force_text,
 )
@@ -11,8 +12,6 @@ from django.utils.html import conditional_escape, format_html
 from django.forms.utils import flatatt
 from django.utils.safestring import mark_safe
 from django.core import serializers
-
-MULTISET_CACHE = {}
 
 class Datalist(forms.widgets.Select):
     def render(self, name, value, attrs=None, choices=(), renderer=None):
@@ -59,9 +58,9 @@ class Datalist(forms.widgets.Select):
 
 class MultiSet(forms.widgets.Select):
 
-    def __init__(self, source_queryset=None, related_field=None, search=True, amounts=False, include=[], editable_fields=[], extra_fields={}):
+    def __init__(self, model=None, related_field=None, search=True, amounts=False, include=[], editable_fields=[], extra_fields={}):
         super(forms.widgets.Select, self).__init__()
-        self.source_queryset = source_queryset
+        self.model = model
         self.related_field = related_field
         self.search = search
         self.amounts = amounts
@@ -70,7 +69,6 @@ class MultiSet(forms.widgets.Select):
         self.extra_fields = extra_fields
 
     def render(self, name, value, attrs=None, choices=(), renderer=None):
-        global MULTISET_CACHE
         model_name = self.choices.queryset.model.__name__
         # print("Rendering multiset form", model_name, self.search, self.amounts, self.include, self.editable_fields)
         if value is None:
@@ -117,22 +115,20 @@ class MultiSet(forms.widgets.Select):
         if editable:
             table_attrs['data-editable'] = json.dumps(editable)
         output.append(format_html('<table{} >', flatatt(table_attrs)))
-        if not model_name in MULTISET_CACHE.keys():
+        multiset_cached = cache.get("multiset_{}".format(model_name))
+        if not multiset_cached:
             # print("Caching", model_name)
-            cached_rows = []
-            for choice in self.source_queryset:
+            multiset_cached = []
+            for choice in self.model.objects.all():
                 tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
                 tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore").decode()) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
                 tr_attr["data-id"] = choice.id
-                # for field in self.include:
-                #     if hasattr(choice, field):
-                #         tr_attr["data-"+field] = getattr(choice, field)
-                cached_rows.append(format_html('<tr {}>', flatatt(tr_attr)))
-                cached_rows.append('<td>{}</td>'.format(str(choice)))
-                cached_rows.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm multiSet-add", "type":"button"})))
-                cached_rows.append('</tr>')
-            MULTISET_CACHE[model_name] = cached_rows
-        output.extend(MULTISET_CACHE[model_name])
+                multiset_cached.append(format_html('<tr {}>', flatatt(tr_attr)))
+                multiset_cached.append('<td>{}</td>'.format(str(choice)))
+                multiset_cached.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm multiSet-add", "type":"button"})))
+                multiset_cached.append('</tr>')
+            cache.set("multiset_{}".format(model_name), multiset_cached, None)
+        output.extend(multiset_cached)
         output.append('</table>')
         output.append('</div>')
         output.append('</div>')

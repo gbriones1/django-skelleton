@@ -25,6 +25,12 @@ object_map = {}
 
 class APIWrapper(viewsets.ModelViewSet):
 
+    def _remove_multiset_cache(self):
+        if hasattr(self, 'multiset_caches'):
+            multiset_caches = cache.get_many(self.multiset_caches)
+            for key in multiset_caches.keys():
+                cache.delete(key)
+
     def list(self, request, *args, **kwargs):
         return super(APIWrapper, self).list(request, *args, **kwargs)
 
@@ -32,8 +38,11 @@ class APIWrapper(viewsets.ModelViewSet):
         return super(APIWrapper, self).retrieve(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        cache.set(self.get_queryset().model.__name__, time.time(), None)
-        return super(APIWrapper, self).destroy(request, *args, **kwargs)
+        response = super(APIWrapper, self).destroy(request, *args, **kwargs)
+        if int(response.status_code/100) == 2:
+            cache.set(self.get_queryset().model.__name__, time.time(), None)
+            self._remove_multiset_cache()
+        return response
 
     def create(self, request, *args, **kwargs):
         # serializer = self.get_serializer(data=request.data)
@@ -43,8 +52,11 @@ class APIWrapper(viewsets.ModelViewSet):
         # self.serializer = serializer
         # return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         # import pdb; pdb.set_trace()
-        cache.set(self.get_queryset().model.__name__, time.time(), None)
-        return super(APIWrapper, self).create(request, *args, **kwargs)
+        response = super(APIWrapper, self).create(request, *args, **kwargs)
+        if int(response.status_code/100) == 2:
+            cache.set(self.get_queryset().model.__name__, time.time(), None)
+            self._remove_multiset_cache()
+        return response
 
     def update(self, request, *args, **kwargs):
         # partial = kwargs.pop('partial', False)
@@ -57,12 +69,18 @@ class APIWrapper(viewsets.ModelViewSet):
         #     instance._prefetched_objects_cache = {}
         #
         # return Response(serializer.data)
-        cache.set(self.get_queryset().model.__name__, time.time(), None)
-        return super(APIWrapper, self).update(request, *args, **kwargs)
+        response = super(APIWrapper, self).update(request, *args, **kwargs)
+        if int(response.status_code/100) == 2:
+            cache.set(self.get_queryset().model.__name__, time.time(), None)
+            self._remove_multiset_cache()
+        return response
 
     def partial_update(self, request, *args, **kwargs):
-        cache.set(self.get_queryset().model.__name__, time.time(), None)
-        return super(APIWrapper, self).partial_update(request, *args, **kwargs)
+        response = super(APIWrapper, self).partial_update(request, *args, **kwargs)
+        if int(response.status_code/100) == 2:
+            cache.set(self.get_queryset().model.__name__, time.time(), None)
+            self._remove_multiset_cache()
+        return response
 
     def custom(self, request, *args, **kwargs):
         status = 200
@@ -105,6 +123,7 @@ class ApplianceViewSet(APIWrapper):
 class ProductViewSet(APIWrapper):
     queryset = Product.objects.order_by('code')
     serializer_class = ProductSerializer
+    multiset_caches = ['multiset_Quotation_Product', 'multiset_Movement_Product']
 
     def picture(self, request, *args, **kwargs):
         if not request.POST:
@@ -406,6 +425,7 @@ class WorkViewSet(APIWrapper):
 class EmployeeWorkViewSet(APIWrapper):
     queryset = Employee_Work.objects.order_by('-work__date')
     serializer_class = EmployeeWorkSerializer
+    multiset_caches = ['multiset_Employee_Work']
 
 
 object_map = {
