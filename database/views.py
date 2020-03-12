@@ -139,12 +139,15 @@ def reports(request, name):
     YEAR = configurations.YEAR
     VERSION = configurations.VERSION
     navbar_active = {"reports": "active"}
+    sidebar_active = {}
     if not name:
         scripts = ["reports", "reports_weekly"]
         global_messages = get_cache_messages("customer")
+        sidebar_active["reports"] = 'active'
         return render(request, 'pages/reports.html', locals())
     else:
         scripts = ["reports", "reports_{}".format(name)]
+        sidebar_active[name] = 'active'
         return render(request, 'pages/reports.html', locals())
     raise Http404("Page does not exist")
 

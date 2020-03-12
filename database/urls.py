@@ -36,6 +36,8 @@ router.register(r'output', OutputViewSet)
 # router.register(r'lending', LendingViewSet)
 router.register(r'order', OrderViewSet)
 
+router.register(r'configuration', ConfigurationViewSet)
+
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [

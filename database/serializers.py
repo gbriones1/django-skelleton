@@ -428,6 +428,7 @@ class InputSerializer(MovementSerializer):
         if self.initial_data.get('invoice_number'):
             provider = Provider.objects.get(id=self.initial_data['provider'])
             invoice, _ = Invoice.objects.get_or_create(number=self.initial_data.get('invoice_number'), provider=provider)
+            invoice.invoiced = True
             validated_data['invoice'] = invoice
         for i in range(len(validated_data['movement_product_set'])):
             data = json.loads(self.initial_data['movement_product_set'])[i]
@@ -441,6 +442,7 @@ class PaymentSerializer(JSONSubsetSerializer):
     date = serializers.DateField(format="%Y-%m-%d", required=False)
     amount = serializers.DecimalField(max_digits=9, decimal_places=2)
     invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all(), required=False)
+    method = serializers.CharField()
 
     class Meta:
         model = Payment
@@ -454,6 +456,7 @@ class InvoiceSerializer(DashboardSerializer):
     price = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     credit = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     discount = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
+    invoiced = serializers.BooleanField(required=False)
     payment_set = PaymentSerializer(many=True, required=False)
 
     class Meta:
@@ -643,3 +646,9 @@ class WorkSerializer(DashboardSerializer):
             data2["number"] = self.instance.number
         validated_data = super().run_validation(data2)
         return validated_data
+
+class ConfigurationSerializer(DashboardSerializer):
+    week_cut = serializers.IntegerField()
+
+    class Meta:
+        model = Configuration

@@ -20,7 +20,7 @@
         <form class="" action="." method="POST">
             <!-- {% csrf_token %} -->
             <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-            {% for field in form %}
+            {% for field in emails_form %}
             <div class="form-group row {% if field.errors %}has-error{% endif %}">
                 <label for="{{ field.id_for_label }}" class="col-sm-4  col-form-label">{{ field.label }}</label>
                 <div class="col-sm-8">

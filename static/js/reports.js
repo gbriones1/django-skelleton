@@ -1,4 +1,14 @@
 var weekCut = 4
+
+$.ajax({
+    type: "GET",
+    url: '/database/api/configuration/',
+    async: false,
+    success: function (data) {
+        weekCut = data[0].week_cut
+    },
+});
+
 var weekCount = 10
 const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
   "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"

@@ -18,6 +18,10 @@ function buildTable (){
         if (item.paid){
             item.paid_status = "Si"
         }
+        item.invoiced_status = "No"
+        if (item.invoiced){
+            item.invoiced_status = "Si"
+        }
         data.push(item)
     })
     $('#table').bootstrapTable({
@@ -29,7 +33,7 @@ function buildTable (){
             sortable: true,
         }, {
             field: 'number',
-            title: 'Factura',
+            title: 'Numero',
             sortable: true,
             filterControl: 'input'
         }, {
@@ -49,6 +53,11 @@ function buildTable (){
         }, {
             field: 'paid_status',
             title: 'Pagado',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'invoiced_status',
+            title: 'Facturado',
             sortable: true,
             filterControl: 'select'
         }, {
@@ -72,9 +81,21 @@ function buildTable (){
 }
 
 function detailViewFormatter(index, row, element){
-    var table = '<table><tr><th>Fecha</th><th>Pago</th></tr><tbody>'
+    var table = '<table><tr><th>Fecha</th><th>Pago</th><th>Forma de Pago</th></tr><tbody>'
     row.payment_set.forEach(function(item) {
-        table += '<tr><td>'+item.date+'</td><td>$'+item.amount+'</td></tr>'
+        var method = ''
+        switch(item.method) {
+            case "C":
+                method = "Efectivo"
+                break;
+            case "T":
+                method = "Transferencia"
+                break;
+            case "K":
+                method = "Cheque"
+                break;
+        }
+        table += '<tr><td>'+item.date+'</td><td>$'+item.amount+'</td><td>'+method+'</td></tr>'
     })
     table += '</tbody></table>'
     return table

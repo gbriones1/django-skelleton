@@ -46,6 +46,14 @@
     {% elif name == 'charts' %}
     <canvas class="my-4 chartjs-render-monitor" id="earningsChart"></canvas>
     <canvas class="my-4 chartjs-render-monitor" id="spendingsChart"></canvas>
+    {% elif name == 'cash' %}
+    <form>
+        <div class="form-group row">
+            <label for="weekSelect" class="col-sm-2 col-form-label">Semana</label>
+            <div class="col-sm-2"><select class="form-control" id="weekSelect"></select></div> 
+        </div>
+    </form>
+    <table id="cashTable"></table>
     {% elif name == 'customers' %}
     {% endif %}
 </div>

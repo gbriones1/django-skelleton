@@ -69,6 +69,7 @@ class Invoice(models.Model):
     credit = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     discount = models.DecimalField(max_digits=9, decimal_places=2, null=True)
     paid = models.BooleanField(default=False)
+    invoiced = models.BooleanField(default=False)
 
     def __str__(self):
         return self.number
@@ -96,9 +97,18 @@ class Invoice(models.Model):
 
 
 class Payment(models.Model):
+    METHOD_CASH = 'C'
+    METHOD_TRANSFER = 'T'
+    METHOD_CHECK = 'K'
+    METHOD_CHOICES = (
+        (METHOD_CASH, 'Efectivo'),
+        (METHOD_TRANSFER, 'Transferencia'),
+        (METHOD_CHECK, 'Cheque')
+    )
     date = models.DateField()
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+    method = models.CharField(max_length=1, choices=METHOD_CHOICES, null=True, default=METHOD_CASH)
 
 
 class Customer(models.Model):
@@ -615,6 +625,22 @@ class Order_Product(models.Model):
 
 
 class Configuration(models.Model):
+    DAY_MON = 1
+    DAY_TUE = 2
+    DAY_WED = 3
+    DAY_THU = 4
+    DAY_FRI = 5
+    DAY_SAT = 6
+    DAY_SUN = 7
+    WEEK_DAYS = (
+        (DAY_MON, 'Lunes'),
+        (DAY_TUE, 'Martes'),
+        (DAY_WED, 'Miercoles'),
+        (DAY_THU, 'Jueves'),
+        (DAY_FRI, 'Viernes'),
+        (DAY_SAT, 'Sabado'),
+        (DAY_SUN, 'Domingo'),
+    )
     sender_email = models.EmailField(null=True)
     password = models.CharField(max_length=30, null=True)
     quotations_email = models.EmailField(null=True)
@@ -622,5 +648,6 @@ class Configuration(models.Model):
     receiver_email = models.EmailField(null=True)
     mailOnPriceChange = models.BooleanField(default=True)
     mailOnNegativeValues = models.BooleanField(default=True)
+    week_cut = models.IntegerField(default=4)
     # destination del sistema para enviar un correo de adgoritmo para mi hermoso amorcito te amo te amo :*
     # la longitud de mi inteligencia va a ayudar a mi papito clo voy a ayudar siempre

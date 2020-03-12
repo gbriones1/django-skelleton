@@ -435,6 +435,10 @@ class EmployeeWorkViewSet(APIWrapper):
     serializer_class = EmployeeWorkSerializer
     multiset_caches = ['multiset_Employee_Work']
 
+class ConfigurationViewSet(APIWrapper):
+    queryset = Configuration.objects.all()
+    serializer_class = ConfigurationSerializer
+
 
 object_map = {
     'product': {
@@ -707,7 +711,7 @@ object_map = {
         'js': ['formset', 'multiset', 'dashboard', 'quotation'],
     },
     'invoice': {
-        'name': 'Facturas de compras',
+        'name': 'Gastos',
         'api_path': '/database/api/invoice/',
         'use_cache': False,
         'model': Invoice,
@@ -721,19 +725,6 @@ object_map = {
         'subset-fields': {'payment_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
         'js': ['formset', 'dashboard', 'invoice'],
-    },
-    'payment': {
-        'name': 'Pagos',
-        'api_path': '/database/api/payment/',
-        'use_cache': False,
-        'model': Payment,
-        'viewset': PaymentViewSet,
-        'action_forms': {
-            'new': NewPaymentForm,
-            'edit': EditPaymentForm,
-            'delete': DeleteForm,
-        },
-        'filter_form': DateRangeFilterForm()
     },
     'sell': {
         'name': 'Ingresos',
@@ -750,19 +741,6 @@ object_map = {
         'subset-fields': {'collection_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
         'js': ['formset', 'dashboard', 'sell'],
-    },
-    'collection': {
-        'name': 'Cobros',
-        'api_path': '/database/api/collection/',
-        'use_cache': False,
-        'model': Collection,
-        'viewset': CollectionViewSet,
-        'action_forms': {
-            'new': NewCollectionForm,
-            'edit': EditCollectionForm,
-            'delete': DeleteForm,
-        },
-        'filter_form': DateRangeFilterForm()
     },
     'work': {
         'name': 'Hojas de trabajo',

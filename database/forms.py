@@ -463,10 +463,11 @@ class EditPriceListForm(forms.ModelForm):
 class PaymentForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
     amount = forms.DecimalField(max_digits=9, decimal_places=2, label='Cantidad', required=True, min_value=0, initial=0)
+    method = forms.ChoiceField(choices=Collection.METHOD_CHOICES, label="Forma de pago")
 
     class Meta:
         model = Payment
-        fields = ('date', 'amount')
+        fields = ('date', 'amount', 'method')
 
 class NewInvoiceForm(forms.ModelForm):
     number = forms.CharField(max_length=200, label='Numero')
@@ -474,6 +475,7 @@ class NewInvoiceForm(forms.ModelForm):
     due = forms.DateField(widget=DateInput(), label='Vence')
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
+    invoiced = forms.BooleanField(required=False, label="Facturado")
     action = HiddenField(initial='new')
 
     class Meta:
@@ -483,7 +485,8 @@ class NewInvoiceForm(forms.ModelForm):
             "date",
             "due",
             "provider",
-            "price"
+            "price",
+            "invoiced",
         )
 
 
@@ -495,6 +498,7 @@ class EditInvoiceForm(forms.ModelForm):
     provider = forms.ModelChoiceField(queryset=Provider.objects.all(), required=False, label="Proveedor")
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio total', required=True, min_value=0, initial=0)
     payment_set = forms.ModelChoiceField(queryset=Payment.objects.none(), required=True, label="Pagos", widget=FormSet(form=PaymentForm()), empty_label=None)
+    invoiced = forms.BooleanField(required=False, label="Facturado")
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -504,24 +508,9 @@ class EditInvoiceForm(forms.ModelForm):
             "date",
             "due",
             "provider",
-            "price"
+            "price",
+            "invoiced",
         )
-
-class NewPaymentForm(forms.ModelForm):
-    action = HiddenField(initial='new')
-
-    class Meta:
-        model = Payment
-        fields = '__all__'
-
-
-class EditPaymentForm(forms.ModelForm):
-    id = HiddenField()
-    action = HiddenField(initial='edit')
-
-    class Meta:
-        model = Payment
-        fields = '__all__'
 
 class CollectionForm(forms.ModelForm):
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
@@ -530,7 +519,7 @@ class CollectionForm(forms.ModelForm):
 
     class Meta:
         model = Payment
-        fields = ('date', 'amount')
+        fields = ('date', 'amount', 'method')
 
 class NewSellForm(forms.ModelForm):
     number = forms.CharField(max_length=200, label='Numero')
