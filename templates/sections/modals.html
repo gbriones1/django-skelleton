@@ -29,7 +29,7 @@
                         {% endfor %}
                     {% elif item.name == 'HTMLObject' %}
                         {{ item.obj.stringify|safe }}
-                    {% else %}
+                    {% elif item.obj %}
                         {{ item.obj }}
                     {% endif %}
                 {% endfor %}

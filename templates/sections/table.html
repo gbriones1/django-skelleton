@@ -1,0 +1,9 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ table_title }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+            {% for button in buttons %}
+            <button type="button" class="btn btn-{{ button.style }}" data-toggle="modal" data-target="#{{ button.name }}"><i class="fa fa-{{ button.icon }}"></i></button>
+            {% endfor %}
+    </div>
+</div>
+<table id="table"></table>

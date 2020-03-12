@@ -78,7 +78,7 @@ class DashboardSerializer(serializers.Serializer):
         if not hasattr(self, "reverse_fields_serializers"):
             self.reverse_fields_serializers = {}
         self.reverse_fields_serializers[field] = []
-        for data in json.loads(self.initial_data.get(field, "[]")):
+        for data in json.loads(self.initial_data.get(field, "[]") or "[]"):
             if 'id' in data:
                 instance = serializer.Meta.model.objects.get(id=data['id'])
             else:
@@ -528,6 +528,15 @@ class QuotationSerializer(DashboardSerializer):
     discount = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     work = serializers.PrimaryKeyRelatedField(queryset=Work.objects.all(), required=False)
     work_number = serializers.ReadOnlyField(source='work.number')
+    unit_section_fr = serializers.BooleanField(required=False)
+    unit_section_fc = serializers.BooleanField(required=False)
+    unit_section_fl = serializers.BooleanField(required=False)
+    unit_section_mr = serializers.BooleanField(required=False)
+    unit_section_mc = serializers.BooleanField(required=False)
+    unit_section_ml = serializers.BooleanField(required=False)
+    unit_section_rr = serializers.BooleanField(required=False)
+    unit_section_rc = serializers.BooleanField(required=False)
+    unit_section_rl = serializers.BooleanField(required=False)
 
     class Meta:
         model = Quotation
@@ -615,7 +624,6 @@ class WorkSerializer(DashboardSerializer):
     number = serializers.IntegerField()
     start_time = serializers.TimeField(required=False)
     end_time = serializers.TimeField(required=False)
-    unit_section = serializers.CharField(required=False)
     employee_work_set = EmployeeWorkSerializer(many=True, required=False)
 
     class Meta:

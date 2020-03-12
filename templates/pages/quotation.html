@@ -1,4 +1,4 @@
-{% extends "layouts/base.html" %}
+{% extends "layouts/headless.html" %}
 
 {% block page_title %}
 <title>{{ PAGE_TITLE }}</title>
@@ -15,24 +15,16 @@
 {% endblock %}
 
 {% block site_wrapper %}
-{% if filter_form %}
-    {% include 'sections/filter_form.html' %}
-{% endif %}
-{% include 'sections/table.html' %}
+
 {% for content in contents %}
-    {% if content.section == 'modal' %}
-        {% include 'sections/modals.html' %}
-    {% elif content.section == 'sheet' %}
+    {% if content.section == 'sheet' %}
         {% include 'sections/sheet.html' %}
-    {% else %}
-        {{ content.html|safe }}
     {% endif %}
 {% endfor %}
 
 {% endblock %}
 
 {% block footer %}
-{% include 'sections/footer.html' %}
 {% endblock %}
 
 {% block modals %}

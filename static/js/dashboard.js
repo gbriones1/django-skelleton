@@ -52,8 +52,13 @@ function getObjectFiltered(name, success) {
     })
 }
 
-function handleErrorAlerts(data) {
-    data = JSON.parse(data.responseText)
+function handleErrorAlerts(response) {
+    try {
+        data = JSON.parse(response.responseText)
+    }
+    catch (err){
+        data = response.responseText
+    }
     if (typeof(data) == "object") {
         for (key in data){
             var value = data[key]

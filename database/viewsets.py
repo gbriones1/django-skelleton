@@ -329,16 +329,20 @@ class OrderViewSet(APIWrapper):
 def render_sheet(request, name, obj_id, instance):
     desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_desc', object_map[name].get('table_fields', []))])
     cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_cont', [])])
+    rest_url = object_map[name]['api_path']
     sheet = graphics.DescriptionSheet(
         name+"-sheet",
         object_map[name].get('sheet_name', object_map[name]['name']),
         obj_id,
         desc_fields=desc_fields,
         cont_fields=cont_fields,
-        instance=instance
+        instance=instance,
+        use_rest=rest_url,
     )
+    origin = request.META["HTTP_ORIGIN"]
+    scripts = ["sheet_quotation"]
     contents = [sheet]
-    return render(request, 'pages/sheet.html', locals())
+    return render(request, 'pages/quotation.html', locals())
 
 class QuotationViewSet(APIWrapper):
     queryset = Quotation.objects.order_by('-date')
@@ -358,14 +362,18 @@ class QuotationViewSet(APIWrapper):
             config = Configuration.objects.all()
             if config and config[0].quotations_email:
                 rendered = render_sheet(request, 'quotation', quotation.id, quotation)
-                html_string = rendered.content.decode().replace('src="/static/', 'src="{}/static/'.format(request.META["HTTP_ORIGIN"])).replace('href="/static/', 'href="{}/static/'.format(request.META["HTTP_ORIGIN"]))
+                origin = request.META["HTTP_ORIGIN"]
+                origin = "file:///home/gbriones/Workspace/django-skelleton"
+                origin = "file://{}".format(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                # print(origin)
+                html_string = rendered.content.decode().replace('src="/static/', 'src="{}/static/'.format(origin)).replace('href="/static/', 'href="{}/static/'.format(origin))
                 html_file = tempfile.mktemp()+".html"
                 # print(html_file)
                 with open(html_file, "w") as f:
                     f.write(html_string)
                 os.chmod(html_file, 438)
                 # proc = subprocess.Popen(["xvfb-run", "-a", "-s", '-screen 0 1024x768x16', "wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                proc = subprocess.Popen(["wkhtmltopdf", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc = subprocess.Popen(["wkhtmltopdf", "--print-media-type", "-q", html_file, "-"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, err = proc.communicate()
                 # print(err)
                 # pdf_file = tempfile.mktemp()+".pdf"
@@ -471,6 +479,7 @@ object_map = {
             'edit': EditCustomerForm,
             'delete': DeleteForm,
         },
+        # 'custom_table_actions': [graphics.Action('merge', 'modal', text='Combinar', icon='compress', style='info', method="")],
         'table_fields': ['name', 'customer_contact_set'],
         'subset-fields': {'customer_contact_set': ["name", "department", "phone", "email"]},
         'js': ['formset', 'dashboard', 'customer'],

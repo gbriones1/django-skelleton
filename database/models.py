@@ -3,12 +3,11 @@ from __future__ import unicode_literals
 import json
 import os
 
-from datetime import datetime
-
 from PIL import Image
 
 from django.db import models
 from django.utils import timezone
+
 
 class Appliance(models.Model):
     name = models.CharField(max_length=100)
@@ -23,6 +22,7 @@ class Appliance(models.Model):
     class Meta:
         ordering = ['name']
 
+
 class Brand(models.Model):
     name = models.CharField(max_length=100)
 
@@ -35,6 +35,7 @@ class Brand(models.Model):
 
     class Meta:
         ordering = ['name']
+
 
 class Provider(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -49,6 +50,7 @@ class Provider(models.Model):
     class Meta:
         ordering = ['name']
 
+
 class Provider_Contact(models.Model):
     provider = models.ForeignKey(Provider, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -56,6 +58,7 @@ class Provider_Contact(models.Model):
     email = models.EmailField(blank=True, null=True, default="")
     phone = models.CharField(max_length=15, blank=True, null=True, default="")
     for_orders = models.BooleanField(default=False)
+
 
 class Invoice(models.Model):
     number = models.CharField(max_length=30)
@@ -91,10 +94,12 @@ class Invoice(models.Model):
         self.price = price
         self.save()
 
+
 class Payment(models.Model):
     date = models.DateField()
     amount = models.DecimalField(max_digits=9, decimal_places=2)
     invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+
 
 class Customer(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -105,6 +110,7 @@ class Customer(models.Model):
     class Meta:
         ordering = ['name']
 
+
 class Customer_Contact(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -113,6 +119,7 @@ class Customer_Contact(models.Model):
     phone = models.CharField(max_length=15, blank=True, null=True, default="")
     for_quotation = models.BooleanField(default=False)
     for_invoice = models.BooleanField(default=False)
+
 
 class Sell(models.Model):
     number = models.CharField(max_length=30, unique=True)
@@ -138,6 +145,7 @@ class Sell(models.Model):
             self.paid = False
         self.save()
 
+
 class Collection(models.Model):
     METHOD_CASH = 'C'
     METHOD_TRANSFER = 'T'
@@ -152,14 +160,17 @@ class Collection(models.Model):
     sell = models.ForeignKey(Sell, on_delete=models.CASCADE)
     method = models.CharField(max_length=1, choices=METHOD_CHOICES, null=True, default=METHOD_CASH)
 
+
 class Employee(models.Model):
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15, null=True)
 
     def __str__(self):
         return self.name
+
     class Meta:
         ordering = ['name']
+
 
 class Tool(models.Model):
     code = models.CharField(max_length=30, unique=True)
@@ -169,6 +180,7 @@ class Tool(models.Model):
 
     def __str__(self):
         return self.code+" - "+self.name+" - "+self.description
+
 
 class Product(models.Model):
     code = models.CharField(max_length=30, unique=True)
@@ -225,7 +237,7 @@ class Product(models.Model):
         return self.price-(self.price*(self.discount/100))
 
     def __str__(self):
-        desc= ""
+        desc = ""
         if self.description:
             desc = " - "+self.description.encode('ascii', 'ignore').decode()
         appl = ""
@@ -246,7 +258,7 @@ class Product(models.Model):
             super(Product, self).save(*args, **kwargs)
             try:
                 picture = Image.open(self.picture.file)
-                picture.thumbnail((500,500), Image.ANTIALIAS)
+                picture.thumbnail((500, 500), Image.ANTIALIAS)
                 picture.save(self.picture.file.name)
             except:
                 pass
@@ -257,7 +269,6 @@ class Product(models.Model):
                 except:
                     pass
             super(Product, self).save(*args, **kwargs)
-
 
     def delete(self, *args, **kwargs):
         if self.picture:
@@ -277,6 +288,7 @@ class Organization(models.Model):
     class Meta:
         ordering = ['name']
 
+
 class StorageType(models.Model):
     name = models.CharField(max_length=200)
 
@@ -285,6 +297,7 @@ class StorageType(models.Model):
 
     class Meta:
         ordering = ['name']
+
 
 class Organization_Storage(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
@@ -295,6 +308,7 @@ class Organization_Storage(models.Model):
 
     class Meta:
         ordering = ['organization']
+
 
 class Storage_Product(models.Model):
     organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
@@ -326,10 +340,12 @@ class Storage_Product(models.Model):
     def organization_name(self):
         return self.organization_storage.organization.name
 
+
 class Storage_Tool(models.Model):
     organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
     amount = models.IntegerField()
+
 
 class Percentage(models.Model):
     max_price_limit = models.DecimalField(max_digits=9, decimal_places=2)
@@ -343,11 +359,13 @@ class Percentage(models.Model):
     def __str__(self):
         return str(self.max_price_limit)
 
+
 class PriceList(models.Model):
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.customer.name
+
 
 class PriceList_Product(models.Model):
     pricelist = models.ForeignKey(PriceList, on_delete=models.CASCADE)
@@ -358,15 +376,16 @@ class PriceList_Product(models.Model):
     def __str__(self):
         return self.product.code+" - "+self.product.name.encode('ascii', 'ignore').decode()+" - "+self.product.description.encode('ascii', 'ignore').decode()
 
+
 class Work(models.Model):
     date = models.DateField(default=timezone.now)
     number = models.IntegerField(unique=True)
     start_time = models.TimeField(null=True)
     end_time = models.TimeField(null=True)
-    unit_section = models.CharField(max_length=30, null=True)
 
     def __str__(self):
         return str(self.number)
+
 
 class Employee_Work(models.Model):
     work = models.ForeignKey(Work, on_delete=models.CASCADE)
@@ -375,7 +394,23 @@ class Employee_Work(models.Model):
 
     class Meta:
         unique_together = ('work', 'employee',)
+
+
 class Quotation(models.Model):
+    SECTION_FR = "fr"
+    SECTION_FC = "fc"
+    SECTION_FL = "fl"
+    SECTION_MR = "mr"
+    SECTION_MC = "mc"
+    SECTION_ML = "ml"
+    SECTION_RR = "rr"
+    SECTION_RC = "rc"
+    SECTION_RL = "rl"
+    SECTION_CHOICES = [
+        ("Delantero", [(SECTION_FR, "Der"), (SECTION_FC, "Cent"), (SECTION_FL, "Izq")]),
+        ("Medio", [(SECTION_MR, "Der"), (SECTION_MC, "Cent"), (SECTION_ML, "Izq")]),
+        ("Trasero", [(SECTION_RR, "Der"), (SECTION_RC, "Cent"), (SECTION_RL, "Izq")]),
+    ]
     date = models.DateTimeField(default=timezone.now)
     pricelist = models.ForeignKey(PriceList, null=True, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
@@ -385,9 +420,19 @@ class Quotation(models.Model):
     service = models.DecimalField(max_digits=9, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
     work = models.ForeignKey(Work, null=True, on_delete=models.CASCADE)
+    unit_section_fr = models.BooleanField(default=False)
+    unit_section_fc = models.BooleanField(default=False)
+    unit_section_fl = models.BooleanField(default=False)
+    unit_section_mr = models.BooleanField(default=False)
+    unit_section_mc = models.BooleanField(default=False)
+    unit_section_ml = models.BooleanField(default=False)
+    unit_section_rr = models.BooleanField(default=False)
+    unit_section_rc = models.BooleanField(default=False)
+    unit_section_rl = models.BooleanField(default=False)
 
     def customer_name(self):
         return self.customer.name
+
 
 class Quotation_Product(models.Model):
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
@@ -395,17 +440,21 @@ class Quotation_Product(models.Model):
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
+
 class Quotation_Others(models.Model):
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
     description = models.CharField(max_length=60)
     amount = models.IntegerField()
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
+
 class MovementProductManager(models.Manager):
 
     def add(self, *args, **kwargs):
         import pdb; pdb.set_trace()
         super(MovementProductManager, self).add(*args, **kwargs)
+
+
 class Movement(models.Model):
     date = models.DateTimeField(default=timezone.now)
     organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
@@ -423,6 +472,7 @@ class Movement(models.Model):
             return "Input"
         except:
             return "Output"
+
 
 class Movement_Product(models.Model):
     movement = models.ForeignKey(Movement, null=True, on_delete=models.CASCADE)
@@ -470,14 +520,17 @@ class Movement_Product(models.Model):
     def __str__(self):
         return str(self.product) + " - " + str(self.amount) + " - " + str(self.price)
 
+
 class Input(Movement):
     invoice = models.ForeignKey(Invoice, null=True, on_delete=models.CASCADE)
     provider = models.ForeignKey(Provider, null=True, on_delete=models.CASCADE)
+
 
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
     destination = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
     replacer = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.CASCADE)
+
 
 class Lending(models.Model):
     date = models.DateTimeField(default=timezone.now)
@@ -488,17 +541,20 @@ class Lending(models.Model):
     returned_date = models.DateTimeField(null=True)
     products = models.ManyToManyField(Product, through='Lending_Product')
 
+
 class Lending_Product(models.Model):
     lending = models.ForeignKey(Lending, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     returned_amount = models.IntegerField()
 
+
 class Lending_Tool(models.Model):
     lending = models.ForeignKey(Lending, on_delete=models.CASCADE)
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE)
     amount = models.IntegerField()
     returned_amount = models.IntegerField()
+
 
 class Order(models.Model):
     STATUS_PENDING = 'P'
@@ -550,11 +606,13 @@ class Order(models.Model):
             op.delete()
         super(Order, self).delete(*args, **kwargs)
 
+
 class Order_Product(models.Model):
     order = models.ForeignKey(Order, null=True, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     amount = models.IntegerField()
     amount_received = models.IntegerField(default=0)
+
 
 class Configuration(models.Model):
     sender_email = models.EmailField(null=True)

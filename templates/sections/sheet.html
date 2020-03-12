@@ -1,50 +1,51 @@
-<!-- <div class="row">
-    <h2>
-        <div class="col-xs-9 col-xs-6">
-            {{ content.title }}: {{ content.obj_id }}
+<div class="sheet" use_rest="{{ content.use_rest }}" origin="{{ origin }}" data-obj_id="{{ content.obj_id }}" style="padding: 0 30px;">
+    <div class="row sheet-head">
+        <div class="col-xs-4">
+            <img src="/static/img/mo.jpeg" id="sheet-logo" height="100">
         </div>
-</div> -->
-<div class="row">
-    <div class="sheet" use_rest="{{ content.use_rest }}" data-obj_id="{{ content.obj_id }}" style="padding: 0 30px;">
-        <div class="row sheet-head">
-            <div class="col-xs-4"><img src="/static/img/mo.jpeg" id="sheet-logo" height="100"></div>
-            <div class="col-xs-5">
-                <div class="sheet-header">
-                    Muelles Obrero S. de R.L. de C.V.<br>
-                    <strong>MOB101108GT6</strong><br>
-                    San Patricio 1676, Vicente Guerrero<br>
-                    C.P. 44330 Guadalajara, Jal.<br>
-                </div>
+        <div class="col-xs-5">
+            <div class="sheet-header">
+                Muelles Obrero S. de R.L. de C.V.<br>
+                <strong>MOB101108GT6</strong><br>
+                San Patricio 1676, Vicente Guerrero<br>
+                C.P. 44330 Guadalajara, Jal.<br>
             </div>
-            <div class="col-xs-3"><table class="table table-striped">
-                <tr><th>Folio</th></tr>
-                <tr><td class="folio">{{ content.obj_id }}</td></tr>
-                <tr><th>Fecha</th></tr>
-                <tr><td class='date'>{{ content.date }}</td></tr>
-            </table></div>
         </div>
-        <div class="row sheet-desc" data-fields="{{ content.desc_fields }}">
-            {% for item in content.desc %}
-                <div class="col-xs-4" style="padding: 0;"><table class="table table-striped" style="border: solid;border-width: 2px;border-color: #f9f9f9;margin: 0;">
-                    <tr><th>{{ item.label}}</th></tr>
-                    <tr><td>{{ item.value }}</td></tr>
-                </table></div>
-            {% endfor %}
-        </div>
-        <div class="row sheet-cont" style="margin-top: 20px" data-fields="{{ content.cont_fields }}">
-            <table class="table table-striped">
-                <thead>
-                    <tr><th class="col-xs-6">Producto</th><th class="col-xs-2">Precio Unitario</th><th class="col-xs-2">Cantidad</th><th class="col-xs-2">Total</th></tr>
-                </thead>
-                <tbody>
-                    {% for item in content.cont %}
-                    <tr><td>{{ item.label }}</td><td>${{ item.price }}</td><td>{{ item.amount }}</td><td>${{ item.total }}</td></tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                        <tr><th></th><th class="col-xs-2"></th><th class="col-xs-2">Total</th><th class="col-xs-2 total">{{ content.total }}</th></tr>
-                </tfoot>
-            </table>
-        </th>
+        <div class="col-xs-3"><table class="table table-striped">
+            <tr><th>Folio</th></tr>
+            <tr><td class="folio">{{ content.obj_id }}</td></tr>
+            <tr><th>Fecha</th></tr>
+            <tr><td class='date'></td></tr>
+        </table></div>
+    </div>
+    <div class="row sheet-desc" data-fields="{{ content.desc_fields }}"></div>
+    <div class="row sheet-cont" style="margin-top: 20px" data-fields="{{ content.cont_fields }}">
+        <table class="table table-striped">
+            <thead>
+                <tr><th class="col-xs-6">Producto</th><th class="col-xs-2">Precio Unitario</th><th class="col-xs-2">Cantidad</th><th class="col-xs-2">Total</th></tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr><th></th><th class="col-xs-2"></th><th class="col-xs-2">Total</th><th class="col-xs-2 total"></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+<div class="row unit-sect" style="height: 200px;">
+    <div class="col-xs-2">
+        <strong><h4>Secciones en la unidad</h4></strong>
+    </div>
+    <div class="col-xs-8">
+        <img src="/static/img/leafs.png" height="200">
+        <img src="/static/img/sect_fr.png" height="200" id="unit_section_fr" style="display: none;">
+        <img src="/static/img/sect_fc.png" height="200" id="unit_section_fc" style="display: none;">
+        <img src="/static/img/sect_fl.png" height="200" id="unit_section_fl" style="display: none;">
+        <img src="/static/img/sect_mr.png" height="200" id="unit_section_mr" style="display: none;">
+        <img src="/static/img/sect_mc.png" height="200" id="unit_section_mc" style="display: none;">
+        <img src="/static/img/sect_ml.png" height="200" id="unit_section_ml" style="display: none;">
+        <img src="/static/img/sect_rr.png" height="200" id="unit_section_rr" style="display: none;">
+        <img src="/static/img/sect_rc.png" height="200" id="unit_section_rc" style="display: none;">
+        <img src="/static/img/sect_rl.png" height="200" id="unit_section_rl" style="display: none;">
     </div>
 </div>

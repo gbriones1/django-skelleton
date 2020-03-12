@@ -384,6 +384,7 @@ class NewQuotationForm(forms.ModelForm):
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
     work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
+    unit_section = forms.ChoiceField(choices=Quotation.SECTION_CHOICES, widget=ColumnCheckboxWidget(), label="Secciones")
 
     class Meta:
         model = Quotation
@@ -398,7 +399,7 @@ class NewQuotationForm(forms.ModelForm):
             'service',
             'discount',
             'work_number',
-            'authorized'
+            'authorized',
         )
 
 
@@ -416,6 +417,7 @@ class EditQuotationForm(forms.ModelForm):
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
     work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
+    unit_section = forms.ChoiceField(choices=Quotation.SECTION_CHOICES, widget=ColumnCheckboxWidget(), label="Secciones")
 
     class Meta:
         model = Quotation
@@ -590,7 +592,6 @@ class EditCollectionForm(forms.ModelForm):
 class NewWorkForm(forms.ModelForm):
     number = forms.IntegerField(label="Numero")
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
     employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(model=Employee, related_field="employee"), empty_label=None)
     action = HiddenField(initial='new')
 
@@ -598,15 +599,13 @@ class NewWorkForm(forms.ModelForm):
         model = Work
         fields = (
             'number',
-            'date',
-            'unit_section'
+            'date'
         )
 
 
 class EditWorkForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateInput(), label='Fecha', initial=datetime.now())
-    unit_section = forms.CharField(max_length=200, label='Seccion en la unidad')
     employee_work_set = forms.ModelChoiceField(queryset=Employee_Work.objects.none(), required=False, label="Trabajadores", widget=MultiSet(model=Employee, related_field="employee"), empty_label=None)
     action = HiddenField(initial='edit')
 
@@ -614,7 +613,6 @@ class EditWorkForm(forms.ModelForm):
         model = Work
         fields = (
             'date',
-            'unit_section'
         )
 
 class ChangeStorageProductForm(forms.ModelForm):
@@ -651,26 +649,6 @@ class QuotationSellForm(forms.ModelForm):
             "due",
             "customer",
             "price"
-        )
-
-class QuotationWorkForm(forms.ModelForm):
-    date = forms.DateTimeField(widget=DateInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%d"))
-    folio = forms.CharField(label="Folio")
-    start_time = forms.TimeField(label="Hora de Inicio")
-    end_time = forms.TimeField(label="Hora de Fin")
-    unit_section = forms.CharField(label="Seccion en la unidad")
-    quotation = HiddenField()
-    action = HiddenField(initial='work')
-
-    class Meta:
-        model = Work
-        fields = (
-            "date",
-            "folio",
-            "start_time",
-            "end_time",
-            "unit_section",
-            "quotation"
         )
 
 class QuotationOutputForm(forms.ModelForm):

@@ -224,3 +224,15 @@ class HiddenJSONField(HiddenField):
         except:
             pass
         super(HiddenField, self).__init__(initial=initial)
+
+class ColumnCheckboxWidget(forms.widgets.CheckboxSelectMultiple):
+    template_name = 'sections/multiple_input_cols.html'
+
+    def get_context(self, *args, **kwargs):
+        context = super().get_context(*args, **kwargs)
+        context["col_size"] = int(12/len(context['widget']['optgroups']))
+        for _, options, _ in context['widget']['optgroups']:
+            for option in options:
+                option["name"] = "{}_{}".format(option["name"], option["value"])
+                option["value"] = True
+        return context

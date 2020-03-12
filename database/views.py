@@ -8,9 +8,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render
-from django.utils import timezone
 
-from mysite import configurations, graphics, extensions
+from mysite import configurations, extensions, graphics
 
 NAVBAR_STRUCTURE = {
     "resources": [
@@ -41,6 +40,7 @@ NAVBAR_STRUCTURE = {
     ],
     "reports": [],
 }
+
 
 @login_required
 def main(request, name, obj_id):
@@ -73,8 +73,13 @@ def main(request, name, obj_id):
                 content = None
                 if action.name in object_map[name]['action_forms'].keys():
                     content = object_map[name]['action_forms'][action.name]()
+                if action.name in object_map[name].get('action_content', {}).keys():
+                    content = object_map[name]['action_content'][action.name]
                 if action.action == 'modal':
-                    modal = graphics.Modal.from_action(action, [content], api_url=object_map[name]['api_path'])
+                    body = []
+                    if content:
+                        body.append(content)
+                    modal = graphics.Modal.from_action(action, body, api_url=object_map[name]['api_path'])
                     contents.append(modal)
             scripts.extend(object_map[name].get('js', []))
         else:
@@ -86,6 +91,7 @@ def main(request, name, obj_id):
     global_messages = get_cache_messages(name)
     return render(request, 'pages/dashboard.html', locals())
 
+
 def get_cache_messages(name):
     messages = []
     update_tsp = cache.get(object_map[name]['model'].__name__)
@@ -93,6 +99,7 @@ def get_cache_messages(name):
         for dep_obj in object_map[name].get('prefetch', []):
             messages.append(extensions.Message("update-{}".format(dep_obj), update_tsp))
     return messages
+
 
 def get_navbar_active(name):
     active = {}
@@ -103,12 +110,13 @@ def get_navbar_active(name):
             break
     return active
 
+
 def render_sheet(request, name, obj_id):
     APPNAME = configurations.APPNAME
     YEAR = configurations.YEAR
     VERSION = configurations.VERSION
     PAGE_TITLE = configurations.PAGE_TITLE
-    scripts = ["sheets"]
+    scripts = ["sheet_{}".format(name)]
     rest_url = object_map[name]['api_path']
     desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_desc', object_map[name].get('table_fields', []))])
     cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_cont', [])])
@@ -121,7 +129,7 @@ def render_sheet(request, name, obj_id):
         use_rest=rest_url,
     )
     contents = [sheet]
-    return render(request, 'pages/database.html', locals())
+    return render(request, 'pages/dashboard.html', locals())
 
 
 @login_required
@@ -147,4 +155,4 @@ def index(request):
     YEAR = configurations.YEAR
     VERSION = configurations.VERSION
     PAGE_TITLE = configurations.PAGE_TITLE
-    return render(request, 'pages/database.html', locals())
+    return render(request, 'pages/dashboard.html', locals())
