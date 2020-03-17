@@ -128,6 +128,15 @@ class EditCustomerForm(forms.ModelForm):
         model = Customer
         fields = ("name",)
 
+class MergeCustomerForm(forms.ModelForm):
+    name = forms.ModelChoiceField(queryset=Customer.objects.all(), empty_label=None, required=True, label='Nombre Correcto')
+    ids = HiddenField()
+    action = HiddenField(initial='merge')
+
+    class Meta:
+        model = Customer
+        fields = ("name",)
+
 class NewEmployeeForm(forms.ModelForm):
     name = forms.CharField(max_length=200, label='Nombre')
     action = HiddenField(initial='new')

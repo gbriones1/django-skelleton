@@ -1,6 +1,7 @@
 from django.core.cache import cache
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.db.utils import IntegrityError
 
 from rest_framework import viewsets
 from rest_framework import status
@@ -69,10 +70,16 @@ class APIWrapper(viewsets.ModelViewSet):
         #     instance._prefetched_objects_cache = {}
         #
         # return Response(serializer.data)
-        response = super(APIWrapper, self).update(request, *args, **kwargs)
-        if int(response.status_code/100) == 2:
-            cache.set(self.get_queryset().model.__name__, time.time(), None)
-            self._remove_multiset_cache()
+        try:
+            response = super(APIWrapper, self).update(request, *args, **kwargs)
+            if int(response.status_code/100) == 2:
+                cache.set(self.get_queryset().model.__name__, time.time(), None)
+                self._remove_multiset_cache()
+        except IntegrityError as e:
+            desc = ""
+            if e.args[1].startswith("Duplicate entry"):
+                desc = "Valor duplicado: {}".format(" ".join(e.args[1].split(" for ")[0].split()[2:]))
+            response = HttpResponseBadRequest(content="Error de integridad en la base de datos: {}".format(desc))
         return response
 
     def partial_update(self, request, *args, **kwargs):
@@ -482,8 +489,9 @@ object_map = {
             'new': NewCustomerForm,
             'edit': EditCustomerForm,
             'delete': DeleteForm,
+            'merge': MergeCustomerForm
         },
-        # 'custom_table_actions': [graphics.Action('merge', 'modal', text='Combinar', icon='compress', style='info', method="")],
+        'custom_table_actions': [graphics.Action('merge', 'modal', text='Combinar', icon='compress', style='info', method="")],
         'table_fields': ['name', 'customer_contact_set'],
         'subset-fields': {'customer_contact_set': ["name", "department", "phone", "email"]},
         'js': ['formset', 'dashboard', 'customer'],

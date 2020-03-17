@@ -1,12 +1,13 @@
 import json
 import urllib
 
+from database.models import *
 from database.serializers import LABEL_TRANSLATIONS
 from database.viewsets import object_map
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 
 from mysite import configurations, extensions, graphics
@@ -130,6 +131,30 @@ def render_sheet(request, name, obj_id):
     )
     contents = [sheet]
     return render(request, 'pages/dashboard.html', locals())
+
+@login_required
+def merge(request, name, obj_id):
+    ids = json.loads(request.POST.get("ids"))
+    if len(ids) > 1:
+        real = object_map[name]['model'].objects.get(id=obj_id)
+        ids.remove(int(obj_id))
+        old = object_map[name]['model'].objects.filter(id__in=ids)
+        for obj in old:
+            if name == "customer":
+                for sell in Sell.objects.filter(customer=obj):
+                    sell.customer = real
+                    sell.save()
+                for pl in PriceList.objects.filter(customer=obj):
+                    pl.customer = real
+                    pl.save()
+                for q in Quotation.objects.filter(customer=obj):
+                    q.customer = real
+                    q.save()
+                for o in Output.objects.filter(destination=obj):
+                    o.destination = real
+                    o.save()
+            obj.delete()
+    return JsonResponse({"resp": request.POST})
 
 
 @login_required

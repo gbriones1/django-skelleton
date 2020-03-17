@@ -43,6 +43,7 @@ router.register(r'configuration', ConfigurationViewSet)
 urlpatterns = [
 	url(r'^api/', include(router.urls)),
 	url(r'^$', views.index),
+	url(r'^merge/(?P<name>\w+\W*\w*)/(?P<obj_id>\d*)/$', views.merge),
 	url(r'^reports/(?P<name>\W*\w*)$', views.reports),
 	url(r'^(?P<name>\w+\W*\w*)/(?P<obj_id>\d*)$', views.main),
 ]
