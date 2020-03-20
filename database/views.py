@@ -95,9 +95,9 @@ def main(request, name, obj_id):
 
 def get_cache_messages(name):
     messages = []
-    update_tsp = cache.get(object_map[name]['model'].__name__)
-    if update_tsp:
-        for dep_obj in object_map[name].get('prefetch', []):
+    for dep_obj in object_map[name].get('prefetch', []):
+        update_tsp = cache.get(object_map[dep_obj]['model'].__name__)
+        if update_tsp:
             messages.append(extensions.Message("update-{}".format(dep_obj), update_tsp))
     return messages
 

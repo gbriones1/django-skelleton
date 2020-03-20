@@ -32,6 +32,14 @@ class APIWrapper(viewsets.ModelViewSet):
             for key in multiset_caches.keys():
                 cache.delete(key)
 
+    def _update_cache(self):
+        update_tsp = time.time()
+        cache.set(self.get_queryset().model.__name__, update_tsp, None)
+        ref = [v for k,v in object_map.items() if v['model'] == self.get_queryset().model][0]
+        for name in ref.get('prefetch', []):
+            cache.set(object_map[name]['model'].__name__, update_tsp, None)
+        self._remove_multiset_cache()
+
     def list(self, request, *args, **kwargs):
         return super(APIWrapper, self).list(request, *args, **kwargs)
 
@@ -41,8 +49,7 @@ class APIWrapper(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         response = super(APIWrapper, self).destroy(request, *args, **kwargs)
         if int(response.status_code/100) == 2:
-            cache.set(self.get_queryset().model.__name__, time.time(), None)
-            self._remove_multiset_cache()
+            self._update_cache()
         return response
 
     def create(self, request, *args, **kwargs):
@@ -55,8 +62,7 @@ class APIWrapper(viewsets.ModelViewSet):
         # import pdb; pdb.set_trace()
         response = super(APIWrapper, self).create(request, *args, **kwargs)
         if int(response.status_code/100) == 2:
-            cache.set(self.get_queryset().model.__name__, time.time(), None)
-            self._remove_multiset_cache()
+            self._update_cache()
         return response
 
     def update(self, request, *args, **kwargs):
@@ -73,8 +79,7 @@ class APIWrapper(viewsets.ModelViewSet):
         try:
             response = super(APIWrapper, self).update(request, *args, **kwargs)
             if int(response.status_code/100) == 2:
-                cache.set(self.get_queryset().model.__name__, time.time(), None)
-                self._remove_multiset_cache()
+                self._update_cache()
         except IntegrityError as e:
             desc = ""
             if e.args[1].startswith("Duplicate entry"):
@@ -85,8 +90,7 @@ class APIWrapper(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         response = super(APIWrapper, self).partial_update(request, *args, **kwargs)
         if int(response.status_code/100) == 2:
-            cache.set(self.get_queryset().model.__name__, time.time(), None)
-            self._remove_multiset_cache()
+            self._update_cache()
         return response
 
     def custom(self, request, *args, **kwargs):
@@ -598,7 +602,7 @@ object_map = {
     'storage_product': {
         'name': 'Productos en almacen',
         'api_path': '/database/api/storage_product/',
-        'prefetch': ['product', 'organization_storage', 'storage_product'],
+        'prefetch': ['storage_product'],
         'use_cache': False,
         'model': Storage_Product,
         'viewset': StorageProductViewSet,
@@ -617,7 +621,7 @@ object_map = {
     'input': {
         'name': 'Entradas',
         'api_path': '/database/api/input/',
-        'prefetch': ['storage_product'],
+        'prefetch': ['storage_product', 'product'],
         'use_cache': False,
         'model': Input,
         'viewset': InputViewSet,

@@ -432,6 +432,9 @@ class InputSerializer(MovementSerializer):
             validated_data['invoice'] = invoice
         for i in range(len(validated_data['movement_product_set'])):
             data = json.loads(self.initial_data['movement_product_set'])[i]
+            validated_data['movement_product_set'][i]['product'].price = Decimal(data['price'])
+            validated_data['movement_product_set'][i]['product'].discount = Decimal(data['discount'])
+            validated_data['movement_product_set'][i]['product'].save()
             validated_data['movement_product_set'][i]['price'] = Decimal(float(data['price'])-(float(data['price'])*float(data['discount'])/100))
         obj = super().create(validated_data)
         if obj.invoice:

@@ -212,9 +212,11 @@ $(document).on('click', 'button.do-delete', function () {
         data: form.serialize(),
         type: form.attr("method"),
         success: function (data) {
-            prefetch.forEach(function(item) {
-                sessionStorage.removeItem(item)
-            });
+            if (typeof prefetch !== "undefined"){
+                prefetch.forEach(function(item) {
+                    sessionStorage.removeItem(item)
+                });
+            }
             location.reload();
         },
         error: function (data) {
@@ -233,9 +235,11 @@ $(document).on('click', 'button.do-multi-delete', function () {
             url: form.attr("action")+item.id+"/",
             type: "DELETE",
             success: function (data) {
-                prefetch.forEach(function(item) {
-                    sessionStorage.removeItem(item)
-                });
+                if (typeof prefetch !== "undefined"){
+                    prefetch.forEach(function(item) {
+                        sessionStorage.removeItem(item)
+                    });
+                }
                 location.reload();
             },
             error: function (data) {
