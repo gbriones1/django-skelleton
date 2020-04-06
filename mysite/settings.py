@@ -40,9 +40,6 @@ SECRET_KEY = '-c&qt=71oi^e5s8(ene*$b89^#%*0xeve$x_trs91veok9#0h0'
 DEBUG = True
 DEV_ENV = True
 
-ALLOWED_HOSTS = ['*']
-CORS_ORIGIN_ALLOW_ALL = True
-
 # Application definition
 
 INSTALLED_APPS = (
@@ -53,7 +50,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.forms',
-    'corsheaders',
     'rest_framework',
     'authentication',
     'database',
@@ -68,7 +64,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'mysite.urls'
@@ -167,5 +162,5 @@ REST_FRAMEWORK = {
 }
 
 LOGIN_REDIRECT_URL="/"
-SESSION_COOKIE_AGE = 3600
+SESSION_COOKIE_AGE = 50400
 SESSION_SAVE_EVERY_REQUEST = True

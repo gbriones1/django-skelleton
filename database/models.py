@@ -496,17 +496,6 @@ class Movement_Product(models.Model):
         if self.id:
             old = Movement_Product.objects.get(id=self.id)
             difference -= old.amount
-        # if isinstance(self.movement, Input):
-        #     self.product.price = self.price
-        #     if hasattr(self, 'discount'):
-        #         self.product.discount = self.discount
-        #     else:
-        #         self.discount = 1
-        #     self.product.save()
-        #     if self.movement.invoice:
-        #         self.movement.invoice.price += (self.amount*self.price)-(self.amount*self.price*self.discount/100)
-        #         self.movement.invoice.save()
-        # else:
         if not isinstance(self.movement, Input):
             difference *= -1
         sp.amount += difference

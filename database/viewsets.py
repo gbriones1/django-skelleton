@@ -172,6 +172,7 @@ class StorageProductViewSet(APIWrapper):
 class InputViewSet(APIWrapper):
     queryset = Input.objects.order_by('-date')
     serializer_class = InputSerializer
+    multiset_caches = ['multiset_Movement_Product']
 
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
