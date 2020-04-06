@@ -37,7 +37,9 @@ class APIWrapper(viewsets.ModelViewSet):
         cache.set(self.get_queryset().model.__name__, update_tsp, None)
         ref = [v for k,v in object_map.items() if v['model'] == self.get_queryset().model][0]
         for name in ref.get('prefetch', []):
-            cache.set(object_map[name]['model'].__name__, update_tsp, None)
+            obj_desc = object_map.get(name)
+            if obj_desc:
+                cache.set(obj_desc['model'].__name__, update_tsp, None)
         self._remove_multiset_cache()
 
     def list(self, request, *args, **kwargs):
