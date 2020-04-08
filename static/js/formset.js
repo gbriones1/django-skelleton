@@ -38,7 +38,6 @@ function initialFormSetData(input, data) {
             choiceFields[choiceName][$(this).val()] = $(this).text()
         })
     })
-    console.log(choiceFields)
     body.empty()
     for (index in data){
         var row = $('<tr>')

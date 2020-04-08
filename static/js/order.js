@@ -121,7 +121,7 @@ function detailViewFormatter(index, row, element){
 }
 
 function renderFilter(form, value) {
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         if (!(value == $(this).data("provider"))){
             $(this).hide();
         }
@@ -130,17 +130,17 @@ function renderFilter(form, value) {
 
 $(document).on('change', 'select#id_provider', function() {
     var form = $(this).closest('form')
-    form.find('table#multiSet-table tr').each(function(){
+    form.find('table.multiSet-table tr').each(function(){
         $(this).show()
     });
-    var search = form.find('#multiSet-search-available').val()
-    var table = form.find('#multiSet-table')
+    var search = form.find('.multiSet-search-available').val()
+    var table = form.find('.multiSet-table')
     var selectedProvider = form.find('select#id_provider').val();
     applySearch(search, table)
     renderFilter(form, selectedProvider)
 });
 
-$(document).on('keyup change', '#multiSet-search-available', function() {
+$(document).on('keyup change', '.multiSet-search-available', function() {
     var form = $(this).closest('form')
     var selectedProvider = form.find('[name="provider"]').val();
     renderFilter(form, selectedProvider)
@@ -155,8 +155,8 @@ function inputEvent (e, value, data, index) {
     form.find('input[name="id"]').val(data['id']);
     form.find('select[name="organization_storage"]').val(data['organization_storage']);
     form.find('input[name="provider"]').val(data['provider']);
-    var search = form.find('#multiSet-search-available').val()
-    var table = form.find('#multiSet-table')
+    var search = form.find('.multiSet-search-available').val()
+    var table = form.find('.multiSet-table')
     applySearch(search, table)
     renderFilter(form, data['provider'])
     for (idx in data.order_product_set){
