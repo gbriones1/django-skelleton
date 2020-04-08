@@ -429,6 +429,7 @@ class Quotation(models.Model):
     authorized = models.BooleanField(default=False)
     service = models.DecimalField(max_digits=9, decimal_places=2, default=0)
     discount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    iva = models.BooleanField(default=False)
     work = models.ForeignKey(Work, null=True, on_delete=models.CASCADE)
     unit_section_fr = models.BooleanField(default=False)
     unit_section_fc = models.BooleanField(default=False)

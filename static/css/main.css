@@ -202,7 +202,7 @@ input.form-control {
 	}
 }
 
-.sheet-cont td.right {
+.sheet-cont .right {
 	text-align: right;
 }
 

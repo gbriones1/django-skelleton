@@ -90,9 +90,14 @@ function initialMultiSetData(input, data) {
     refreshMutliSetInputs(input.closest('form'));
 }
 
+availTO = null
 $(document).on('keyup change', '.multiSet-search-available', function() {
     var table = $(this).closest('.multiSet-container').find('table.multiSet-table')
-    applySearch($(this).val(), table);
+    if (availTO){
+        clearTimeout(availTO)
+    }
+    availTO = setTimeout(applySearch, 1000, $(this).val(), table)
+    // applySearch($(this).val(), table);
 });
 
 $(document).on('keyup change', '.multiSet-search-added', function() {

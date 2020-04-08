@@ -46,6 +46,9 @@ function buildTable (){
         })
         total += parseFloat(item.service)
         total -= parseFloat(item.discount)
+        if (item.iva) {
+            total += total*.16
+        }
         item.total = total.toFixed(2)
         item.authorized_name = "No"
         if (item.authorized){

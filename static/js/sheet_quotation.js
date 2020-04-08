@@ -119,6 +119,13 @@ $('.sheet').each(function () {
                 }
 
             }
+            if (data.iva){
+                contSection.find(".subtotal").text("$"+total.toFixed(2));
+                contSection.find(".iva").text("$"+(total*.16).toFixed(2));
+                total += total*.16
+                contSection.find(".subtotal").closest("tr").show()
+                contSection.find(".iva").closest("tr").show()
+            }
             contSection.find(".total").text("$"+total.toFixed(2));
             for (field in data){
                 if (startsWith(field, "unit_section_")){

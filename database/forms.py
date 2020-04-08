@@ -391,7 +391,8 @@ class NewQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
-    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
+    iva = forms.BooleanField(label="+IVA")
+    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Numero de hoja", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
     unit_section = forms.ChoiceField(choices=Quotation.SECTION_CHOICES, widget=ColumnCheckboxWidget(), label="Secciones")
 
@@ -407,6 +408,7 @@ class NewQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
+            'iva',
             'work_number',
             'authorized',
         )
@@ -424,7 +426,8 @@ class EditQuotationForm(forms.ModelForm):
     quotation_others_set = forms.ModelChoiceField(queryset=Quotation_Others.objects.none(), required=True, label="Otros", widget=FormSet(form=QuotationOtherForm()), empty_label=None)
     service = forms.DecimalField(max_digits=9, decimal_places=2, label='Costo del servicio', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento en pesos', required=True, min_value=0, initial=0)
-    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Hoja de trabajo", widget=Datalist())
+    iva = forms.BooleanField(label="+IVA")
+    work_number = forms.ModelChoiceField(queryset=Work.objects.all(), required=False, label="Numero de hoja", widget=Datalist())
     authorized = forms.BooleanField(label="Autorizado")
     unit_section = forms.ChoiceField(choices=Quotation.SECTION_CHOICES, widget=ColumnCheckboxWidget(), label="Secciones")
 
@@ -441,6 +444,7 @@ class EditQuotationForm(forms.ModelForm):
             'quotation_others_set',
             'service',
             'discount',
+            'iva',
             'work_number',
             'authorized'
         )

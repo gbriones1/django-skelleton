@@ -532,6 +532,7 @@ class QuotationSerializer(DashboardSerializer):
     authorized = serializers.BooleanField(required=False)
     service = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
     discount = serializers.DecimalField(max_digits=9, decimal_places=2, required=False)
+    iva = serializers.BooleanField(required=False)
     work = serializers.PrimaryKeyRelatedField(queryset=Work.objects.all(), required=False)
     work_number = serializers.ReadOnlyField(source='work.number')
     unit_section_fr = serializers.BooleanField(required=False)
