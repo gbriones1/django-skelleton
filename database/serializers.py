@@ -489,6 +489,7 @@ class PriceListProductSerializer(JSONSubsetSerializer):
 
 class PriceListSerializer(DashboardSerializer):
     customer = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all())
+    customer_name = serializers.ReadOnlyField(source='customer.name')
     pricelist_product_set = PriceListProductSerializer(many=True)
 
     class Meta:

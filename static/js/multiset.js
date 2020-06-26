@@ -49,7 +49,7 @@ function applySearch(search, table){
 function initialMultiSetData(input, data) {
     var div = input.closest('.multiSet-container')
     // var modelName = input.attr('data-model')
-    var reference = input.data("related")
+    var reference = input.data("name")
     var added = div.find('.multiSet-added')
     added.empty()
     var multiple = div.find('.multiSet-table').attr('data-multiple')
@@ -106,7 +106,7 @@ $(document).on('keyup change', '.multiSet-search-added', function() {
 });
 
 $(document).on('click', '.multiSet-add', function(){
-    var reference = $(this).closest('.multiSet-container').find('input.multiset').data("related")
+    var reference = $(this).closest('.multiSet-container').find('input.multiset').data("name")
     var val = $(this).closest('tr').attr('data-id')
     var multiple = $(this).closest('table').attr('data-multiple')
     var editable = $(this).closest('table').attr('data-editable')
@@ -166,7 +166,7 @@ $(document).on('click', '.multiSet-add-all', function(){
     var added = div.find('.multiSet-added tbody');
     var multiple = div.find('.multiSet-table').attr('data-multiple');
     var editable = div.find('.multiSet-table').attr('data-editable');
-    var reference = div.find('input.multiset').data("related");
+    var reference = div.find('input.multiset').data("name");
     div.find('.multiSet-table tbody tr').each(function() {
         if (this.style.display != 'none'){
             var val = $(this).attr('data-id')

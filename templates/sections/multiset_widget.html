@@ -1,0 +1,23 @@
+<div class="row multiSet-container">
+    {% include 'django/forms/widgets/hidden.html' %}
+    <div class="col-sm-6">
+        <h4 style="float: left;">Available</h4>
+        <button class="btn btn-primary btn-sm multiSet-add-all" style="float: right;" type="button"><i class="fa fa-forward"></i></button>
+        {% if search %}
+        <input class="multiSet-search-available form-control" placeholder="Search">
+        {% endif %}
+        <div style="height: 300px;overflow-y: auto;padding: 0">
+            <table class="table multiSet-table" data-editable="{{ editable }}" data-multiple="{{ multiple }}"><tbody></tbody></table>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <h4 style="float: left;">Added</h4>
+        <button class="btn btn-danger btn-sm multiSet-delete-all" style="float: right;" type="button"><i class="fa fa-backward"></i></button>
+        {% if search %}
+        <input class="multiSet-search-added form-control" placeholder="Search">
+        {% endif %}
+        <div style="height: 300px;overflow-y: auto;padding: 0">
+            <table class="table multiSet-added"><thead></thead><tbody></tbody></table>
+        </div>
+    </div>
+</div>

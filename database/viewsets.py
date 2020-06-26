@@ -22,7 +22,6 @@ import subprocess
 import tempfile
 import time
 
-object_map = {}
 
 class APIWrapper(viewsets.ModelViewSet):
 
@@ -654,7 +653,7 @@ object_map = {
         },
         'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
-        'js': ['multiset', 'dashboard', 'output'],
+        'js': ['dashboard', 'multiset', 'output'],
         'custom_table_actions': [
             graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST"),
             graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST")],

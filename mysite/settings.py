@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.forms',
     'rest_framework',
+    'mysite',
     'authentication',
     'database',
     'public',

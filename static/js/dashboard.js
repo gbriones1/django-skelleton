@@ -18,40 +18,6 @@ TRANSLATIONS = {
     'This field may not be null.': 'Este campo no puede estar vacio',
 }
 
-function getObject(name){
-    object = sessionStorage.getItem(name)
-    if (object){
-        console.log(name+" cached")
-        return function (param) {
-            _mockAjaxOptions = param;
-            param.complete("data", "textStatus", "jqXHR");
-        }
-    } else {
-        console.log(name+" not cached")
-        return $.ajax({
-            url: '/database/api/'+name+"/",
-            type: "GET",
-            success: function (data) {
-                sessionStorage.setItem(name, JSON.stringify(data))
-            },
-            error: function (data) {
-                handleErrorAlerts(data)
-            }
-        })
-    }
-}
-
-function getObjectFiltered(name, success) {
-    return $.ajax({
-        url: '/database/api/'+name+'/'+window.location.search,
-        type: "GET",
-        success: success,
-        error: function (data) {
-            handleErrorAlerts(data)
-        }
-    })
-}
-
 function handleErrorAlerts(response) {
     try {
         data = JSON.parse(response.responseText)

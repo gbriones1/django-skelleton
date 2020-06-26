@@ -56,99 +56,6 @@ class Datalist(forms.widgets.Select):
         #                    force_text(option_label))
         return '<option value="{}"></option>'.format(option_label.encode('utf-8').decode())
 
-class MultiSet(forms.widgets.Select):
-
-    def __init__(self, model=None, related_field=None, search=True, amounts=False, include=[], editable_fields=[], extra_fields={}):
-        super(forms.widgets.Select, self).__init__()
-        self.model = model
-        self.related_field = related_field
-        self.search = search
-        self.amounts = amounts
-        self.include = include
-        self.editable_fields = editable_fields
-        self.extra_fields = extra_fields
-
-    def render(self, name, value, attrs=None, choices=(), renderer=None):
-        model_name = self.choices.queryset.model.__name__
-        # print("Rendering multiset form", model_name, self.search, self.amounts, self.include, self.editable_fields)
-        if value is None:
-            value = ''
-        final_attrs = self.build_attrs(attrs)
-        final_attrs["name"] = name
-        final_attrs["type"] = 'hidden'
-        final_attrs["class"] = 'multiset'
-        final_attrs["data-related"] = self.related_field
-        # fields = []
-        # for field in self.choices.queryset.model._meta.get_fields():
-        #     fields.append(field.name)
-        # final_attrs['data-fields'] = json.dumps(fields)
-
-        output = []
-
-        output.append(format_html('<div{}>', flatatt({"class": "row multiSet-container"})))
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-        output.append(format_html('<h4{} >Available</h4>', flatatt({"style": "float: left;"})))
-        output.append(format_html('<button{}><i class="fa fa-forward"></i></button>', flatatt({"class":"btn btn-primary btn-sm multiSet-add-all", "type":"button", "style": "float: right;"})))
-        if self.search:
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-available"})))
-        output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        table_attrs = {"class": "table", "class":"table multiSet-table"}
-        if self.amounts:
-            table_attrs['data-multiple'] = 'true'
-        editable = {}
-        if self.editable_fields:
-            for field in self.editable_fields:
-                widget = self.choices.queryset.model._meta.get_field(field).formfield().widget
-                if hasattr(widget, 'input_type'):
-                    editable[field] = {
-                        'tag': 'input',
-                        'type': widget.input_type,
-                    }
-                elif hasattr(widget, 'choices'):
-                    editable[field] = {
-                        'tag': 'select',
-                        'choices': widget.choices,
-                    }
-        if self.extra_fields:
-            for field in self.extra_fields.keys():
-                editable[field] = self.extra_fields[field]
-        if editable:
-            table_attrs['data-editable'] = json.dumps(editable)
-        output.append(format_html('<table{} >', flatatt(table_attrs)))
-        multiset_cached = cache.get("multiset_{}".format(model_name))
-        if not multiset_cached:
-            # print("Caching", model_name)
-            multiset_cached = []
-            for choice in self.model.objects.all():
-                tr_attr = json.loads(serializers.serialize("json", [choice]))[0]['fields']
-                tr_attr = dict([("data-"+x, tr_attr[x].encode("ascii", "ignore").decode()) if type(tr_attr[x]) == type(u"") else ("data-"+x, tr_attr[x]) for x in tr_attr.keys()])
-                tr_attr["data-id"] = choice.id
-                multiset_cached.append(format_html('<tr {}>', flatatt(tr_attr)))
-                multiset_cached.append('<td>{}</td>'.format(str(choice)))
-                multiset_cached.append(format_html('<td><button{}><i class="fa fa-plus"></i></button></td>', flatatt({"class":"btn btn-primary btn-sm multiSet-add", "type":"button"})))
-                multiset_cached.append('</tr>')
-            cache.set("multiset_{}".format(model_name), multiset_cached, None)
-        output.extend(multiset_cached)
-        output.append('</table>')
-        output.append('</div>')
-        output.append('</div>')
-
-        output.append(format_html('<div{}>', flatatt({"class": "col-sm-6"})))
-        output.append(format_html('<h4{}>Added</h4>', flatatt({"style": "float: left;"})))
-        output.append(format_html('<button{}><i class="fa fa-backward"></i></button>', flatatt({"class":"btn btn-danger btn-sm multiSet-delete-all", "type":"button", "style": "float: right;"})))
-        if self.search:
-            output.append(format_html('<td><input{} /></td>', flatatt({"placeholder":"Search", "class":"multiSet-search-added"})))
-        output.append(format_html('<div{}>', flatatt({"style":"height: 300px;overflow-y: auto;padding: 0"})))
-        output.append(format_html('<table{} >', flatatt({"class": "table", 'class':"table multiSet-added"})))
-        output.append('<thead></thead><tbody></tbody></table>')
-        output.append('</div>')
-        output.append('</div>')
-
-        output.append(format_html('<input{} />', flatatt(final_attrs)))
-        output.append('</div>')
-
-        return mark_safe('\n'.join(output))
-
 
 class FormSet(forms.widgets.Select):
 
@@ -235,4 +142,42 @@ class ColumnCheckboxWidget(forms.widgets.CheckboxSelectMultiple):
             for option in options:
                 option["name"] = "{}_{}".format(option["name"], option["value"])
                 option["value"] = True
+        return context
+
+
+class MultiSetWidget(forms.widgets.Select):
+    template_name = 'sections/multiset_widget.html'
+
+    def __init__(self, search=True, amounts=False, editable_fields=[], extra_fields={}):
+        super(forms.widgets.Select, self).__init__()
+        self.search = search
+        self.amounts = amounts
+        self.editable_fields = editable_fields
+        self.extra_fields = extra_fields
+        self.attrs["class"] = "multiset form-control"
+
+    def get_context(self, *args, **kwargs):
+        context = super().get_context(*args, **kwargs)
+        context["widget"]["type"] = "hidden"
+        context["search"] = self.search
+
+        editable = {}
+        for field in self.editable_fields:
+            widget = self.choices.queryset.model._meta.get_field(field).formfield().widget
+            if hasattr(widget, 'input_type'):
+                editable[field] = {
+                    'tag': 'input',
+                    'type': widget.input_type,
+                }
+            elif hasattr(widget, 'choices'):
+                editable[field] = {
+                    'tag': 'select',
+                    'choices': widget.choices,
+                }
+        for field in self.extra_fields.keys():
+            editable[field] = self.extra_fields[field]
+        context["editable"] = json.dumps(editable)
+        
+        if self.amounts:
+            context["multiple"] = "true"
         return context

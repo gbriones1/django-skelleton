@@ -200,3 +200,72 @@ $('#update_userpass form').submit(function (argument) {
 $('li.filter-menu').click(function(){return false});
 
 $('.table-fixed-height').height($(window).height()-320);
+
+
+function getObject(name){
+    object = sessionStorage.getItem(name)
+    if (object){
+        console.log(name+" cached")
+        return function (param) {
+            _mockAjaxOptions = param;
+            param.complete("data", "textStatus", "jqXHR");
+        }
+    } else {
+        console.log(name+" not cached")
+        return $.ajax({
+            url: '/database/api/'+name+"/",
+            type: "GET",
+            success: function (data) {
+                sessionStorage.setItem(name, JSON.stringify(data))
+            },
+            error: function (data) {
+                handleErrorAlerts(data)
+            }
+        })
+    }
+}
+
+function getObjectFiltered(name, success) {
+    return $.ajax({
+        url: '/database/api/'+name+'/'+window.location.search,
+        type: "GET",
+        success: success,
+        error: function (data) {
+            handleErrorAlerts(data)
+        }
+    })
+}
+
+$('.cached-model').each(function (){
+    var obj_name = $(this).data("name")
+    var namers = $(this).data("namers") || ["name"]
+    var widget = $(this).attr("widget")
+    var field = $(this)
+    $.when(getObject(obj_name)).done(function () {
+        data = JSON.parse(sessionStorage.getItem(obj_name) || "[]")
+        switch(widget) {
+            case "Select":
+                for (record of data){
+                    var text = Object.values(namers.reduce(function(o, k) { o[k] = record[k]; return o; }, {})).join(" - ") || record.id
+                    field.append('<option value="'+record.id+'">'+text+'</option>')
+                }
+                break;
+            case "MultiSetWidget":
+                var table = field.closest(".multiSet-container").find(".multiSet-table")
+                for (record of data){
+                    var text = Object.values(namers.reduce(function(o, k) { o[k] = record[k]; return o; }, {})).join(" - ") || record.id
+                    var row = $('<tr></tr>')
+                    for (field_name in record){
+                        row.attr("data-"+field_name, record[field_name])
+                        row.data(field_name, record[field_name])
+                    }
+                    row.append('<td>'+text+'</td>')
+                    row.append('<td><button class="btn btn-primary btn-sm multiSet-add" type="button"><i class="fa fa-plus"></i></button></td>')
+                    table.append(row)
+                }
+                break;
+            default:
+                console.log("No widget support for cached model")
+        }
+    })
+})
