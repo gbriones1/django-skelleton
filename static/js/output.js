@@ -94,6 +94,12 @@ function buildTable (){
             width: 60,
             filterControl: 'input'
         }, {
+            field: 'sum',
+            title: 'Total',
+            sortable: true,
+            filterControl: 'input',
+            formatter: sumFormatter
+        }, {
             field: 'action',
             title: 'Acciones',
             formatter: actionFormatter,
@@ -124,6 +130,12 @@ function detailViewFormatter(index, row, element){
 
 function productFormatter(element, row, index){
     return '<a class="detail-icon" href="#"><i class="fa fa-plus"></i></a><div style="display: none;">'+element+"</div>"
+}
+
+function sumFormatter(element, row, index){
+    var sum = 0
+    for (x in row.movement_product_set) {sum += row.movement_product_set[x].price*row.movement_product_set[x].amount}
+    return sum.toFixed(2)
 }
 
 function renderFilter(form) {
