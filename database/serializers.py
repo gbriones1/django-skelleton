@@ -65,12 +65,13 @@ class DashboardSerializer(serializers.Serializer):
         for field, value in validated_data.items():
             setattr(instance, field, value)
         for field in instance._meta.fields:
-            if field.name != 'id' and not field.name.endswith('_ptr') and not field.name in validated_data.keys():
+            if field.name != 'id' and not field.name.endswith('_ptr') and not field.name in validated_data.keys() and not field.name in self.Meta.disable_clean_fields:
                 setattr(instance, field.name, None)
         instance.save()
         for reverse_fields_arg in reverse_fields_args:
-            reverse_fields_arg['instance'] = instance
-            self.update_reverse_field(**reverse_fields_arg)
+            if not reverse_fields_arg['reference'].name in self.Meta.disable_clean_fields:
+                reverse_fields_arg['instance'] = instance
+                self.update_reverse_field(**reverse_fields_arg)
         return instance
 
     def validate_reverse_field(self, field, serializer, parent):
@@ -148,7 +149,7 @@ class ProductSerializer(DashboardSerializer):
     appliance = serializers.PrimaryKeyRelatedField(queryset=Appliance.objects.all(), required=False)
     price = serializers.DecimalField(max_digits=9, decimal_places=2)
     discount = serializers.DecimalField(max_digits=9, decimal_places=2)
-    picture = serializers.CharField(required=False)
+    picture = serializers.ImageField(required=False)
 
     def create(self, validated_data):
         brand, _ = Brand.objects.get_or_create(name=self.initial_data.get('brand_name'))
@@ -333,6 +334,7 @@ class MovementSerializer(DashboardSerializer):
     date = serializers.DateTimeField(format="%Y-%m-%dT%H:%M:%S", required=False)
     organization_storage = serializers.PrimaryKeyRelatedField(queryset=Organization_Storage.objects.all())
     movement_product_set = MovementProductSerializer(many=True)
+    evidence = serializers.ImageField(required=False)
 
     def run_validation(self, data):
         data2 = data.copy()
@@ -359,6 +361,7 @@ class OutputSerializer(MovementSerializer):
                 'product'
             )
         ]
+        disable_clean_fields = ('movement_product_set', 'evidence')
 
 
 class OrderProductSerializer(JSONSubsetSerializer):
@@ -423,6 +426,7 @@ class InputSerializer(MovementSerializer):
                 'product'
             )
         ]
+        disable_clean_fields = ('movement_product_set', 'evidence', 'provider')
 
     def create(self, validated_data):
         if self.initial_data.get('invoice_number'):
@@ -440,6 +444,13 @@ class InputSerializer(MovementSerializer):
         if obj.invoice:
             obj.invoice.recalculate_price()
         return obj
+
+    def run_validation(self, data):
+        data2 = data.copy()
+        if self.instance:
+            data2["provider"] = self.instance.provider.id
+        validated_data = super().run_validation(data2)
+        return validated_data
 
 class PaymentSerializer(JSONSubsetSerializer):
     date = serializers.DateField(format="%Y-%m-%d", required=False)

@@ -3,18 +3,12 @@ from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # groups = serializers.HyperlinkedRelatedField(
-    #     many=True,
-    #     view_name='group-detail',
-    #     queryset=Group.objects.all()
-    # )
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'groups')
+        fields = ['username', 'first_name', 'last_name', 'email', 'is_staff']
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    # user_set = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Group
         fields = ('url', 'name', 'user_set')

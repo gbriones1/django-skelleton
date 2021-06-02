@@ -59,12 +59,12 @@ def users(request):
         return HttpResponseRedirect('/accounts/users/')
     modals = [
         graphics.Modal.from_action(graphics.Action.crud_button('new'), [NewUserForm()]),
-        graphics.Modal.from_action(graphics.Action.crud_button('edit'), [EditUserForm()]),
-        graphics.Modal.from_action(graphics.Action.crud_button('delete'), [DeleteForm()]),
-        graphics.Modal.from_action(graphics.Action.crud_button('multi-delete'), [DeleteForm()]),
+        graphics.Modal.from_action(graphics.Action.crud_button('edit'), [EditUserForm()], "/accounts/api/users/"),
+        graphics.Modal.from_action(graphics.Action.crud_button('delete'), [DeleteForm()], "/accounts/api/users/"),
+        # graphics.Modal.from_action(graphics.Action.crud_button('multi-delete'), [DeleteForm()]),
     ]
     users = User.objects.all()
-    scripts = ["dashboard"]
+    scripts = ["dashboard", "accounts"]
     return render(request, 'pages/accounts.html', locals())
 
 def update_pass(request):
@@ -87,6 +87,11 @@ class UserViewSet(viewsets.ModelViewSet):
         # import pdb; pdb.set_trace()
         # return Response(self.serializer_class(data=self.queryset).initial_data)
         return Response(self.get_serializer(self.queryset, many=True).data)
+
+    # def update(self, request, *args, **kwargs):
+    #     import pdb; pdb.set_trace()
+    #     result = super().update(request, *args, **kwargs)
+    #     return result
 
 
 class GroupViewSet(viewsets.ModelViewSet):

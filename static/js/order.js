@@ -174,7 +174,9 @@ $(document).on('click', 'button.do-input', function () {
     var formData = new FormData(form.get(0));
     $.ajax({
         url: "/database/api/input/",
-        data: new URLSearchParams(formData).toString(),
+        data: formData,
+        contentType: false,
+        processData: false,
         type: 'POST',
         success: function (data) {
             sessionStorage.removeItem('storage_product')

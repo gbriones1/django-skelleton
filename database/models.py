@@ -459,16 +459,10 @@ class Quotation_Others(models.Model):
     price = models.DecimalField(max_digits=9, decimal_places=2)
 
 
-class MovementProductManager(models.Manager):
-
-    def add(self, *args, **kwargs):
-        import pdb; pdb.set_trace()
-        super(MovementProductManager, self).add(*args, **kwargs)
-
-
 class Movement(models.Model):
     date = models.DateTimeField(default=timezone.now)
     organization_storage = models.ForeignKey(Organization_Storage, on_delete=models.CASCADE)
+    evidence = models.ImageField(upload_to='evidence', null=True)
 
     def delete(self, *args, **kwargs):
         for mp in self.movement_product_set.all():

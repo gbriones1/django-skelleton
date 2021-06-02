@@ -3,7 +3,7 @@ import urllib
 
 from database.models import *
 from database.serializers import LABEL_TRANSLATIONS
-from database.viewsets import object_map
+from database.viewsets import get_object_perm
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
@@ -52,6 +52,7 @@ def main(request, name, obj_id):
     contents = []
     notifications = []
     global_messages = []
+    object_map = get_object_perm(request.user)
     if name in object_map.keys():
         table_title = object_map[name]["name"]
         if not obj_id:
@@ -89,11 +90,11 @@ def main(request, name, obj_id):
     else:
         raise Http404("Page does not exist")
     navbar_active = get_navbar_active(name)
-    global_messages = get_cache_messages(name)
+    global_messages = get_cache_messages(name, object_map)
     return render(request, 'pages/dashboard.html', locals())
 
 
-def get_cache_messages(name):
+def get_cache_messages(name, object_map):
     messages = []
     for dep_obj in object_map[name].get('prefetch', []):
         obj_desc = object_map.get(dep_obj)
@@ -120,6 +121,7 @@ def render_sheet(request, name, obj_id):
     VERSION = configurations.VERSION
     PAGE_TITLE = configurations.PAGE_TITLE
     scripts = ["sheet_{}".format(name)]
+    object_map = get_object_perm(request.user)
     rest_url = object_map[name]['api_path']
     desc_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_desc', object_map[name].get('table_fields', []))])
     cont_fields = dict([(field, {"label": LABEL_TRANSLATIONS.get(field, field)}) for field in object_map[name].get('sheet_cont', [])])
@@ -136,6 +138,7 @@ def render_sheet(request, name, obj_id):
 
 @login_required
 def merge(request, name, obj_id):
+    object_map = get_object_perm(request.user)
     ids = json.loads(request.POST.get("ids"))
     if len(ids) > 1:
         real = object_map[name]['model'].objects.get(id=obj_id)
@@ -167,9 +170,10 @@ def reports(request, name):
     VERSION = configurations.VERSION
     navbar_active = {"reports": "active"}
     sidebar_active = {}
+    object_map = get_object_perm(request.user)
     if not name:
         scripts = ["reports", "reports_weekly"]
-        global_messages = get_cache_messages("customer")
+        global_messages = get_cache_messages("customer", object_map)
         sidebar_active["reports"] = 'active'
         return render(request, 'pages/reports.html', locals())
     else:

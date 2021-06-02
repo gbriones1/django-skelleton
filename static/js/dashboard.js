@@ -25,6 +25,9 @@ function handleErrorAlerts(response) {
     catch (err){
         data = response.responseText
     }
+    if (response.status == 401){
+        data = "No autorizado"
+    }
     if (typeof(data) == "object") {
         for (key in data){
             var value = data[key]
@@ -119,14 +122,15 @@ function deleteEvent (e, value, data, index) {
     deleteform.find('input[name="id"]').val(data['id']);
 }
 
-$(document).on('click', 'button.do-new', function () {
-    var button = $(this)
+function doNew(button){
     button.attr('disabled', true)
-    var form = $(this).closest('.modal-content').find('form')
+    var form = button.closest('.modal-content').find('form')
     $.ajax({
         url: form.attr("action"),
-        data: new URLSearchParams(new FormData(form.get(0))).toString(),
+        data: new FormData(form.get(0)),
         type: form.attr("method"),
+        contentType: false,
+        processData: false,
         success: function (data) {
             if (typeof prefetch !== "undefined"){
                 prefetch.forEach(function(item) {
@@ -140,6 +144,10 @@ $(document).on('click', 'button.do-new', function () {
             handleErrorAlerts(data)
         }
     });
+}
+
+$(document).on('click', 'button.do-new', function () {
+    doNew($(this))
 });
 
 $(document).on('click', 'button.do-edit', function () {

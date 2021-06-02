@@ -86,11 +86,14 @@ function buildTable (){
 }
 
 function detailViewFormatter(index, row, element){
-    var table = '<table><tr><th>Refaccion</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
+    var table = '<table style="float: left;margin-right: 50px;"><tr><th>Refaccion</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
     row.movement_product_set.forEach(function(item) {
         table += '<tr><td>'+productNames[item.product]+'</td><td>$'+item.price+'</td><td>'+item.amount+'</td><td>$'+(item.price*item.amount).toFixed(2)+'</td></tr>'
     })
     table += '</tbody></table>'
+    if (row.evidence){
+        table += '<img src="'+row.evidence+'" height="250">'
+    }
     return table
 }
 
@@ -122,4 +125,37 @@ $(document).on('change', '#new select[name="provider"]', function() {
 
 $(document).on('keyup change', '.multiSet-search-available', function() {
     renderFilter($(this).closest('form'))
+});
+
+$(document).on('click', 'button[data-target="#remove_photo"]', function () {
+    var ids = []
+    var form = $("#remove_photo form");
+    $("#table").bootstrapTable('getSelections').forEach(function (item, index) {
+        ids.push(item.id)
+    });
+    form.find('input[name="ids"]').val(JSON.stringify(ids));
+});
+
+$(document).on('click', 'button.do-remove_photo', function () {
+    var button = $(this)
+    button.attr('disabled', true)
+    var form = $(this).closest('.modal-content').find('form');
+    var data = new FormData(form.get(0));
+    $.ajax({
+        url: "/database/api/input/",
+        data: new URLSearchParams(data).toString(),
+        type: 'POST',
+        success: function (data) {
+            if (typeof prefetch !== "undefined"){
+                prefetch.forEach(function(item) {
+                    sessionStorage.removeItem(item)
+                });
+            }
+            location.reload();
+        },
+        error: function (data) {
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
+        }
+    });
 });

@@ -13,6 +13,14 @@ $.when(getObject("product"), getObject("percentage"), getObject("brand"), getObj
     buildTable()
 });
 
+function pictureFormatter(value, row, index, field){
+    var image = ''
+    if (row.picture){
+        image = '<img src="'+row.picture+'" height="100">'
+    }
+    return image
+}
+
 function buildTable (){
     providerNames = {}
     brandNames = {}
@@ -101,6 +109,10 @@ function buildTable (){
             filterControl: 'input',
             align: 'right'
         }, {
+            field: 'picture_image',
+            title: 'Foto',
+            formatter: pictureFormatter,
+        }, {
             field: 'action',
             title: 'Acciones',
             formatter: actionFormatter,
@@ -108,7 +120,8 @@ function buildTable (){
             align: 'center',
             events: {
                 'click .edit': editEvent,
-                'click .delete': deleteEvent
+                'click .delete': deleteEvent,
+                'click .picture': pictureEvent
               }
         }],
         pagination: true,
@@ -118,8 +131,37 @@ function buildTable (){
     })
 }
 
-$(document).on('click', 'button[data-target="#picture"]', function () {
-    var data = $(this).closest('tr').data()
+function pictureEvent(e, value, data, index) {
     var form = $("#picture form");
+    form.submit(function() {
+        return false;
+    });
+    form[0].reset();
     form.find('input[name="id"]').val(data['id']);
+}
+
+$(document).on('click', 'button.do-picture', function () {
+    var button = $(this)
+    button.attr('disabled', true)
+    var form = $(this).closest('.modal-content').find('form');
+    formData = getFormData(form)
+    $.ajax({
+        url: "/database/api/product/"+formData.id+"/",
+        data: new FormData(form.get(0)),
+        contentType: false,
+        processData: false,
+        type: 'PUT',
+        success: function (data) {
+            if (typeof prefetch !== "undefined"){
+                prefetch.forEach(function(item) {
+                    sessionStorage.removeItem(item)
+                });
+            }
+            location.reload();
+        },
+        error: function (data) {
+            button.attr('disabled', false)
+            handleErrorAlerts(data)
+        }
+    });
 });

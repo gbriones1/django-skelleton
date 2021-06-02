@@ -212,14 +212,18 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     })
 });
 
-$('input.multiset').closest('form').submit(function () {
+$(document).off('click', 'button.do-new');
+
+$('input.multiset').closest('form').submit(function (e) {
     var form = $(this).closest("form");
     refreshMutliSetInputs(form);
+    return false;
 });
 
 $(document).on('click', 'button.do-new', function () {
     var form = $(this).closest('.modal-content').find('form')
     refreshMutliSetInputs(form);
+    doNew($(this))
 });
 
 $(document).on('click', 'button.do-edit', function () {

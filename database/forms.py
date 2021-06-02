@@ -86,7 +86,7 @@ class NewProductForm(forms.ModelForm):
     appliance_name = forms.ModelChoiceField(queryset=Appliance.objects.all(), required=False, label="Aplicacion", widget=Datalist())
     price = forms.DecimalField(max_digits=9, decimal_places=2, label='Precio de lista', required=True, min_value=0, initial=0)
     discount = forms.DecimalField(max_digits=9, decimal_places=2, label='Descuento', required=False, initial=0, min_value=0, max_value=100)
-    picture = forms.ImageField()
+    picture = forms.ImageField(label="Foto")
     action = HiddenField(initial='new')
 
     class Meta:
@@ -325,6 +325,7 @@ class NewInputForm(forms.ModelForm):
     provider = CachedModelChoiceField(name="provider", required=True, label="Proveedor")
     invoice_number = forms.CharField(max_length=200, label='Numero de factura')
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
+    evidence = forms.ImageField(label="Evidencia")
     movement_product_set = CachedRelatedModelChoiceField(name="movement_product", required=False, label="Refacciones", widget=MultiSetWidget(amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
     action = HiddenField(initial='new')
 
@@ -332,6 +333,7 @@ class NewInputForm(forms.ModelForm):
         model = Input
         fields = [
             'date',
+            'evidence',
             'organization_storage',
             'provider'
         ]
@@ -339,6 +341,7 @@ class NewInputForm(forms.ModelForm):
 class EditInputForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateTimeInput(), label='Fecha')
+    evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -354,6 +357,7 @@ class NewOutputForm(forms.ModelForm):
     employee = CachedModelChoiceField(name="employee", label="Empleado")
     destination = CachedModelChoiceField(name="customer", label="Destino")
     replacer = CachedModelChoiceField(name="organization", label="Repone")
+    evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='new')
 
     class Meta:
@@ -367,6 +371,7 @@ class EditOutputForm(forms.ModelForm):
     employee = CachedModelChoiceField(name="employee", label="Empleado")
     destination = CachedModelChoiceField(name="customer", label="Destino")
     replacer = CachedModelChoiceField(name="organization", label="Repone")
+    evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='edit')
 
     class Meta:
@@ -375,7 +380,8 @@ class EditOutputForm(forms.ModelForm):
             'date',
             'employee',
             'destination',
-            'replacer'
+            'replacer',
+            'evidence'
         ]
 
 class NewLendingForm(forms.ModelForm):
@@ -397,6 +403,7 @@ class EditLendingForm(forms.ModelForm):
 class NewOrderForm(forms.ModelForm):
     action = HiddenField(initial='new')
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
+    email_override = forms.EmailField(max_length=255, label='Email alternativo', required=False)
     order_product_set = CachedRelatedModelChoiceField(name="order_product", required=False, label="Refacciones", widget=MultiSetWidget(amounts=True), empty_label=None)
     provider = CachedModelChoiceField(name="provider", required=False, label="Proveedor")
     claimant = CachedModelChoiceField(name="employee", required=False, label="Solicitante")
@@ -407,6 +414,7 @@ class NewOrderForm(forms.ModelForm):
         model = Order
         fields = (
             'message',
+            'email_override',
             'provider',
             'organization_storage',
             'claimant',
@@ -740,6 +748,7 @@ class QuotationOutputForm(forms.ModelForm):
 class OrderOutputForm(forms.ModelForm):
     id = HiddenField()
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
+    email_override = forms.EmailField(max_length=255, label='Email alternativo', required=False)
     organization_storage = CachedModelChoiceField(name="organization_storage", required=True, label="Almacen")
     claimant = CachedModelChoiceField(name="employee", label="Solicitante")
     replacer = CachedModelChoiceField(name="organization", label="Repone")
@@ -748,7 +757,7 @@ class OrderOutputForm(forms.ModelForm):
 
     class Meta:
         model = Output
-        fields = ['message', 'organization_storage', 'claimant']
+        fields = ['message', 'email_override', 'organization_storage', 'claimant']
 
 class EmailOutputForm(forms.Form):
     email = forms.EmailField(max_length=255, label='Email', required=False)
@@ -762,18 +771,20 @@ class InputOrderForm(forms.ModelForm):
     provider = HiddenField()
     invoice_number = forms.CharField(max_length=200, label='Numero de factura')
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
+    evidence = forms.ImageField(label="Evidencia")
     organization_storage = CachedModelChoiceField(name="organization_storage", required=True, label="Almacen")
     movement_product_set = CachedRelatedModelChoiceField(name="movement_product", required=False, label="Refacciones", widget=MultiSetWidget(amounts=True, editable_fields=['price'], extra_fields={'discount':{'tag':'input', 'type': 'number'}}), empty_label=None)
     action = HiddenField(initial='input')
 
     class Meta:
         model = Input
-        fields = ('invoice', 'invoice_date', 'invoice_number', 'organization_storage', 'movement_product_set')
+        fields = ('invoice', 'invoice_date', 'invoice_number', 'evidence', 'organization_storage', 'movement_product_set')
 
 
 class MailOrderForm(forms.ModelForm):
     id = HiddenField()
     message = forms.CharField(widget=forms.Textarea(attrs={"class":"form-control"}), label="Mensaje", initial="Por medio de este mensaje les solicitamos el siguiente pedido. Favor de confirmar por esta misma via si esta enderado del mismo.\nDuda o aclaracion comunicarlo con almacenista a cargo.\nGracias.")
+    email_override = forms.EmailField(max_length=255, label='Email alternativo', required=False)
     organization_storage = HiddenField()
     action = HiddenField(initial='mail')
 
@@ -806,9 +817,13 @@ class InvoiceProviderFilterForm(forms.Form):
 
 class UploadPictureForm(forms.ModelForm):
     id = HiddenField()
-    picture = forms.ImageField()
+    picture = forms.ImageField(label="Foto")
     action = HiddenField(initial='picture')
 
     class Meta:
         model = Product
         fields = ['picture']
+
+class RemovePhotoForm(forms.Form):
+    ids = HiddenField()
+    action = HiddenField(initial='remove_photo')

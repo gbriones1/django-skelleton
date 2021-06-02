@@ -137,6 +137,11 @@ class ProductViewSet(APIWrapper):
     serializer_class = ProductSerializer
     multiset_caches = ['multiset_Quotation_Product', 'multiset_Movement_Product']
 
+    def update(self, request, *args, **kwargs):
+        if request.data.get('action') == 'picture':
+            return self.picture(request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
+
     def picture(self, request, *args, **kwargs):
         if not request.POST:
             request = request._stream
@@ -146,6 +151,7 @@ class ProductViewSet(APIWrapper):
         product = Product.objects.get(id=request.data.get("id"))
         product.picture = request.data.get('picture')
         product.save()
+        self._update_cache()
         return Response([""], status=200)
 
 class PercentageViewSet(APIWrapper):
@@ -168,12 +174,33 @@ class PriceListViewSet(APIWrapper):
 class StorageProductViewSet(APIWrapper):
     queryset = Storage_Product.objects.order_by('product')
     serializer_class = StorageProductSerializer
-
+    
+    def update(self, request, *args, **kwargs):
+        if self.request.user.is_staff:
+            return super().update(request, *args, **kwargs)
+        else:
+            return Response({}, status=status.HTTP_401_UNAUTHORIZED)
 
 class InputViewSet(APIWrapper):
     queryset = Input.objects.order_by('-date')
     serializer_class = InputSerializer
     multiset_caches = ['multiset_Movement_Product']
+
+    def create(self, request, *args, **kwargs):
+        if request.data.get('action') == 'remove_photo':
+            return self.remove_photo(request, *args, **kwargs)
+        return super().create(request, *args, **kwargs)
+
+    def remove_photo(self, request, *args, **kwargs):
+        status = 200
+        for input_ in Input.objects.filter(id__in=json.loads(request.POST['ids'])):
+            try:
+                os.remove(input_.evidence.file.name)
+            except:
+                pass
+            input_.evidence = None
+            input_.save()
+        return Response([], status=status)
 
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
@@ -182,6 +209,8 @@ class OutputViewSet(APIWrapper):
     def create(self, request, *args, **kwargs):
         if request.data.get('action') == 'email':
             return self.email(request, *args, **kwargs)
+        if request.data.get('action') == 'remove_photo':
+            return self.remove_photo(request, *args, **kwargs)
         return super().create(request, *args, **kwargs)
 
     def order(self, request, *args, **kwargs):
@@ -230,6 +259,17 @@ class OutputViewSet(APIWrapper):
             status = 499
         return Response([response], status=status)
 
+    def remove_photo(self, request, *args, **kwargs):
+        status = 200
+        for output in Output.objects.filter(id__in=json.loads(request.POST['ids'])):
+            try:
+                os.remove(output.evidence.file.name)
+            except:
+                pass
+            output.evidence = None
+            output.save()
+        return Response([], status=status)
+
     @staticmethod
     def send_email(outputs, email, message):
         total = 0
@@ -267,7 +307,7 @@ class OrderViewSet(APIWrapper):
         mail_error = None
         config = Configuration.objects.all()
         if config and config[0].sender_email:
-            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'), fail_no_dest=False)
+            mail_error = OrderViewSet.send_email(Order.objects.get(id=response.data['id']), request.data.get('message'), fail_no_dest=False, email_override=request.data.get('email_override'))
         if mail_error:
             response.status_code = 499
             response.data = {"error": mail_error}
@@ -278,7 +318,7 @@ class OrderViewSet(APIWrapper):
             response = Response({}, 201)
             order = Order.objects.get(id=request.data['id'])
             mail_error = None
-            mail_error = OrderViewSet.send_email(order, request.data.get('message'))
+            mail_error = OrderViewSet.send_email(order, request.data.get('message'), email_override=request.data.get('email_override'))
             if mail_error:
                 response.status_code = 499
                 response.data = {"error": mail_error}
@@ -310,14 +350,17 @@ class OrderViewSet(APIWrapper):
         return Response([response], status=status)
 
     @staticmethod
-    def send_email(order, message, fail_no_dest=True):
+    def send_email(order, message, fail_no_dest=True, email_override=None):
         message = message+"\n\nPedido numero: {}\n".format(order.id)
         for p in order.order_product:
             message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
         dest = []
-        for pc in order.provider.provider_contact_set.all():
-            if pc.for_orders and pc.email:
-                dest.append(pc.email)
+        if email_override:
+            dest.append(email_override)
+        else:
+            for pc in order.provider.provider_contact_set.all():
+                if pc.for_orders and pc.email:
+                    dest.append(pc.email)
         if dest:
             config = Configuration.objects.all()
             if config:
@@ -332,7 +375,7 @@ class OrderViewSet(APIWrapper):
                         order.status = Order.STATUS_ASKED
                         order.save()
                     else:
-                        return "Fallo envio de email a {}".format(dest)
+                        return "Fallo envio de email a {}".format(['gbriones.gdl@gmail.com', 'mind.braker@hotmail.com'])
             else:
                 return "No hay email para enviar pedidos. Ir a Configuracion para establecerlo"
         elif fail_no_dest:
@@ -631,10 +674,14 @@ object_map = {
             'new': NewInputForm,
             'edit': EditInputForm,
             'delete': DeleteForm,
+            'remove_photo': RemovePhotoForm
         },
         'table_fields': ['date', 'invoice_number', 'invoice_price', 'movement_product_set', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['multiset', 'dashboard', 'input'],
+        'custom_table_actions': [
+            graphics.Action('remove_photo', 'modal', text='Quitar fotos', icon='eye-slash', style='warning', method="DELETE")
+        ],
         'filter_form': DateTimeRangeFilterForm()
     },
     'output': {
@@ -650,13 +697,16 @@ object_map = {
             'delete': DeleteForm,
             'order': OrderOutputForm,
             'email': EmailOutputForm,
+            'remove_photo': RemovePhotoForm
         },
         'table_fields': ['date', 'movement_product_set', 'employee_name', 'destination_name', 'replacer_name', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
         'js': ['dashboard', 'multiset', 'output'],
         'custom_table_actions': [
             graphics.Action('order', 'modal', text='Pedir', icon='shopping-cart', style='info', method="POST"),
-            graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST")],
+            graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST"),
+            graphics.Action('remove_photo', 'modal', text='Quitar fotos', icon='eye-slash', style='warning', method="DELETE")
+        ],
         'filter_form': DateTimeRangeFilterForm()
     },
     # 'lending': {
@@ -781,3 +831,14 @@ object_map = {
         'filter_form': DateRangeFilterForm()
     }
 }
+
+
+def get_object_perm(user):
+    new_map = object_map.copy()
+    if not user.is_staff:
+        new_map['storage_product']['custom_reg_actions'] = []
+        new_map['storage_product']['custom_table_actions'] = []
+    else:
+        new_map['storage_product']['custom_reg_actions'] = [graphics.Action('edit', 'modal', text='Cambiar', icon='calculator', style='success', method="PUT")]
+        new_map['storage_product']['custom_table_actions'] = [graphics.Action('new', 'modal', text='Agregar', icon='plus-circle', style='primary', method="POST")]
+    return new_map
