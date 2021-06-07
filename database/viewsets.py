@@ -352,8 +352,13 @@ class OrderViewSet(APIWrapper):
     @staticmethod
     def send_email(order, message, fail_no_dest=True, email_override=None):
         message = message+"\n\nPedido numero: {}\n".format(order.id)
+        total = 0.0
         for p in order.order_product:
-            message += "{} {} {}. \tCantidad: {}\n".format(p.product.code, p.product.name, p.product.description, p.amount)
+            message += f"{p.product.code} {p.product.name} {p.product.description}. \t"
+            price = p.product.price - p.product.price * p.product.discount
+            total += float(price) * float(p.amount)
+            message += "Precio: ${:.2f} Cantidad: {} Total: ${:.2f}\n".format(price, p.amount, float(price) * float(p.amount))
+        message += "\nTotal: ${:.2f}".format(total)
         dest = []
         if email_override:
             dest.append(email_override)
