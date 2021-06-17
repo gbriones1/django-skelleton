@@ -65,8 +65,12 @@ class DashboardSerializer(serializers.Serializer):
         for field, value in validated_data.items():
             setattr(instance, field, value)
         for field in instance._meta.fields:
-            if field.name != 'id' and not field.name.endswith('_ptr') and not field.name in validated_data.keys() and not field.name in self.Meta.disable_clean_fields:
-                setattr(instance, field.name, None)
+            if field.name != 'id' and not field.name.endswith('_ptr') and not field.name in validated_data.keys():
+                if hasattr(self.Meta, 'disable_clean_fields'):
+                    if not field.name in self.Meta.disable_clean_fields:
+                        setattr(instance, field.name, None)
+                else:
+                    setattr(instance, field.name, None)
         instance.save()
         for reverse_fields_arg in reverse_fields_args:
             if not reverse_fields_arg['reference'].name in self.Meta.disable_clean_fields:

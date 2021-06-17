@@ -355,7 +355,7 @@ class OrderViewSet(APIWrapper):
         total = 0.0
         for p in order.order_product:
             message += f"{p.product.code} {p.product.name} {p.product.description}. \t"
-            price = p.product.price - p.product.price * p.product.discount
+            price = p.product.price - p.product.price * (p.product.discount / 100)
             total += float(price) * float(p.amount)
             message += "Precio: ${:.2f} Cantidad: {} Total: ${:.2f}\n".format(price, p.amount, float(price) * float(p.amount))
         message += "\nTotal: ${:.2f}".format(total)
