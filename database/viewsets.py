@@ -647,7 +647,7 @@ object_map = {
         },
         'table_fields': ['customer_name',],
         'subset-fields': {'pricelist_product_set': ["product", "price"]},
-        'js': ['multiset', 'dashboard', 'pricelist'],
+        'js': ['dashboard', 'multiset', 'pricelist'],
     },
     'storage_product': {
         'name': 'Productos en almacen',
@@ -683,7 +683,7 @@ object_map = {
         },
         'table_fields': ['date', 'invoice_number', 'invoice_price', 'movement_product_set', 'organization_name', 'storage_name'],
         'subset-fields': {'movement_product_set': ["product", "price", "amount"]},
-        'js': ['multiset', 'dashboard', 'input'],
+        'js': ['dashboard', 'multiset', 'input'],
         'custom_table_actions': [
             graphics.Action('remove_photo', 'modal', text='Quitar fotos', icon='eye-slash', style='warning', method="DELETE")
         ],
@@ -744,7 +744,7 @@ object_map = {
         },
         'table_fields': ['id', 'date', 'order_product_set', 'provider_name', 'claimant_name', 'replacer_name', 'organization_name', 'storage_name', 'status'],
         'subset-fields': {'order_product_set': ["product", "amount"]},
-        'js': ['multiset', 'dashboard', 'order'],
+        'js': ['dashboard', 'multiset', 'order'],
         'custom_reg_actions': [
             graphics.Action('input', 'modal', text='Entrada', icon='sign-in', style='info', method="POST"),
             graphics.Action('mail', 'modal', text='Reenviar', icon='envelope', style='info', method="POST"),
@@ -777,7 +777,7 @@ object_map = {
             graphics.Action('view', 'navigate', text='Ver', icon='eye', style='info', method="GET"),
             graphics.Action('sell', 'modal', text='Registrar Ingreso', icon='money', style='info', method="POST"),
             ],
-        'js': ['formset', 'multiset', 'dashboard', 'quotation'],
+        'js': ['dashboard', 'formset', 'multiset', 'quotation'],
     },
     'invoice': {
         'name': 'Gastos',
@@ -793,7 +793,7 @@ object_map = {
         'table_fields': ['date', 'number', 'provider_name', 'payment_set', 'price', 'due', 'paid'],
         'subset-fields': {'payment_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
-        'js': ['formset', 'dashboard', 'invoice'],
+        'js': ['dashboard', 'formset', 'invoice'],
     },
     'sell': {
         'name': 'Ingresos',
@@ -809,7 +809,7 @@ object_map = {
         'table_fields': ['date', 'number', 'customer_name', 'collection_set', 'price', 'due', 'paid'],
         'subset-fields': {'collection_set': ["date", "amount"]},
         'filter_form': DateRangeFilterForm(),
-        'js': ['formset', 'dashboard', 'sell'],
+        'js': ['dashboard', 'formset', 'sell'],
     },
     'work': {
         'name': 'Hojas de trabajo',
@@ -823,7 +823,7 @@ object_map = {
             'delete': DeleteForm,
         },
         'filter_form': DateRangeFilterForm(),
-        'js': ['multiset', 'dashboard', 'work'],
+        'js': ['dashboard', 'multiset', 'work'],
     },
     'employee_work': {
         'name': 'Comisiones',
