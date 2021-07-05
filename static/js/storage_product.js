@@ -1,6 +1,7 @@
 var stoPro = [];
 var products = [];
 var orgSto = [];
+var proInSto = {}
 
 var columns = [{
     checkbox: true
@@ -72,6 +73,7 @@ function buildTable (){
     orgStoNames = {}
     orgSto.forEach(function (item, index) {
         orgStoNames[item.id] = item.organization_name + " - " + item.storage_type_name
+        proInSto[item.id] = {}
     });
     productNames = {}
     providerIds = {}
@@ -97,6 +99,7 @@ function buildTable (){
             item.debt = 0
         }
         data.push(item)
+        proInSto[item.organization_storage][item.product] = true
     })
     $('#table').bootstrapTable({
         columns: columns,
@@ -106,3 +109,18 @@ function buildTable (){
         data: data
     })
 }
+
+$('select#id_product').attr('disabled', 'disabled');
+
+$(document).on('change', 'select#id_organization_storage', function(){
+    var selectedOrgSto = $(this).val()
+    $('select#id_product > option').each(function (){
+        // console.log($(this));
+        var prodId = $(this).val()
+        $(this).show();
+        if (proInSto[selectedOrgSto][prodId] == true){
+            $(this).hide();
+        }
+    })
+    $('select#id_product').removeAttr('disabled');
+})

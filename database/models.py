@@ -326,6 +326,9 @@ class Storage_Product(models.Model):
     amount = models.IntegerField(default=0)
     must_have = models.IntegerField(default=0)
 
+    class Meta:
+        unique_together = ['organization_storage', 'product']
+
     @property
     def product_code(self):
         return self.product.code
