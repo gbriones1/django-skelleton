@@ -212,7 +212,8 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
     })
 });
 
-$(document).off('click', 'button.do-new');
+// $(document).off('click', 'button.do-new');
+$('button.do-new').attr("avoid-dashboard-submit", true)
 
 $('input.multiset').closest('form').submit(function (e) {
     var form = $(this).closest("form");
@@ -223,7 +224,7 @@ $('input.multiset').closest('form').submit(function (e) {
 $(document).on('click', 'button.do-new', function () {
     var form = $(this).closest('.modal-content').find('form')
     refreshMutliSetInputs(form);
-    doNew($(this))
+    doNew($(this), true)
 });
 
 $(document).on('click', 'button.do-edit', function () {

@@ -122,7 +122,10 @@ function deleteEvent (e, value, data, index) {
     deleteform.find('input[name="id"]').val(data['id']);
 }
 
-function doNew(button){
+function doNew(button, hasMultiset = false){
+    if (button.attr("avoid-dashboard-submit") == true || hasMultiset){
+        return
+    }
     button.attr('disabled', true)
     var form = button.closest('.modal-content').find('form')
     $.ajax({
