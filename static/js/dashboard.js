@@ -122,12 +122,12 @@ function deleteEvent (e, value, data, index) {
     deleteform.find('input[name="id"]').val(data['id']);
 }
 
-function doNew(button, hasMultiset = false){
-    if (button.attr("avoid-dashboard-submit") == true || hasMultiset){
+function doNew(form){
+    var button = form.find('button.do-new');
+    if (form.attr("avoid-submit") == "true"){
         return
     }
     button.attr('disabled', true)
-    var form = button.closest('.modal-content').find('form')
     $.ajax({
         url: form.attr("action"),
         data: new FormData(form.get(0)),
@@ -150,7 +150,7 @@ function doNew(button, hasMultiset = false){
 }
 
 $(document).on('click', 'button.do-new', function () {
-    doNew($(this))
+    doNew($(this).closest('.modal-content').find('form'))
 });
 
 $(document).on('click', 'button.do-edit', function () {

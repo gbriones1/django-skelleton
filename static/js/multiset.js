@@ -213,7 +213,7 @@ $(document).on('click', 'button[data-target="#edit"]', function () {
 });
 
 // $(document).off('click', 'button.do-new');
-$('button.do-new').attr("avoid-dashboard-submit", true)
+$('button.do-new').closest('.modal-content').find('form').attr("avoid-submit", true)
 
 $('input.multiset').closest('form').submit(function (e) {
     var form = $(this).closest("form");
@@ -224,7 +224,9 @@ $('input.multiset').closest('form').submit(function (e) {
 $(document).on('click', 'button.do-new', function () {
     var form = $(this).closest('.modal-content').find('form')
     refreshMutliSetInputs(form);
-    doNew($(this), true)
+    form.removeAttr("avoid-submit")
+    doNew(form)
+    form.attr("avoid-submit", true)
 });
 
 $(document).on('click', 'button.do-edit', function () {
