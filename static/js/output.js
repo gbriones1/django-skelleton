@@ -57,7 +57,7 @@ function buildTable (){
         item.movement_product_set.forEach(function (movement){
             itemProducts.push(productNames[movement.product])
         });
-        item['products'] = itemProducts.join(",")
+        item['products'] = itemProducts.join(";")
         data.push(item);
     })
     $('#table').bootstrapTable({
@@ -88,6 +88,11 @@ function buildTable (){
             sortable: true,
             filterControl: 'select'
         }, {
+            field: 'reference',
+            title: 'Folio',
+            sortable: true,
+            filterControl: 'input'
+        }, {
             field: 'products',
             title: 'Productos',
             formatter: productFormatter,
@@ -98,7 +103,8 @@ function buildTable (){
             title: 'Total',
             sortable: true,
             filterControl: 'input',
-            formatter: sumFormatter
+            formatter: sumFormatter,
+            // footerFormatter: totalSumFormatter,
         }, {
             field: 'action',
             title: 'Acciones',
@@ -115,9 +121,21 @@ function buildTable (){
         height: 600,
         data: data,
         detailView: true,
-        detailFormatter: detailViewFormatter
+        detailFormatter: detailViewFormatter,
+        onColumnSearch: function (field, text){
+            // console.log(field);
+            // console.log(text);
+        },
+        // showFooter: true,
+        showExport: true,
+        toolbar: "#outputsToolbar",
+        exportDataType: "all",
+        exportTypes: ['csv', 'excel', 'pdf'],
+        footerStyle: footerStyle,
     })
 }
+
+
 
 function detailViewFormatter(index, row, element){
     var table = '<table style="float: left;margin-right: 50px;"><tr><th>Refaccion</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
@@ -139,6 +157,17 @@ function sumFormatter(element, row, index){
     var sum = 0
     for (x in row.movement_product_set) {sum += row.movement_product_set[x].price*row.movement_product_set[x].amount}
     return sum.toFixed(2)
+}
+
+
+function totalSumFormatter(data){
+    console.log(data)
+    return "$0.0"
+}
+
+function footerStyle(column){
+    console.log(column)
+    return {}
 }
 
 function renderFilter(form) {

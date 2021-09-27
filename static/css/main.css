@@ -76,7 +76,7 @@ footer p {
 	left: 0;
 	z-index: 1000;
 	display: block;
-	padding: 20px;
+	padding: 20px 0px;
 	overflow-x: hidden;
 	overflow-y: auto;
 	background-color: #f5f5f5;

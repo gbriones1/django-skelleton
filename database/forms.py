@@ -323,6 +323,7 @@ class NewInputForm(forms.ModelForm):
     date = forms.DateTimeField(widget=DateTimeInput(), label='Fecha', initial=datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
     organization_storage = CachedModelChoiceField(name="organization_storage", required=True, label="Almacen")
     provider = CachedModelChoiceField(name="provider", required=True, label="Proveedor")
+    organization = CachedModelChoiceField(name="organization", required=True, label="Organizacion")
     invoice_number = forms.CharField(max_length=200, label='Numero de factura')
     invoice_date = forms.DateField(widget=DateInput(), label='Fecha de Factura', initial=datetime.now())
     evidence = forms.ImageField(label="Evidencia")
@@ -335,19 +336,23 @@ class NewInputForm(forms.ModelForm):
             'date',
             'evidence',
             'organization_storage',
-            'provider'
+            'provider',
+            'organization'
         ]
 
 class EditInputForm(forms.ModelForm):
     id = HiddenField()
     date = forms.DateField(widget=DateTimeInput(), label='Fecha')
+    organization = CachedModelChoiceField(name="organization", required=True, label="Organizacion")
     evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='edit')
 
     class Meta:
         model = Input
         fields = [
-            'date'
+            'date',
+            'organization',
+            'evidence'
         ]
 
 class NewOutputForm(forms.ModelForm):
@@ -357,6 +362,7 @@ class NewOutputForm(forms.ModelForm):
     employee = CachedModelChoiceField(name="employee", label="Empleado")
     destination = CachedModelChoiceField(name="customer", label="Destino")
     replacer = CachedModelChoiceField(name="organization", label="Repone")
+    reference = forms.CharField(max_length=30, label="Folio")
     evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='new')
 
@@ -371,6 +377,7 @@ class EditOutputForm(forms.ModelForm):
     employee = CachedModelChoiceField(name="employee", label="Empleado")
     destination = CachedModelChoiceField(name="customer", label="Destino")
     replacer = CachedModelChoiceField(name="organization", label="Repone")
+    reference = forms.CharField(max_length=30, label="Folio")
     evidence = forms.ImageField(label="Evidencia")
     action = HiddenField(initial='edit')
 

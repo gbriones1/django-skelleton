@@ -1,4 +1,4 @@
-var weekCut = 4
+var weekCut = 6
 
 $.ajax({
     type: "GET",

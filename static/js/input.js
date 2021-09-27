@@ -2,14 +2,17 @@ var inputs = [];
 var orgSto = [];
 var products = [];
 var providers = [];
+var organizations = [];
 var productNames = {};
 var productProviders = {};
 var providerProducts = {};
+var organizationsNames = {};
 
-$.when(getObjectFiltered("input", function(data) {inputs = data}), getObject("provider"), getObject("product"), getObject("organization_storage")).done(function (){
+$.when(getObjectFiltered("input", function(data) {inputs = data}), getObject("provider"), getObject("product"), getObject("organization_storage"), getObject("organization")).done(function (){
     orgSto = JSON.parse(sessionStorage.getItem("organization_storage") || "[]")
     providers = JSON.parse(sessionStorage.getItem("provider") || "[]")
     products = JSON.parse(sessionStorage.getItem("product") || "[]")
+    organizations = JSON.parse(sessionStorage.getItem("organization") || "[]")
     $('#new.modal form').each(function () {
         renderFilter($(this));
     });
@@ -31,10 +34,14 @@ function buildTable (){
         providerProducts[item.provider][item.id] = true
         productProviders[item.id] = item.provider
     });
+    organizations.forEach(function (item, index) {
+        organizationsNames[item.id] = item.name
+    });
     data = []
     inputs.forEach(function (item){
         item['storage_name'] = orgStoNames[item.organization_storage]
         item['provider_name'] = providerNames[item.provider]
+        item['organization_name'] = organizationsNames[item.organization]
         data.push(item);
     })
     $('#table').bootstrapTable({
@@ -59,6 +66,17 @@ function buildTable (){
             title: 'Almacen',
             sortable: true,
             filterControl: 'select'
+        }, {
+            field: 'organization_name',
+            title: 'Organizacion',
+            sortable: true,
+            filterControl: 'select'
+        }, {
+            field: 'total',
+            title: 'Total',
+            formatter: totalFormatter,
+            sortable: true,
+            filterControl: 'input'
         }, {
             field: 'products',
             title: 'Productos',
@@ -99,6 +117,14 @@ function detailViewFormatter(index, row, element){
 
 function productFormatter(element, row, index){
     return '<a class="detail-icon" href="#"><i class="fa fa-plus"></i></a><div style="display: none;">'+element+"</div>"
+}
+
+function totalFormatter(element, row, index){
+    var total = 0;
+    row.movement_product_set.forEach(function(item){
+        total += item.price*item.amount
+    })
+    return "$"+total.toFixed(2)
 }
 
 function renderFilter(form) {

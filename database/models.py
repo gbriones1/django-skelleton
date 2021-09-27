@@ -522,12 +522,14 @@ class Movement_Product(models.Model):
 class Input(Movement):
     invoice = models.ForeignKey(Invoice, null=True, on_delete=models.CASCADE)
     provider = models.ForeignKey(Provider, null=True, on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, null=True, on_delete=models.CASCADE)
 
 
 class Output(Movement):
     employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)
     destination = models.ForeignKey(Customer, null=True, on_delete=models.CASCADE)
     replacer = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.CASCADE)
+    reference = models.CharField(max_length=30, null=True)
 
 
 class Lending(models.Model):

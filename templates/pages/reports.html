@@ -50,11 +50,25 @@
     <form>
         <div class="form-group row">
             <label for="weekSelect" class="col-sm-2 col-form-label">Semana</label>
-            <div class="col-sm-2"><select class="form-control" id="weekSelect"></select></div> 
+            <div class="col-sm-3"><select class="form-control" id="weekSelect"></select></div> 
         </div>
     </form>
     <table id="cashTable"></table>
     {% elif name == 'customers' %}
+    <div id="customersToolbar">
+        <h3>Clientes</h3>
+    </div>
+    {% elif name == 'providers' %}
+    <form>
+        <div class="form-group row">
+            <label for="weekSelect" class="col-sm-2 col-form-label">Semana</label>
+            <div class="col-sm-3"><select class="form-control" id="weekSelect"></select></div> 
+        </div>
+    </form>
+    <div id="providersToolbar">
+        <h3>Entradas</h3>
+    </div>
+    <table id="providersInputTable"></table>
     {% endif %}
 </div>
 {% endblock %}

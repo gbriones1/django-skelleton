@@ -354,6 +354,7 @@ class OutputSerializer(MovementSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), required=False)
     destination = serializers.PrimaryKeyRelatedField(queryset=Customer.objects.all(), required=False)
     replacer = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
+    reference = serializers.CharField(required=False)
 
     class Meta:
         model = Output
@@ -416,6 +417,7 @@ class OrderSerializer(DashboardSerializer):
 
 class InputSerializer(MovementSerializer):
     provider = serializers.PrimaryKeyRelatedField(queryset=Provider.objects.all())
+    organization = serializers.PrimaryKeyRelatedField(queryset=Organization.objects.all(), required=False)
     invoice = serializers.PrimaryKeyRelatedField(queryset=Invoice.objects.all(), required=False)
     invoice_number = serializers.ReadOnlyField(source='invoice.number')
     invoice_date = serializers.ReadOnlyField(source='invoice.date')
