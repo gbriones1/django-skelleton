@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from django.core.cache import cache
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -205,6 +206,32 @@ class InputViewSet(APIWrapper):
 class OutputViewSet(APIWrapper):
     queryset = Output.objects.order_by('-date')
     serializer_class = OutputSerializer
+
+    def get_queryset(self):
+        params = self.request.query_params.dict()
+        provider = params.pop("provider", None)
+        result = self.queryset.filter(**params)
+        if provider:
+            o_list = []
+            for o in result:
+                mp = o.movement_product_set.filter(product__provider=provider)
+                if mp:
+                    o_list.append(o)
+            return o_list
+        return result
+
+    def list(self, request, *args, **kwargs):
+        response = super(APIWrapper, self).list(request, *args, **kwargs)
+        provider = self.request.query_params.get('provider', None)
+        if provider:
+            provider_products = [x.id for x in Product.objects.filter(provider=provider)]
+            for o in response.data:
+                new_mp = []
+                for mp in o["movement_product_set"]:
+                    if mp["product"] in provider_products:
+                        new_mp.append(mp)
+                o["movement_product_set"] = new_mp
+        return response
 
     def create(self, request, *args, **kwargs):
         if request.data.get('action') == 'email':
@@ -712,7 +739,7 @@ object_map = {
             graphics.Action('email', 'modal', text='Email', icon='envelope', style='info', method="POST"),
             graphics.Action('remove_photo', 'modal', text='Quitar fotos', icon='eye-slash', style='warning', method="DELETE")
         ],
-        'filter_form': DateTimeRangeFilterForm()
+        'filter_form': DateTimeRangeProviderFilterForm()
     },
     # 'lending': {
     #     'name': 'Prestamos',

@@ -1,20 +1,28 @@
+var provider = urlParams["provider"];
+if (provider){
+    $('.filter_form select#id_provider').val(provider);
+}
+
 var outputs = [];
 var organizations = [];
 var orgSto = [];
 var products = [];
 var employees = [];
 var customers = [];
+var providers = [];
 var productNames = {};
 var productProviders = {};
+var providerNames = {};
 var storages = {};
 
-$.when(getObjectFiltered("output", function(data) {outputs = data}), getObject("product"), getObject("organization"), getObject("organization_storage"), getObject("employee"), getObject("customer"), getObject("storage_product")).done(function (){
+$.when(getObjectFiltered("output", function(data) {outputs = data}), getObject("product"), getObject("organization"), getObject("organization_storage"), getObject("employee"), getObject("customer"), getObject("storage_product"), getObject("provider")).done(function (){
     organizations = JSON.parse(sessionStorage.getItem("organization") || "[]")
     orgSto = JSON.parse(sessionStorage.getItem("organization_storage") || "[]")
     products = JSON.parse(sessionStorage.getItem("product") || "[]")
     employees = JSON.parse(sessionStorage.getItem("employee") || "[]")
     customers = JSON.parse(sessionStorage.getItem("customer") || "[]")
     stoPro = JSON.parse(sessionStorage.getItem("storage_product") || "[]")
+    providers = JSON.parse(sessionStorage.getItem("provider") || "[]")
     $('#new.modal form').each(function () {
         renderFilter($(this));
     });
@@ -46,6 +54,9 @@ function buildTable (){
         productNames[item.id] = item.code + " - " + item.name + " - " + item.description
         item.price_raw = item.price
         productProviders[item.id] = item.provider
+    });
+    providers.forEach(function (item) {
+        providerNames[item.id] = item.name;
     });
     data = []
     outputs.forEach(function (item){
@@ -138,9 +149,9 @@ function buildTable (){
 
 
 function detailViewFormatter(index, row, element){
-    var table = '<table style="float: left;margin-right: 50px;"><tr><th>Refaccion</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
+    var table = '<table style="float: left;margin-right: 50px;"><tr><th>Refaccion</th><th>Proveedor</th><th>Precio Unitario</th><th>Cantidad</th><th>Total</th></tr><tbody>'
     row.movement_product_set.forEach(function(item) {
-        table += '<tr><td>'+productNames[item.product]+'</td><td>$'+item.price+'</td><td>'+item.amount+'</td><td>$'+(item.price*item.amount).toFixed(2)+'</td></tr>'
+        table += '<tr><td>'+productNames[item.product]+'</td><td>'+providerNames[productProviders[item.product]]+'</td><td>$'+item.price+'</td><td>'+item.amount+'</td><td>$'+(item.price*item.amount).toFixed(2)+'</td></tr>'
     })
     table += '</tbody></table>'
     if (row.evidence){

@@ -2,8 +2,8 @@
     <form class="form-inline">
         {% for field in filter_form %}
             <div class="form-group {% if field.errors %}has-error{% endif %}">
-                <label for="{{ field.id_for_label }}" class="col-sm-2 control-label"><h4>{{ field.label }}</h4></label>
-                <div class="col-sm-8">
+                <label for="{{ field.id_for_label }}" class="col-md-2 control-label"><h6>{{ field.label }}</h6></label>
+                <div class="col-md-8">
                     {{ field }}
                     {% for error in field.errors %}
                     <span class="help-block">{{ error }}</span>
