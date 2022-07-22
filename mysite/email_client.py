@@ -49,8 +49,9 @@ def send_email(user_email, password, destinations, subject, text, files=[], part
     while not success and not err and retries < 10:
         try:
             print("Sending email. Attempt: {}".format(retries+1))
-            server = smtplib.SMTP("smtp.gmail.com", 587, timeout=3)
+            # server = smtplib.SMTP("smtp.gmail.com", 587, timeout=3)
             #server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+            server = smtplib.SMTP("mail.muellesobrero.com", 587, timeout=900)
             server.ehlo()
             server.starttls()
             server.login(gmail_user, gmail_pwd)
